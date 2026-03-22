@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PDF Viewer Test</title>
+    <script src="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+    <script src="{{ asset('js/pdf-viewer.js') }}"></script>
+    <style>
+        body { margin: 0; background: #000; }
+        .pdf-viewer-container { width: 100vw; height: 100vh; }
+    </style>
+</head>
+<body>
+    <div id="pdf-viewer-container"></div>
+    <script>
+        // Configure PDF.js
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+        
+        // Test PDF URL
+        const pdfUrl = '{{ asset("storage/books/pdfs/1765701025_693e75a189f6c.pdf") }}';
+        console.log('Testing PDF URL:', pdfUrl);
+        
+        // Initialize viewer
+        try {
+            const viewer = new CustomPDFViewer('pdf-viewer-container', pdfUrl);
+            console.log('PDF viewer initialized successfully');
+        } catch (error) {
+            console.error('Failed to initialize PDF viewer:', error);
+        }
+    </script>
+</body>
+</html>

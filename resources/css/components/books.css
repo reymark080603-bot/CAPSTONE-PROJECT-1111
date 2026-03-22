@@ -1,0 +1,208 @@
+/* Line clamp utility classes */
+.line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+/* Enhanced book card animations */
+.book-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.book-card:hover {
+    transform: translateY(-8px);
+}
+
+/* Category-based solid colors */
+.category-programming { background-color: #3B82F6; }
+.category-mathematics { background-color: #10B981; }
+.category-literature { background-color: #8B5CF6; }
+.category-science { background-color: #EF4444; }
+.category-business { background-color: #F59E0B; }
+.category-technology { background-color: #6366F1; }
+.category-education { background-color: #EC4899; }
+.category-reference { background-color: #6B7280; }
+
+/* Smooth aspect ratio for book covers */
+.aspect-\[3\/4\] {
+    aspect-ratio: 3/4;
+}
+
+/* Filter panel animations */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-slide-down {
+    animation: slideDown 0.2s ease-out;
+}
+
+/* Loading animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in-up {
+    animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+/* Focus ring utility */
+.focus-ring:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+/* Modal animations */
+.modal-backdrop {
+    transition: opacity 0.3s ease;
+}
+
+.modal-content {
+    transition: all 0.3s ease;
+}
+
+/* Borrow modal styles */
+.borrow-modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.5);
+    transition: opacity 0.3s ease;
+}
+
+.borrow-modal-content {
+    transform: scale(0.95);
+    transition: transform 0.3s ease;
+}
+
+.borrow-modal.show .borrow-modal-content {
+    transform: scale(1);
+}
+
+/* Radio button custom styles */
+.duration-option {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.duration-option:hover {
+    border-color: #3b82f6;
+}
+
+.duration-radio:checked + .duration-option {
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+}
+
+.radio-indicator {
+    transition: border-color 0.2s ease;
+}
+
+.check-mark {
+    transition: opacity 0.2s ease;
+}
+
+/* Borrow popup animations */
+@keyframes popupIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+#borrowPopupCard {
+    animation: popupIn 0.2s ease-out;
+}
+
+/* Button hover effects */
+.btn-hover-lift:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Search and filter enhancements */
+.search-input:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.filter-input:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Responsive grid adjustments */
+@media (max-width: 768px) {
+    .book-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .book-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Loading states */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+/* Pagination styles */
+.pagination-btn {
+    transition: all 0.2s ease;
+}
+
+.pagination-btn:hover {
+    background-color: #e5e7eb;
+}
+
+.pagination-btn.active {
+    background-color: #3b82f6;
+    color: white;
+}
+
+/* No results animation */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.no-results {
+    animation: fadeIn 0.3s ease-out;
+}

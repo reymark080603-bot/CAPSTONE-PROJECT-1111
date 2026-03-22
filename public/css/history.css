@@ -1,0 +1,570 @@
+/* History Page Styles */
+
+/* Statistics Cards Animation */
+.stat-card {
+    transition: all 0.3s ease;
+    border: 1px solid #e5e7eb;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Filter Controls */
+.filter-controls {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+/* History Table Styles */
+.history-table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.history-table th {
+    position: sticky;
+    top: 0;
+    background: #f9fafb;
+    z-index: 10;
+}
+
+.history-table tbody tr {
+    transition: all 0.2s ease;
+}
+
+.history-table tbody tr:hover {
+    background-color: #f8fafc;
+    transform: translateX(2px);
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-borrowed {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.status-returned {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.status-overdue {
+    background-color: #fee2e2;
+    color: #dc2626;
+    animation: pulse-red 2s infinite;
+}
+
+.status-auto-returned {
+    background-color: #f3e8ff;
+    color: #7c3aed;
+    border: 1px solid #ddd6fe;
+}
+
+.status-reserved {
+    background-color: #fef3c7;
+    color: #d97706;
+}
+
+.status-expired {
+    background-color: #f3f4f6;
+    color: #6b7280;
+}
+
+/* Overdue Pulse Animation */
+@keyframes pulse-red {
+    0%, 100% {
+        background-color: #fee2e2;
+    }
+    50% {
+        background-color: #fecaca;
+    }
+}
+
+/* Book Information */
+.book-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.book-cover-mini {
+    width: 40px;
+    height: 56px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.book-cover-mini.programming {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.book-cover-mini.mathematics {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.book-cover-mini.literature {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.book-cover-mini.science {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.book-cover-mini.business {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+}
+
+.book-cover-mini.education {
+    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+}
+
+.book-cover-mini.reference {
+    background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+}
+
+.book-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.book-title {
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 2px;
+    line-height: 1.4;
+}
+
+.book-author {
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+/* Action Buttons */
+.action-btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.action-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-renew {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.btn-renew:hover {
+    background-color: #2563eb;
+}
+
+.btn-return {
+    background-color: #10b981;
+    color: white;
+}
+
+.btn-return:hover {
+    background-color: #059669;
+}
+
+.btn-details {
+    background-color: #6b7280;
+    color: white;
+}
+
+.btn-details:hover {
+    background-color: #4b5563;
+}
+
+.btn-disabled {
+    background-color: #d1d5db;
+    color: #9ca3af;
+    cursor: not-allowed;
+}
+
+.btn-disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+/* Date Display */
+.date-display {
+    font-size: 0.875rem;
+    color: #374151;
+}
+
+.date-overdue {
+    color: #dc2626;
+    font-weight: 600;
+}
+
+.date-due-soon {
+    color: #d97706;
+    font-weight: 500;
+}
+
+/* Type Indicators */
+.type-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.type-borrow {
+    color: #3b82f6;
+}
+
+.type-return {
+    color: #10b981;
+}
+
+.type-reserve {
+    color: #d97706;
+}
+
+/* Filter Section */
+.filter-section {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Loading State */
+.loading-shimmer {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Empty State */
+.empty-state {
+    padding: 3rem 1rem;
+    text-align: center;
+}
+
+.empty-state-icon {
+    margin-bottom: 1rem;
+    color: #d1d5db;
+}
+
+/* Pagination */
+.pagination-btn {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db;
+    background: white;
+    color: #374151;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.pagination-btn:hover:not(.disabled) {
+    background-color: #f3f4f6;
+    border-color: #9ca3af;
+}
+
+.pagination-btn.active {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
+    color: white;
+}
+
+.pagination-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination-btn:first-child {
+    border-top-left-radius: 0.375rem;
+    border-bottom-left-radius: 0.375rem;
+}
+
+.pagination-btn:last-child {
+    border-top-right-radius: 0.375rem;
+    border-bottom-right-radius: 0.375rem;
+}
+
+.pagination-btn:not(:first-child) {
+    border-left: none;
+}
+
+/* Modal Styles */
+.modal-overlay {
+    backdrop-filter: blur(4px);
+}
+
+.modal-content {
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Export Button */
+#export-btn {
+    position: relative;
+    overflow: hidden;
+}
+
+#export-btn:hover {
+    background-color: #e5e7eb;
+}
+
+#export-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.2),
+        transparent
+    );
+    transition: left 0.5s;
+}
+
+#export-btn:hover::before {
+    left: 100%;
+}
+
+/* Fine Indicators */
+.fine-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    background-color: #fef2f2;
+    color: #dc2626;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+/* Days Counter */
+.days-counter {
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.days-overdue {
+    background-color: #fecaca;
+    color: #991b1b;
+}
+
+.days-due-soon {
+    background-color: #fed7aa;
+    color: #c2410c;
+}
+
+.days-normal {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .history-table {
+        font-size: 0.875rem;
+    }
+    
+    .book-info {
+        gap: 8px;
+    }
+    
+    .book-cover-mini {
+        width: 32px;
+        height: 44px;
+        font-size: 14px;
+    }
+    
+    .action-btn {
+        padding: 4px 8px;
+        font-size: 0.7rem;
+    }
+    
+    .stat-card {
+        padding: 1rem;
+    }
+    
+    .stat-card p {
+        font-size: 0.75rem;
+    }
+    
+    .stat-card .text-2xl {
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .history-search-wrap {
+        min-width: 100% !important;
+    }
+
+    #search-history {
+        min-height: 2.75rem;
+        font-size: 0.875rem;
+        padding-top: 0.75rem;
+        padding-bottom: 0.75rem;
+    }
+
+    .history-filter-wrap,
+    .history-filter-btn {
+        width: 100%;
+    }
+
+    .history-filter-btn {
+        justify-content: center;
+        min-height: 2.75rem;
+        font-size: 0.875rem;
+    }
+
+    #history-filter-dropdown {
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%);
+        width: min(20rem, calc(100vw - 1rem)) !important;
+        max-width: none;
+    }
+
+    .history-table th,
+    .history-table td {
+        padding: 0.625rem 0.5rem;
+    }
+    
+    .book-details {
+        min-width: 110px;
+    }
+    
+    .book-title {
+        font-size: 0.8125rem;
+    }
+    
+    .book-author {
+        font-size: 0.6875rem;
+    }
+
+    .history-table {
+        min-width: 640px;
+    }
+
+    .history-table th {
+        font-size: 0.6875rem;
+        white-space: nowrap;
+    }
+
+    .date-display,
+    .type-indicator {
+        font-size: 0.75rem;
+    }
+
+    .status-badge {
+        font-size: 0.6875rem;
+        padding: 0.25rem 0.5rem;
+    }
+
+    .action-btn {
+        padding: 0.35rem 0.5rem;
+        font-size: 0.6875rem;
+        white-space: nowrap;
+    }
+}
+
+/* Search and Filter Highlights */
+.search-highlight {
+    background-color: #fef3c7;
+    padding: 1px 2px;
+    border-radius: 2px;
+    font-weight: 600;
+}
+
+/* Notification Badge Animation */
+.notification-badge {
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-4px);
+    }
+    60% {
+        transform: translateY(-2px);
+    }
+}
+
+/* Smooth Transitions */
+* {
+    scroll-behavior: smooth;
+}
+
+.history-container {
+    transition: all 0.3s ease-in-out;
+}
+
+.history-table-wrapper {
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Focus Styles */
+.action-btn:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+input:focus,
+select:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px #3b82f6;
+}

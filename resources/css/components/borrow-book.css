@@ -1,0 +1,81 @@
+/* Custom styles for borrow page */
+.aspect-3-4 {
+    aspect-ratio: 3/4;
+}
+
+/* Borrowing process animations */
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.fa-spin {
+    animation: spin 1s linear infinite;
+}
+
+/* Progress indicators */
+.progress-step {
+    transition: all 0.3s ease;
+}
+
+.progress-step.completed .step-icon {
+    color: #10b981;
+}
+
+.progress-step.processing .step-icon {
+    color: #3b82f6;
+}
+
+/* Due date calculation */
+.due-date {
+    font-weight: 600;
+    color: #2563eb;
+}
+
+/* Auto-borrow form */
+.auto-borrow-form {
+    display: none;
+}
+
+/* Success state animations */
+.success-state {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Loading states */
+.loading-spinner {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 50%;
+    border-top-color: #3b82f6;
+    animation: spin 1s ease-in-out infinite;
+}
+
+/* Borrow process timing */
+.borrow-step-1 { animation-delay: 0s; }
+.borrow-step-2 { animation-delay: 1.5s; }
+.borrow-step-3 { animation-delay: 2.5s; }
+
+/* Form transitions */
+.borrow-form-transition {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.borrow-form-transition.hidden {
+    opacity: 0;
+    transform: scale(0.95);
+}

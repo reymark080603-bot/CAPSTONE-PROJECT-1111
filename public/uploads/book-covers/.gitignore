@@ -1,0 +1,8 @@
+# Keep uploaded book cover images out of git but preserve the directory structure
+*
+!.gitignore
+
+# This ensures that:
+# 1. The directory structure is preserved in git
+# 2. Uploaded book covers are stored locally only
+# 3. No uploaded files are accidentally committed to version control

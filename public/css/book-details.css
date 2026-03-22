@@ -1,0 +1,110 @@
+/* Book Details Modal Styling */
+#book-modal {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+#book-modal .prose {
+    color: #374151;
+    line-height: 1.625;
+    max-width: 100%;
+}
+
+#book-modal .prose p {
+    margin-top: 0.75em;
+    margin-bottom: 0.75em;
+}
+
+#book-modal .prose a {
+    color: #3b82f6;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+#book-modal .prose a:hover {
+    text-decoration: underline;
+}
+
+/* Modal Transitions */
+#book-modal {
+    transition: opacity 0.2s ease-in-out;
+}
+
+#book-modal .bg-black\/50 {
+    transition: opacity 0.3s ease-in-out;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    #book-modal .flex-col {
+        gap: 1.5rem;
+    }
+    
+    #book-modal .w-full {
+        width: 100%;
+    }
+    
+    #book-modal .text-2xl {
+        font-size: 1.5rem;
+        line-height: 2rem;
+    }
+    
+    #book-modal .text-lg {
+        font-size: 1.125rem;
+        line-height: 1.75rem;
+    }
+    
+    #book-modal .p-6 {
+        padding: 1rem;
+    }
+}
+
+/* Loading Animation */
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+/* Modal Scrollbar Styling */
+#book-modal ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+#book-modal ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+#book-modal ::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+#book-modal ::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Print Styles */
+@media print {
+    #book-modal {
+        position: static !important;
+        display: block !important;
+        background: white;
+    }
+    
+    #book-modal .bg-black\/50, 
+    #close-modal {
+        display: none !important;
+    }
+    
+    #book-modal .max-h-\[90vh\] {
+        max-height: none !important;
+    }
+}

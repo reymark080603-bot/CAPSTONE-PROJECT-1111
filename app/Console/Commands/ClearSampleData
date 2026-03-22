@@ -1,0 +1,57 @@
+<?php
+
+namespace App\Console\Commands;
+
+use Illuminate\Console\Command;
+use App\Models\Book;
+use App\Models\BorrowRecord;
+use App\Models\Fine;
+
+class ClearSampleData extends Command
+{
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
+    protected $signature = 'library:clear-sample-data';
+
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'Clear all sample/dummy data from the library system';
+
+    /**
+     * Execute the console command.
+     */
+    public function handle()
+    {
+        if ($this->confirm('This will remove all books, borrow records, and fines. Are you sure?')) {
+            $this->info('Clearing sample data...');
+
+            // Disable foreign key checks
+            \DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+
+            // Clear all related data in proper order
+
+            Fine::truncate();
+            $this->info('✓ Cleared fines');
+
+            BorrowRecord::truncate();
+            $this->info('✓ Cleared borrow records');
+
+            Book::truncate();
+            $this->info('✓ Cleared books');
+
+            // Re-enable foreign key checks
+            \DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
+            $this->info('All sample data has been cleared successfully!');
+            $this->comment('The system is now ready for real book data to be uploaded by librarians.');
+        } else {
+            $this->info('Operation cancelled.');
+        }
+    }
+}

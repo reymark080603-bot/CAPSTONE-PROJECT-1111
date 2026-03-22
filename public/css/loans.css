@@ -1,0 +1,401 @@
+/* Loans Page Styles */
+
+/* Book Card Sizing - Match Student Dashboard */
+#loans-grid .book-card {
+    min-width: clamp(140px, 18vw, 192px); /* responsive card width matching student dashboard */
+    flex-shrink: 0; /* Prevent cards from shrinking on mobile */
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+/* Mobile responsiveness for book cards */
+@media (max-width: 768px) {
+    #loans-grid .book-card { 
+        min-width: 150px; 
+    }
+}
+
+/* Loan Card Styles */
+.loan-card {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.loan-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Book Cover Mini Styles */
+.book-cover-mini {
+    position: relative;
+    background: linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%);
+    overflow: hidden;
+}
+
+.book-cover-mini::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.1) 50%,
+        transparent 100%
+    );
+    transform: translateX(-100%);
+    transition: transform 0.6s ease;
+}
+
+.loan-card:hover .book-cover-mini::before {
+    transform: translateX(100%);
+}
+
+/* Book Category Colors */
+.book-cover-mini.programming {
+    background: linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%);
+}
+
+.book-cover-mini.mathematics {
+    background: linear-gradient(135deg, #10B981 0%, #047857 100%);
+}
+
+.book-cover-mini.literature {
+    background: linear-gradient(135deg, #8B5CF6 0%, #5B21B6 100%);
+}
+
+.book-cover-mini.science {
+    background: linear-gradient(135deg, #EF4444 0%, #B91C1C 100%);
+}
+
+.book-cover-mini.business {
+    background: linear-gradient(135deg, #F59E0B 0%, #B45309 100%);
+}
+
+.book-cover-mini.education {
+    background: linear-gradient(135deg, #6366F1 0%, #3730A3 100%);
+}
+
+.book-cover-mini.reference {
+    background: linear-gradient(135deg, #6B7280 0%, #374151 100%);
+}
+
+/* Status Badges */
+.status-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.status-borrowed {
+    background-color: #DBEAFE;
+    color: #1E40AF;
+}
+
+.status-reserved {
+    background-color: #FEF3C7;
+    color: #B45309;
+}
+
+.status-overdue {
+    background-color: #FEE2E2;
+    color: #B91C1C;
+}
+
+/* Days Remaining Display */
+.days-remaining {
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.days-remaining.urgent {
+    background: #EF4444;
+    animation: pulse 2s infinite;
+}
+
+.days-remaining.warning {
+    background: #F59E0B;
+}
+
+.days-remaining.normal {
+    background: #10B981;
+}
+
+/* Action Buttons */
+.action-btn {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.5rem;
+    border-radius: 0.375rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    min-height: 2rem;
+    white-space: nowrap;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 640px) {
+    .action-btn {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.375rem;
+        min-height: 1.75rem;
+        gap: 0.125rem;
+    }
+    
+    .action-btn i {
+        font-size: 0.65rem;
+    }
+}
+
+.btn-renew {
+    background-color: #10B981;
+    color: white;
+}
+
+.btn-renew:hover {
+    background-color: #059669;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.btn-renew:disabled {
+    background-color: #9CA3AF;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-view {
+    background-color: #3B82F6;
+    color: white;
+}
+
+.btn-view:hover {
+    background-color: #2563EB;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.btn-details {
+    background-color: #6B7280;
+    color: white;
+    padding: 0.375rem;
+    min-width: 2rem;
+    min-height: 2rem;
+}
+
+.btn-details:hover {
+    background-color: #4B5563;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(107, 114, 128, 0.4);
+}
+
+/* Due Date Styling */
+.due-date-urgent {
+    color: #EF4444;
+    font-weight: 600;
+}
+
+.due-date-warning {
+    color: #F59E0B;
+    font-weight: 600;
+}
+
+.due-date-normal {
+    color: #10B981;
+    font-weight: 500;
+}
+
+/* Quick Stats Card Animation */
+.stat-card {
+    transition: all 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Loading Animation */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.8;
+    }
+}
+
+/* Line Clamp Utility */
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    /* Standard properties for compatibility */
+    display: -moz-box;
+    -moz-line-clamp: 2;
+    -moz-box-orient: vertical;
+    line-clamp: 2;
+    box-orient: vertical;
+}
+
+/* Empty State Animation */
+.empty-state {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Loan Card Grid Animation */
+.loan-card {
+    animation: slideInUp 0.6s ease-out;
+    animation-fill-mode: both;
+}
+
+.loan-card:nth-child(1) { animation-delay: 0.1s; }
+.loan-card:nth-child(2) { animation-delay: 0.2s; }
+.loan-card:nth-child(3) { animation-delay: 0.3s; }
+.loan-card:nth-child(4) { animation-delay: 0.4s; }
+.loan-card:nth-child(5) { animation-delay: 0.5s; }
+.loan-card:nth-child(6) { animation-delay: 0.6s; }
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Renew All Button */
+#renew-all-btn {
+    transition: all 0.2s ease;
+}
+
+#renew-all-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+}
+
+/* Modal Animations */
+.modal-content {
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .loan-card {
+        animation-delay: 0 !important;
+    }
+    
+    #loans-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    .action-btn {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.75rem;
+    }
+    
+    .days-remaining {
+        font-size: 0.625rem;
+        padding: 0.125rem 0.375rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .book-cover-mini {
+        height: 7rem;
+    }
+    
+    .loan-card .p-4 {
+        padding: 1rem;
+    }
+}
+
+/* Focus States for Accessibility */
+.action-btn:focus,
+.sidebar-link:focus,
+button:focus {
+    outline: 2px solid #3B82F6;
+    outline-offset: 2px;
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+    .status-badge {
+        border: 1px solid currentColor;
+    }
+    
+    .loan-card {
+        border: 1px solid #374151;
+    }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    .loan-card,
+    .stat-card,
+    .action-btn,
+    .book-cover-mini::before {
+        animation: none;
+        transition: none;
+    }
+    
+    .loan-card:hover {
+        transform: none;
+    }
+}

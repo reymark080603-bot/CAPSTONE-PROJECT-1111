@@ -1,0 +1,796 @@
+/* Student Dashboard Styles */
+:root {
+    --sidebar-w: 256px;
+    --header-h: 72px;
+}
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    overflow-x: hidden;
+}
+
+/* Fixed Header */
+.header {
+    position: fixed;
+    top: 0;
+    left: var(--sidebar-w); /* Start with sidebar expanded */
+    right: 0;
+    z-index: 50;
+    transition: all 0.3s ease-in-out;
+}
+
+.header.sidebar-collapsed {
+    left: 0; /* When sidebar shows only icons */
+}
+
+/* Header when sidebar is completely hidden - use more reliable selectors */
+.sidebar.hidden ~ .dashboard-container .header,
+.sidebar.hidden ~ .main-content .header,
+.sidebar.hidden + .main-content .header,
+.dashboard-container .sidebar.hidden ~ * .header,
+.dashboard-container .sidebar.hidden ~ .header,
+.header.sidebar-collapsed {
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+}
+
+/* Header layout fixes */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    transition: all 0.3s ease-in-out;
+    box-sizing: border-box;
+    padding: 0 1.5rem;
+    height: var(--header-h);
+}
+
+.header .flex {
+    flex-shrink: 0;
+}
+
+.header .flex.items-center.space-x-4 {
+    flex-shrink: 0;
+    gap: 1rem;
+    min-width: 0;
+}
+
+/* Ensure proper header layout on all pages */
+.header > div:first-child {
+    flex: 0 0 auto; /* Don't grow, stay natural size */
+    min-width: 0;
+}
+
+.header > div:last-child {
+    flex: 0 0 auto; /* Don't grow, stay natural size */
+    min-width: 0;
+}
+
+/* Desktop specific fixes */
+@media (min-width: 768px) {
+    .header.sidebar-expanded {
+        left: var(--sidebar-w);
+        right: 0;
+        width: auto;
+    }
+    
+    .header.sidebar-collapsed {
+        left: 0;
+        right: 0;
+        width: auto;
+    }
+}
+
+/* Header responsiveness */
+@media (max-width: 768px) {
+    .header {
+        padding: 0 1rem;
+    }
+
+    .header > div {
+        gap: 0.75rem;
+    }
+
+    .header > div > .flex:first-child {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .header > div > .flex:last-child {
+        flex: 0 0 auto;
+        min-width: 0;
+    }
+
+    .header .flex.items-center.space-x-4 {
+        gap: 0.5rem;
+    }
+
+    .header .quick-search-form {
+        flex: 1 1 auto;
+        min-width: 0;
+        max-width: 12rem;
+    }
+    
+    .header #header-search {
+        width: clamp(8.5rem, 34vw, 12rem) !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .header {
+        min-height: var(--header-h);
+        height: auto;
+        padding: 0 0.75rem;
+    }
+
+    .header > div {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        gap: 0.5rem;
+    }
+
+    .header .flex.items-center.space-x-4 {
+        gap: 0.25rem;
+    }
+
+    .header .quick-search-form {
+        max-width: 9.75rem;
+    }
+
+    .header button#sidebar-toggle {
+        padding: 0.45rem;
+    }
+
+    .header .w-10.h-10 {
+        width: 2.25rem;
+        height: 2.25rem;
+    }
+    
+    .header h1 {
+        font-size: 1.125rem;
+        line-height: 1.25rem;
+    }
+    
+    .header .fa-book-open {
+        font-size: 1.125rem;
+        margin-right: 0.5rem;
+    }
+    
+    .header #header-search {
+        width: clamp(7.5rem, 38vw, 10rem) !important;
+        font-size: 0.8125rem;
+        padding-top: 0.625rem;
+        padding-bottom: 0.625rem;
+    }
+
+    #header-search-results {
+        width: min(22rem, calc(100vw - 1.5rem)) !important;
+        right: -0.25rem !important;
+    }
+}
+
+.quick-search-results {
+    overscroll-behavior: contain;
+}
+
+@media (max-width: 640px) {
+    .quick-search-form {
+        position: static;
+    }
+
+    .quick-search-results {
+        width: min(20rem, calc(100vw - 1.25rem)) !important;
+        max-height: min(70vh, 30rem) !important;
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%);
+        margin-top: 0.5rem !important;
+        border-radius: 1rem;
+    }
+
+    .quick-search-results .quick-search-item {
+        padding: 0.875rem;
+    }
+
+    .quick-search-results .quick-search-row {
+        align-items: flex-start;
+    }
+
+    .quick-search-results .quick-search-cover {
+        width: 2.5rem;
+        height: 3.5rem;
+        flex-shrink: 0;
+    }
+
+    .quick-search-results .quick-search-head {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .quick-search-results .quick-search-head span {
+        align-self: flex-start;
+    }
+
+    .quick-search-results .quick-search-actions {
+        flex-wrap: wrap;
+    }
+
+    .quick-search-results .quick-search-actions a {
+        flex: 1 1 5rem;
+        text-align: center;
+        padding-top: 0.4rem;
+        padding-bottom: 0.4rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .quick-search-results {
+        width: min(18.5rem, calc(100vw - 1rem)) !important;
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%);
+    }
+
+    .quick-search-results .quick-search-item {
+        padding: 0.75rem;
+    }
+
+    .quick-search-results .quick-search-actions {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.header.sidebar-expanded {
+    left: var(--sidebar-w); /* When sidebar is expanded */
+}
+
+/* Sidebar Styles */
+.sidebar {
+    transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+    width: var(--sidebar-w);
+    flex-shrink: 0;
+    min-height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 40;
+    overflow-y: auto;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+    transform: translateX(-100%);
+    opacity: 0;
+}
+
+/* Show sidebar on desktop */
+@media (min-width: 768px) {
+    .sidebar {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    
+    /* Hide sidebar when .hidden class is added on desktop */
+    .sidebar.hidden {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+}
+
+/* Show sidebar when active class is added */
+.sidebar.active {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+/* Backdrop for mobile */
+.sidebar-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 30;
+}
+
+.sidebar-backdrop.active {
+    display: block;
+}
+
+.header.sidebar-collapsed {
+    left: 0 !important;
+}
+
+.main-content.expanded {
+    left: 0 !important;
+}
+
+.sidebar.hidden .sidebar-text {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.sidebar.hidden .sidebar-welcome {
+    display: none;
+}
+
+.sidebar-text {
+    transition: all 0.3s ease-in-out;
+}
+
+.sidebar-link {
+    transition: all 0.2s ease-in-out;
+}
+
+.sidebar-link:hover {
+    background-color: #374151;
+}
+
+.sidebar-link.active {
+    background-color: #4B5563;
+    border-left: 4px solid white;
+}
+
+/* Toggle Button */
+.sidebar-toggle {
+    transition: all 0.2s ease-in-out;
+}
+
+.sidebar-toggle:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    transform: scale(1.05);
+}
+
+/* Main Content */
+.main-content {
+    transition: all 0.3s ease-in-out;
+    position: absolute;
+    top: 0;
+    left: var(--sidebar-w);
+    right: 0;
+    min-height: 100vh;
+    overflow-x: auto;
+    background-color: #f9fafb;
+    padding-top: calc(var(--header-h) + 8px); /* Account for fixed header */
+    box-sizing: border-box;
+}
+
+.main-content.expanded {
+    left: 0; /* Account for hidden sidebar */
+}
+
+/* Dashboard container */
+.dashboard-container {
+    position: relative;
+    min-height: 100vh;
+    width: 100%;
+}
+
+/* Search Input */
+.search-input {
+    background-color: rgba(255, 255, 255, 0.15);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+}
+
+.search-input::placeholder {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Cards Animation */
+.stat-card {
+    transition: all 0.2s ease-in-out;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Table Styles */
+.books-table tbody tr {
+    transition: all 0.2s ease-in-out;
+}
+
+.books-table tbody tr:hover {
+    background-color: rgba(59, 130, 246, 0.05);
+}
+
+/* Button Styles */
+.btn-primary {
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .dashboard-container {
+        position: relative;
+    }
+    
+    .header {
+        left: 0 !important; /* Full width on mobile */
+    }
+    
+    .sidebar {
+        position: fixed;
+        z-index: 45; /* Below header on mobile */
+        height: 100vh;
+        transform: translateX(-100%);
+        width: min(14rem, calc(100vw - 3rem));
+        top: 0;
+        left: 0;
+    }
+    
+    .sidebar.mobile-open {
+        transform: translateX(0);
+    }
+    
+    .sidebar.hidden {
+        transform: translateX(-100%);
+    }
+    
+    .main-content {
+        left: 0; /* Ensure main content starts at screen edge on mobile */
+        margin-left: 0;
+        width: 100%;
+        max-width: 100%;
+        padding: 1rem;
+        padding-top: calc(var(--header-h) + 16px); /* More space on mobile */
+        overflow-x: hidden;
+    }
+    
+    .main-content.expanded {
+        left: 0;
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .sidebar .p-4 {
+        padding: 1rem 0.875rem;
+    }
+
+    .sidebar-link {
+        padding-left: 0.875rem;
+        padding-right: 0.875rem;
+    }
+}
+
+@media (hover: hover) and (pointer: fine) {
+    [data-profile-wrapper]:hover [data-profile-menu] {
+        display: block;
+    }
+}
+
+.profile-menu-open [data-profile-menu] {
+    display: block;
+}
+
+@media (max-width: 640px) {
+    .main-content {
+        padding: 0.875rem;
+        padding-top: calc(var(--header-h) + 12px);
+    }
+
+    .main-content h1.text-3xl {
+        font-size: 1.875rem;
+        line-height: 2.25rem;
+    }
+
+    .main-content #loans-grid,
+    .main-content .grid.grid-cols-2.sm\:grid-cols-3.md\:grid-cols-4.lg\:grid-cols-5 {
+        gap: 0.75rem;
+    }
+
+    .main-content h3.text-lg {
+        font-size: 1rem;
+        line-height: 1.5rem;
+    }
+
+    .main-content p.text-sm,
+    .main-content .text-sm {
+        font-size: 0.8125rem;
+        line-height: 1.25rem;
+    }
+
+    .main-content .overflow-x-auto table {
+        min-width: 42rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-content {
+        padding: 0.75rem;
+        padding-top: calc(var(--header-h) + 10px);
+    }
+
+    .main-content h1.text-3xl {
+        font-size: 1.625rem;
+        line-height: 2rem;
+    }
+
+    .main-content h3.text-lg {
+        font-size: 0.95rem;
+        line-height: 1.35rem;
+    }
+
+    .main-content p.text-sm,
+    .main-content .text-sm {
+        font-size: 0.775rem;
+        line-height: 1.15rem;
+    }
+
+    .main-content .text-xs {
+        font-size: 0.6875rem;
+        line-height: 1rem;
+    }
+
+    .main-content .bg-white.rounded-lg.shadow-sm,
+    .main-content .bg-white.rounded-2xl.shadow-lg {
+        border-radius: 1rem;
+    }
+
+    .main-content .p-6 {
+        padding: 1rem;
+    }
+
+    .main-content .px-6 {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .main-content .py-4 {
+        padding-top: 0.875rem;
+        padding-bottom: 0.875rem;
+    }
+}
+
+/* Loading Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* Sidebar Icons */
+.sidebar-icon {
+    min-width: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Book Carousel Styles */
+.book-carousel {
+    position: relative;
+    /* Mobile scrolling */
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+    /* Ensure proper spacing and prevent cutoff */
+    padding: 0 1rem 0 0.25rem;
+    margin: 0 -1rem 0 -0.25rem;
+}
+
+.book-carousel::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+}
+
+.book-carousel-track {
+    transition: transform 0.3s ease-in-out;
+    /* Add proper spacing between cards */
+    gap: 1.5rem;
+    padding: 0 0.5rem;
+}
+
+.book-card {
+    min-width: clamp(140px, 18vw, 192px); /* responsive card width */
+    flex-shrink: 0; /* Prevent cards from shrinking on mobile */
+    transition: all 0.3s ease;
+    /* Mobile snap alignment */
+    scroll-snap-align: start;
+    /* Ensure cards don't get cut off */
+    box-sizing: border-box;
+}
+
+/* Mobile scroll indicators - removed for cleaner look */
+
+.book-cover {
+    background: linear-gradient(135deg, var(--book-color-1, #3B82F6) 0%, var(--book-color-2, #1E40AF) 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.book-cover::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.1) 50%,
+        transparent 100%
+    );
+    transform: translateX(-100%);
+    transition: transform 0.6s ease;
+}
+
+.book-card:hover .book-cover::before {
+    transform: translateX(100%);
+}
+
+.book-cover:hover {
+    transform: translateY(-2px) rotateY(5deg);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* Book cover gradients */
+.book-cover.blue {
+    background: linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%);
+}
+
+.book-cover.green {
+    background: linear-gradient(135deg, #10B981 0%, #047857 100%);
+}
+
+.book-cover.purple {
+    background: linear-gradient(135deg, #8B5CF6 0%, #5B21B6 100%);
+}
+
+.book-cover.red {
+    background: linear-gradient(135deg, #EF4444 0%, #B91C1C 100%);
+}
+
+.book-cover.indigo {
+    background: linear-gradient(135deg, #6366F1 0%, #3730A3 100%);
+}
+
+.book-cover.yellow {
+    background: linear-gradient(135deg, #F59E0B 0%, #B45309 100%);
+}
+
+/* Carousel navigation */
+#prevBtn, #nextBtn {
+    transition: all 0.2s ease;
+}
+
+#prevBtn:hover, #nextBtn:hover {
+    background-color: #E5E7EB;
+    transform: scale(1.1);
+}
+
+#prevBtn:disabled, #nextBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: scale(1);
+}
+
+/* Book card animations */
+@keyframes bookSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.book-card {
+    animation: bookSlideIn 0.6s ease-out;
+}
+
+/* Responsive book carousel */
+@media (max-width: 768px) {
+    .book-card { min-width: 136px; }
+    .book-cover { height: 204px; }
+    .book-carousel,
+    .book-carousel-track { gap: 0.875rem; }
+    .book-carousel {
+        padding-right: 1.5rem;
+        margin-right: -0.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .book-card { min-width: 124px; }
+    .book-cover { height: 188px; }
+    .book-carousel,
+    .book-carousel-track { gap: 0.75rem; }
+    .book-carousel {
+        padding-right: 1.75rem;
+        margin-right: -0.75rem;
+    }
+
+    .book-card h5,
+    .book-card h3 {
+        font-size: 0.8rem;
+        line-height: 1.1rem;
+    }
+
+    .book-card p {
+        font-size: 0.7rem;
+        line-height: 1rem;
+    }
+
+    .book-card a,
+    .book-card button {
+        font-size: 0.7rem;
+        line-height: 1rem;
+    }
+}
+
+/* Tablet adjustments */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .header { height: var(--header-h); }
+    #header-search { width: clamp(12rem, 30vw, 16rem); }
+}
+
+/* Large screens */
+@media (min-width: 1280px) {
+    #header-search { width: clamp(14rem, 24vw, 20rem); }
+}
+
+/* Mobile sidebar backdrop */
+.sidebar-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 30;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease-in-out;
+}
+
+.sidebar-backdrop.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Scrollbar styling for sidebar */
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
