@@ -13,6 +13,29 @@ class HistoryManager {
         
         this.init();
     }
+
+    getRoute(name, fallback = '') {
+        return (window.historyPageRoutes && window.historyPageRoutes[name]) || fallback;
+    }
+
+    getBookUrl(bookId) {
+        const base = this.getRoute('booksBase', '/student/books');
+        return `${base.replace(/\/$/, '')}/${bookId}`;
+    }
+
+    getBookDetailsUrl(bookId) {
+        return `${this.getBookUrl(bookId)}/details`;
+    }
+
+    getRenewUrl(recordId) {
+        const base = this.getRoute('renewBase', '/student/borrow-records');
+        return `${base.replace(/\/$/, '')}/${recordId}/renew`;
+    }
+
+    getReturnUrl(recordId) {
+        const base = this.getRoute('renewBase', '/student/borrow-records');
+        return `${base.replace(/\/$/, '')}/${recordId}/return`;
+    }
     
     init() {
         // Set initial state
@@ -111,7 +134,7 @@ class HistoryManager {
                 const ok = confirm('Delete your old history records? Borrowed/active items are kept.');
                 if (!ok) return;
                 try {
-                    const res = await fetch('/student/history/clear', {
+                    const res = await fetch(this.getRoute('historyClear', '/student/history/clear'), {
                         method: 'POST',
                         headers: {
                             'Accept': 'application/json',
@@ -155,7 +178,7 @@ class HistoryManager {
                 const bookId = e.target.dataset.bookId;
                 // Navigate to book details page instead of showing popup
                 if (bookId) {
-                    window.location.href = `/student/books/${bookId}`;
+                    window.location.href = this.getBookUrl(bookId);
                 }
             }
         });
@@ -277,7 +300,9 @@ class HistoryManager {
                 status: this.statusFilter
             });
             
-            const response = await fetch(`/student/history/api?${params}`, {
+            const historyApiUrl = new URL(this.getRoute('historyApi', '/student/history/api'), window.location.origin);
+            historyApiUrl.search = params.toString();
+            const response = await fetch(historyApiUrl.toString(), {
                 method: 'GET',
                 headers: {
                     'Accept': 'application/json',
@@ -757,7 +782,7 @@ class HistoryManager {
         
         try {
             
-            const response = await fetch(`/student/books/${bookId}/details`, {
+            const response = await fetch(this.getBookDetailsUrl(bookId), {
                 method: 'GET',
                 headers: {
                     'Accept': 'application/json',
@@ -853,7 +878,7 @@ class HistoryManager {
         if (!this.selectedRecordId) return;
         
         try {
-            const response = await fetch(`/student/borrow-records/${this.selectedRecordId}/renew`, {
+            const response = await fetch(this.getRenewUrl(this.selectedRecordId), {
                 method: 'POST',
                 headers: {
                     'Accept': 'application/json',
@@ -884,7 +909,7 @@ class HistoryManager {
         if (!this.selectedRecordId) return;
         
         try {
-            const response = await fetch(`/student/borrow-records/${this.selectedRecordId}/return`, {
+            const response = await fetch(this.getReturnUrl(this.selectedRecordId), {
                 method: 'POST',
                 headers: {
                     'Accept': 'application/json',
@@ -929,7 +954,9 @@ class HistoryManager {
                 export: 'csv'
             });
             
-            const response = await fetch(`/student/history/export?${params}`, {
+            const exportUrl = new URL(this.getRoute('historyExport', '/student/history/export'), window.location.origin);
+            exportUrl.search = params.toString();
+            const response = await fetch(exportUrl.toString(), {
                 method: 'GET',
                 headers: {
                     'Accept': 'text/csv,application/csv',
@@ -1010,7 +1037,8 @@ function initializeHeaderSearch() {
         const searchTerm = headerSearchInput.value.trim();
         if (searchTerm) {
             // Redirect to books page with search query
-            window.location.href = `/student/books?search=${encodeURIComponent(searchTerm)}`;
+            const booksBase = (window.historyPageRoutes && window.historyPageRoutes.booksBase) || '/student/books';
+            window.location.href = `${booksBase}?search=${encodeURIComponent(searchTerm)}`;
         }
     };
     

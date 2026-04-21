@@ -77,8 +77,8 @@ class LibrarianDashboardController extends Controller
             ->pluck('count', 'availability_status')
             ->toArray();
 
-        // Borrowed books by course - show all 6 target courses
-        $targetCourses = ['BSI', 'BSN', 'BSHM', 'BST', 'BSED', 'BSEntrep']; // BSI(BSIT), BSN, BSHM, BST(BSTM), BSED, BSEntrep
+        // Borrowed books by program
+        $targetCourses = ['BSE', 'BSHM', 'BSIT', 'BSN', 'BSTM'];
         
         $borrowedBooksByCourse = User::select('courses.code', DB::raw('COUNT(borrow_records.id) as borrowed_count'))
             ->join('borrow_records', 'users.id', '=', 'borrow_records.user_id')
@@ -112,13 +112,24 @@ class LibrarianDashboardController extends Controller
         // Overdue books
 
 
-        // Popular categories (top 5) via normalized categories
-        $popularCategories = Category::select('categories.name as category', DB::raw('COUNT(book_category.book_id) as count'))
-            ->join('book_category', 'categories.id', '=', 'book_category.category_id')
-            ->groupBy('categories.name')
+        // Borrowing activity by resource type
+        $popularCategories = BorrowRecord::query()
+            ->join('books', 'borrow_records.book_id', '=', 'books.id')
+            ->selectRaw("COALESCE(NULLIF(books.resource_type, ''), 'book') as resource_type")
+            ->selectRaw('COUNT(borrow_records.id) as count')
+            ->groupBy('books.resource_type')
             ->orderByDesc('count')
-            ->limit(5)
-            ->get();
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'category' => match ($item->resource_type) {
+                        'e_journal' => 'E-Journal',
+                        'thesis' => 'E-Thesis',
+                        default => 'Book',
+                    },
+                    'count' => (int) $item->count,
+                ];
+            });
 
         // Monthly borrowing trends (last 12 months) - database agnostic
         $driver = DB::getDriverName();

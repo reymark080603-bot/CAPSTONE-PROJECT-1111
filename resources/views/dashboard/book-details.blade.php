@@ -145,12 +145,6 @@
                         
                         <!-- Action Buttons -->
                         <div class="flex flex-col sm:flex-row flex-wrap justify-center gap-3 sm:gap-4 mb-8 w-full sm:w-auto">
-                            @if($book->hasAnyEbookFile() || !empty($book->content))
-                                <a href="{{ route('student.books.read', $book->id) }}" class="w-full sm:w-auto justify-center px-6 sm:px-8 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors flex items-center text-base sm:text-lg">
-                                    <i class="fas fa-book-open mr-2"></i>Read Now
-                                </a>
-                            @endif
-                            
                             @if(!$book->user_has_borrowed)
                                 <button class="btn-borrow w-full sm:w-auto justify-center px-6 sm:px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors flex items-center text-base sm:text-lg" 
                                         data-book-id="{{ $book->id }}" 
@@ -158,11 +152,9 @@
                                     <i class="fas fa-book-reader mr-2"></i>Borrow Book
                                 </button>
                             @else
-                                <button class="btn-borrow w-full sm:w-auto justify-center px-6 sm:px-8 py-3 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors flex items-center text-base sm:text-lg" 
-                                        data-book-id="{{ $book->id }}" 
-                                        data-book-title="{{ $book->title }}">
-                                    <i class="fas fa-history mr-2"></i>Borrow Again
-                                </button>
+                                <a href="{{ route('student.books.read', $book->id) }}" class="w-full sm:w-auto justify-center px-6 sm:px-8 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors flex items-center text-base sm:text-lg">
+                                    <i class="fas fa-book-open mr-2"></i>Read Now
+                                </a>
                             @endif
                         </div>
 
@@ -220,7 +212,13 @@
 
 
     <!-- Include JavaScript -->
-    <script src="{{ asset('js/student-dashboard.js') }}"></script>
+    <script>
+    window.bookDetailsRoutes = {
+        booksBase: @json(url('student/books')),
+        borrowBase: @json(url('student/books')),
+    };
+    </script>
+    <script src="{{ asset('js/student-dashboard.js') }}?v={{ filemtime(public_path('js/student-dashboard.js')) }}"></script>
     @vite('resources/js/components/book-details.js')
     <!-- Centered Borrow Notification -->
     <div id="borrowNotification" class="fixed inset-0 hidden flex items-center justify-center z-[9999]">

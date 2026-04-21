@@ -1,6 +1,8 @@
 // Book details page JavaScript functionality
 document.addEventListener('DOMContentLoaded', function() {
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    const getBookDetailsRoute = (name, fallback = '') => (window.bookDetailsRoutes && window.bookDetailsRoutes[name]) || fallback;
+    const getBorrowUrl = (bookId) => `${getBookDetailsRoute('borrowBase', '/student/books').replace(/\/$/, '')}/${bookId}/borrow`;
 
     // Borrow button click - direct borrowing without confirmation
     document.addEventListener('click', async function(e) {
@@ -40,7 +42,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         try {
-            const response = await fetch(`/student/books/${bookId}/borrow`, {
+            const response = await fetch(getBorrowUrl(bookId), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -7,9 +7,9 @@
     <title>Knowly - Student Dashboard</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="{{ asset('css/student-dashboard.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/student-dashboard.css') }}?v={{ filemtime(public_path('css/student-dashboard.css')) }}" rel="stylesheet">
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-gray-50 min-h-screen homepage-dashboard">
     <!-- Header -->
     <div class="header sidebar-expanded bg-green-600 shadow-lg">
         <div class="flex items-center justify-between px-6 py-4 w-full">
@@ -25,22 +25,23 @@
                 </div>
             </div>
             
-            <div class="flex items-center space-x-4 flex-shrink-0">
+            <div class="header-actions flex items-center flex-shrink-0">
                 <!-- Quick Search Bar -->
-                <form action="{{ route('student.books') }}" method="GET" class="quick-search-form relative">
+                <form action="{{ route('student.books') }}" method="GET" id="header-search-form" class="quick-search-form">
                     <input type="text"
                            id="header-search"
                            name="search"
                            placeholder="Quick search books..."
-                           class="bg-white text-gray-800 placeholder-gray-600 border border-gray-300 rounded-full px-4 py-2 pr-10 w-48 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm">
-                    <button type="submit" id="header-search-btn" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-gray-800 transition-colors">
-                        <i class="fas fa-search"></i>
-                    </button>
+                           class="bg-white text-gray-800 placeholder-gray-600 border border-gray-300 rounded-full px-4 py-2 w-48 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm">
                     <div id="header-search-results" class="quick-search-results hidden absolute right-0 mt-2 w-96 max-h-96 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-xl z-[60]"></div>
                 </form>
+
+                <button type="submit" form="header-search-form" id="header-search-btn" class="header-search-icon-btn text-green-700 hover:text-green-900 transition-colors" aria-label="Search">
+                    <i class="fas fa-search"></i>
+                </button>
                 
                 <!-- User Profile -->
-                <div class="flex items-center space-x-3">
+                <div class="flex items-center space-x-3 homepage-profile-group">
                     <div class="relative group" data-profile-wrapper>
                         <button type="button" data-profile-toggle class="w-10 h-10 bg-white text-green-700 border-2 border-white/60 rounded-full flex items-center justify-center cursor-pointer shadow-sm hover:shadow-md transition-all">
                             <span class="font-semibold text-sm text-green-700">{{ substr($user->firstname ?? '', 0, 1) }}{{ substr($user->lastname ?? '', 0, 1) }}</span>
@@ -131,13 +132,13 @@
                 <div class="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center px-4 sm:px-6 py-4 border-b border-gray-200">
                     <div>
                         <h3 class="text-lg font-semibold text-gray-900">Recommended for You</h3>
-                        <p class="text-sm text-gray-600 mt-1">Books related to your course and popular picks</p>
+                        <p class="text-sm text-gray-600 mt-1">Resources matched to your program or course</p>
                     </div>
-                    <div class="flex space-x-2">
-                        <button id="prevBtnRecommended" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                    <div class="flex space-x-2 carousel-nav">
+                        <button id="prevBtnRecommended" class="carousel-arrow p-2 hover:bg-gray-100 rounded-lg transition-colors">
                             <i class="fas fa-chevron-left"></i>
                         </button>
-                        <button id="nextBtnRecommended" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                        <button id="nextBtnRecommended" class="carousel-arrow p-2 hover:bg-gray-100 rounded-lg transition-colors">
                             <i class="fas fa-chevron-right"></i>
                         </button>
                     </div>
@@ -154,7 +155,7 @@
                         </div>
                         <div id="no-recommendations" class="text-center py-8 text-gray-500 hidden">
                             <i class="fas fa-inbox text-3xl mb-2"></i>
-                            <p>No recommendations available yet</p>
+                            <p>No course-matched resources available yet</p>
                         </div>
                     </div>
                 </div>
@@ -181,36 +182,128 @@
                 </div>
             </div>
 
-            <!-- Recently Added Books - HORIZONTAL CAROUSEL -->
-            <div class="bg-white rounded-lg shadow-sm">
+            <div class="bg-white rounded-lg shadow-sm mb-6">
                 <div class="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center px-4 sm:px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-900">Recently Added Books</h3>
-                    <div class="flex space-x-2">
-                        <button type="button" onclick="document.getElementById('recentBooksContainer').scrollLeft -= 220" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                    <div class="flex items-center justify-between gap-3 w-full">
+                        <h3 class="text-lg font-semibold text-gray-900">Latest E-Journals</h3>
+                        <a href="{{ route('student.books', ['resource_type' => 'e_journal']) }}" class="px-3 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 whitespace-nowrap">See All</a>
+                    </div>
+                    <div class="flex space-x-2 carousel-nav">
+                        <button type="button" onclick="document.getElementById('recentEJournalsContainer').scrollLeft -= 220" class="carousel-arrow p-2 hover:bg-gray-100 rounded-lg transition-colors">
                             <i class="fas fa-chevron-left"></i>
                         </button>
-                        <button type="button" onclick="document.getElementById('recentBooksContainer').scrollLeft += 220" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                        <button type="button" onclick="document.getElementById('recentEJournalsContainer').scrollLeft += 220" class="carousel-arrow p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-6">
+                    <div id="recentEJournalsContainer" class="flex flex-nowrap overflow-x-auto gap-4 sm:gap-6 pb-2" style="scroll-behavior: smooth;">
+                        @forelse($recentEJournalResources as $resource)
+                            <div class="book-card flex-shrink-0 w-40 sm:w-44 md:w-48">
+                                <div class="bg-white rounded-lg shadow border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
+                                    <div class="relative h-56 sm:h-60 md:h-64 bg-gray-100">
+                                        <img src="{{ $resource->display_cover_url }}" alt="{{ $resource->title }}" class="w-full h-full object-cover" loading="lazy">
+                                        <span class="absolute top-2 left-2 px-2 py-1 text-[10px] font-semibold bg-indigo-100 text-indigo-800 rounded-full">E-Journal</span>
+                                    </div>
+
+                                    <div class="p-3">
+                                        <h5 class="font-semibold text-sm text-gray-900 truncate" title="{{ $resource->title }}">{{ $resource->title }}</h5>
+                                        <p class="text-xs text-gray-600 mt-1 truncate" title="{{ $resource->author }}">{{ $resource->author }}</p>
+
+                                        <div class="flex gap-2 mt-3">
+                                            <a href="{{ route('student.books.show', $resource->id) }}" class="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white py-2 rounded text-xs font-medium">View</a>
+                                            <button onclick="quickBorrowBook({{ $resource->id }}, '{{ addslashes($resource->title) }}')" class="flex-1 text-center bg-green-600 hover:bg-green-700 text-white py-2 rounded text-xs font-medium">Borrow</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="w-full text-center py-8 text-gray-500">
+                                <i class="fas fa-newspaper text-4xl mb-2"></i>
+                                <p>No e-journals available yet</p>
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm mb-6">
+                <div class="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center px-4 sm:px-6 py-4 border-b border-gray-200">
+                    <div class="flex items-center justify-between gap-3 w-full">
+                        <h3 class="text-lg font-semibold text-gray-900">Latest Theses</h3>
+                        <a href="{{ route('student.books', ['resource_type' => 'thesis']) }}" class="px-3 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 whitespace-nowrap">See All</a>
+                    </div>
+                    <div class="flex space-x-2 carousel-nav">
+                        <button type="button" onclick="document.getElementById('recentThesesContainer').scrollLeft -= 220" class="carousel-arrow p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button type="button" onclick="document.getElementById('recentThesesContainer').scrollLeft += 220" class="carousel-arrow p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-6">
+                    <div id="recentThesesContainer" class="flex flex-nowrap overflow-x-auto gap-4 sm:gap-6 pb-2" style="scroll-behavior: smooth;">
+                        @forelse($recentThesisResources as $resource)
+                            <div class="book-card flex-shrink-0 w-40 sm:w-44 md:w-48">
+                                <div class="bg-white rounded-lg shadow border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
+                                    <div class="relative h-56 sm:h-60 md:h-64 bg-gray-100">
+                                        <img src="{{ $resource->display_cover_url }}" alt="{{ $resource->title }}" class="w-full h-full object-cover" loading="lazy">
+                                        <span class="absolute top-2 left-2 px-2 py-1 text-[10px] font-semibold bg-amber-100 text-amber-800 rounded-full">Thesis</span>
+                                    </div>
+
+                                    <div class="p-3">
+                                        <h5 class="font-semibold text-sm text-gray-900 truncate" title="{{ $resource->title }}">{{ $resource->title }}</h5>
+                                        <p class="text-xs text-gray-600 mt-1 truncate" title="{{ $resource->author }}">{{ $resource->author }}</p>
+
+                                        <div class="flex gap-2 mt-3">
+                                            <a href="{{ route('student.books.show', $resource->id) }}" class="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white py-2 rounded text-xs font-medium">View</a>
+                                            <button onclick="quickBorrowBook({{ $resource->id }}, '{{ addslashes($resource->title) }}')" class="flex-1 text-center bg-green-600 hover:bg-green-700 text-white py-2 rounded text-xs font-medium">Borrow</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="w-full text-center py-8 text-gray-500">
+                                <i class="fas fa-scroll text-4xl mb-2"></i>
+                                <p>No theses available yet</p>
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recently Added Books - HORIZONTAL CAROUSEL -->
+            <div class="bg-white rounded-lg shadow-sm mb-6">
+                <div class="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center px-4 sm:px-6 py-4 border-b border-gray-200">
+                    <div class="flex items-center justify-between gap-3 w-full">
+                        <h3 class="text-lg font-semibold text-gray-900">Recently Added E-Resources</h3>
+                        <a href="{{ route('student.books') }}" class="px-3 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 whitespace-nowrap">See All</a>
+                    </div>
+                    <div class="flex space-x-2 carousel-nav">
+                        <button type="button" onclick="document.getElementById('recentBooksContainer').scrollLeft -= 220" class="carousel-arrow p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button type="button" onclick="document.getElementById('recentBooksContainer').scrollLeft += 220" class="carousel-arrow p-2 hover:bg-gray-100 rounded-lg transition-colors">
                             <i class="fas fa-chevron-right"></i>
                         </button>
                     </div>
                 </div>
                 
-                <!-- Book Carousel - HORIZONTAL with $recentBooks -->
                 <div class="p-6">
-                    <!-- Container: flex, flex-nowrap, overflow-x-auto, gap-6 -->
                     <div id="recentBooksContainer" class="flex flex-nowrap overflow-x-auto gap-4 sm:gap-6 pb-2" style="scroll-behavior: smooth;">
-                        
                         @forelse($recentBooks as $book)
-                            <!-- Card: shrink-0, fixed width w-48 -->
                             <div class="book-card flex-shrink-0 w-40 sm:w-44 md:w-48">
                                 <div class="bg-white rounded-lg shadow border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
-                                    <!-- Image: fixed height -->
                                     <div class="relative h-56 sm:h-60 md:h-64 bg-gray-100">
                                         @if($book->display_cover_url)
                                             <img src="{{ $book->display_cover_url }}" alt="{{ $book->title }}" class="w-full h-full object-cover" loading="lazy">
                                         @else
                                             <div class="w-full h-full bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-                                                <i class="fas fa-book text-4xl text-blue-400"></i>
+                                <i class="fas fa-book text-4xl text-blue-400"></i>
                                             </div>
                                         @endif
                                         
@@ -221,12 +314,10 @@
                                         @endif
                                     </div>
                                     
-                                    <!-- Info below image -->
                                     <div class="p-3">
                                         <h5 class="font-semibold text-sm text-gray-900 truncate" title="{{ $book->title }}">{{ $book->title }}</h5>
                                         <p class="text-xs text-gray-600 mt-1 truncate" title="{{ $book->author }}">{{ $book->author }}</p>
                                         
-                                        <!-- Buttons below -->
                                         <div class="flex gap-2 mt-3">
                                             <a href="{{ route('student.books.show', $book->id) }}" class="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white py-2 rounded text-xs font-medium">View</a>
                                             @if($book->availability_status === 'available')
@@ -241,10 +332,9 @@
                         @empty
                             <div class="w-full text-center py-8 text-gray-500">
                                 <i class="fas fa-inbox text-4xl mb-2"></i>
-                                <p>No recently added books</p>
+                                <p>No recently added e-resources</p>
                             </div>
                         @endforelse
-                        
                     </div>
                 </div>
             </div>
@@ -295,13 +385,24 @@
         </div>
     </div>
 
-    <script src="{{ asset('js/student-dashboard.js') }}"></script>
+    <script src="{{ asset('js/student-dashboard.js') }}?v={{ filemtime(public_path('js/student-dashboard.js')) }}"></script>
+    <script>
+    window.studentDashboardRoutes = {
+        recommended: @json(route('dashboard.recommended')),
+        recent: @json(route('dashboard.recent')),
+        stats: @json(route('dashboard.stats')),
+        search: @json(route('dashboard.search')),
+        loansApi: @json(route('student.loans.api')),
+        booksBase: @json(url('student/books')),
+    };
+    </script>
     
     <script>
     // Quick Borrow function for Recently Added Books carousel
     function quickBorrowBook(bookId, bookTitle) {
         if(confirm('Borrow "' + bookTitle + '"?')) {
-            fetch('/student/books/' + bookId + '/borrow', {
+            const booksBase = (window.studentDashboardRoutes && window.studentDashboardRoutes.booksBase) || '/student/books';
+            fetch(booksBase.replace(/\/$/, '') + '/' + bookId + '/borrow', {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',

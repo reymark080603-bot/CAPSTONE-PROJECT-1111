@@ -64,50 +64,35 @@ class StudentDashboardController extends Controller
         $overdueBooks = $currentBorrows->filter(function ($borrow) {
             return $borrow->due_date < now();
         })->count();
-
-
-        // Get user's course for personalized recommendations
-        $userCourse = null;
-        if ($user->course_id) {
-            $course = \Illuminate\Support\Facades\DB::table('courses')->find($user->course_id);
-            $userCourse = $course ? $course->name : null;
-        }
-        
-        // Get course-related books (books related to student's course)
-        $courseRelatedBooks = [];
-        if ($userCourse) {
-            $courseRelatedBooks = Book::where('availability_status', 'available')
-                ->whereDoesntHave('borrowRecords', function ($query) use ($user) {
-                    $query->where('user_id', $user->id);
-                })
-                ->where('course', $userCourse)
-                ->withCount('borrowRecords')
-                ->orderByDesc('borrow_records_count')
-                ->limit(3)
-                ->get();
-        }
-
-        // Get popular books (overall popular not borrowed by user)
-        $popularBooks = Book::where('availability_status', 'available')
+        $recommendedBooks = $this->buildCourseResourceQuery($user)
             ->whereDoesntHave('borrowRecords', function ($query) use ($user) {
-                $query->where('user_id', $user->id);
+                $query->where('user_id', $user->id)
+                    ->where('status', 'borrowed');
             })
             ->withCount('borrowRecords')
             ->orderByDesc('borrow_records_count')
-            ->limit(3)
+            ->orderByDesc('created_at')
+            ->limit(6)
             ->get();
 
-        // If no course-related books, show popular books as recommendations
-        if ($courseRelatedBooks->isEmpty()) {
-            $courseRelatedBooks = $popularBooks->take(3);
-            $popularBooks = collect(); // Clear popular books to avoid duplicates
-        }
+        $courseRelatedBooks = $recommendedBooks;
+        $popularBooks = collect();
 
-        // Combine recommendations: course-related first, then popular
-        $recommendedBooks = $courseRelatedBooks->concat($popularBooks)->take(6);
+        // Get recent e-resources for horizontal carousel
+        $recentBooks = Book::where('availability_status', 'available')
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
 
-        // Get recent books for horizontal carousel
-        $recentBooks = Book::orderBy('created_at', 'desc')
+        $recentEJournalResources = Book::where('resource_type', 'e_journal')
+            ->where('availability_status', 'available')
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        $recentThesisResources = Book::where('resource_type', 'thesis')
+            ->where('availability_status', 'available')
+            ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
 
@@ -115,8 +100,82 @@ class StudentDashboardController extends Controller
             'user', 'currentBorrows', 'recentHistory',
             'totalBorrows', 'activeBorrows', 'overdueBooks',
             'recommendedBooks', 'courseRelatedBooks', 'popularBooks',
-            'recentBooks'
+            'recentBooks', 'recentEJournalResources', 'recentThesisResources'
         ));
+    }
+
+    private function buildCourseResourceQuery($user)
+    {
+        $courseVariants = $this->getUserCourseVariants($user);
+
+        $query = Book::where('availability_status', 'available');
+
+        if (empty($courseVariants)) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query->where(function ($courseQuery) use ($courseVariants) {
+            foreach ($courseVariants as $variant) {
+                $courseQuery->orWhere('course', $variant)
+                    ->orWhere('program', $variant)
+                    ->orWhere('course', 'LIKE', '%' . $variant . '%')
+                    ->orWhere('program', 'LIKE', '%' . $variant . '%');
+            }
+        });
+    }
+
+    private function getUserCourseVariants($user): array
+    {
+        $variants = collect([
+            $user->course_name ?? null,
+            $user->course ?? null,
+        ]);
+
+        if ($user->course_id) {
+            $course = DB::table('courses')->find($user->course_id);
+            if ($course) {
+                $variants = $variants->merge([
+                    $course->name ?? null,
+                    $course->code ?? null,
+                ]);
+            }
+        }
+
+        $courseMappings = [
+            'BSIT' => ['Information Technology', 'BS Information Technology'],
+            'BSN' => ['Nursing', 'BS Nursing'],
+            'BSNURSING' => ['Nursing', 'BS Nursing'],
+            'NURSING' => ['BSN', 'BS Nursing'],
+            'BSHM' => ['Hospitality Management', 'BS Hospitality Management'],
+            'HM' => ['BSHM', 'Hospitality Management'],
+            'BSED' => ['Education', 'BS Education'],
+            'EDUCATION' => ['BSED', 'BS Education'],
+            'BSE' => ['Entrepreneurship', 'BS Entrepreneurship'],
+            'BSENTREP' => ['Entrepreneurship', 'BS Entrepreneurship'],
+            'ENTREP' => ['BS Entrepreneurship', 'Entrepreneurship'],
+            'BSBM' => ['Business Management', 'BS Business Management'],
+            'BUSINESS MANAGEMENT' => ['BSBM', 'BS Business Management'],
+            'BSTOURISM' => ['Tourism', 'BS Tourism'],
+            'TOURISM' => ['BSTourism', 'BS Tourism'],
+        ];
+
+        $variants = $variants->flatMap(function ($value) use ($courseMappings) {
+            $value = trim((string) $value);
+            if ($value === '') {
+                return [];
+            }
+
+            $normalized = strtoupper(str_replace(['.', '-', '_'], '', $value));
+
+            return array_merge([$value], $courseMappings[$normalized] ?? []);
+        });
+
+        return $variants
+            ->map(fn ($value) => trim((string) $value))
+            ->filter()
+            ->unique(fn ($value) => strtolower($value))
+            ->values()
+            ->all();
     }
 
     /**

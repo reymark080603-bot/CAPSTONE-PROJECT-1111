@@ -161,13 +161,13 @@ class Book extends Model
             }
 
             if (Storage::disk('public')->exists($normalized)) {
-                return Storage::url($normalized);
+                return asset('storage/' . $normalized);
             }
 
             if (str_starts_with($normalized, 'storage/')) {
                 $relative = substr($normalized, 8);
                 if (Storage::disk('public')->exists($relative)) {
-                    return Storage::url($relative);
+                    return asset('storage/' . $relative);
                 }
             }
         }
@@ -375,14 +375,14 @@ class Book extends Model
 
         // Public disk paths, e.g. "covers/..." stored in storage/app/public/covers
         if (Storage::disk('public')->exists($normalized)) {
-            return Storage::url($normalized);
+            return asset('storage/' . $normalized);
         }
 
         // Handle DB values already prefixed with "storage/"
         if (str_starts_with($normalized, 'storage/')) {
             $relative = substr($normalized, 8);
             if (Storage::disk('public')->exists($relative)) {
-                return Storage::url($relative);
+                return asset('storage/' . $relative);
             }
         }
 

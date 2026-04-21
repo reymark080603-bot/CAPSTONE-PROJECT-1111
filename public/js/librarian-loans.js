@@ -86,7 +86,7 @@
       if (!res.ok) throw new Error('Failed to load loans');
       const data = await res.json();
       renderLoans(data.loans || []);
-      if (count) count.textContent = `${(data.loans || []).length} loan${(data.loans || []).length === 1 ? '' : 's'}`;
+      if (count) count.textContent = `${(data.loans || []).length} borrowed e-resource${(data.loans || []).length === 1 ? '' : 's'}`;
     } catch (e) {
       console.error(e);
       body.innerHTML = `<tr><td colspan=\"7\" class=\"px-6 py-8 text-center text-red-600\">Failed to load loans</td></tr>`;
@@ -98,7 +98,7 @@
   function renderLoans(loans) {
     const body = $('#loans-body');
     if (!loans.length) {
-      body.innerHTML = `<tr><td colspan="7" class="px-6 py-8 text-center text-gray-500">No loans found</td></tr>`;
+      body.innerHTML = `<tr><td colspan="7" class="px-6 py-8 text-center text-gray-500">No borrowed e-resources found</td></tr>`;
       return;
     }
 
@@ -160,14 +160,14 @@
   }
 
   function confirmReturn(id) {
-    openConfirm('Mark as Returned', 'Confirm marking this loan as returned?', async () => {
+    openConfirm('Mark as Returned', 'Confirm marking this e-resource as returned?', async () => {
       await postJson(`/librarian/loans/${id}/return`, {});
       await loadLoans();
     });
   }
 
   function confirmRenew(id) {
-    openConfirm('Renew Loan', 'Renew this loan by 7 days?', async () => {
+    openConfirm('Renew Borrowed E-Resource', 'Renew this borrowed e-resource by 7 days?', async () => {
       await postJson(`/librarian/loans/${id}/renew`, { days: 7 });
       await loadLoans();
     });

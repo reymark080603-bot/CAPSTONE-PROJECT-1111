@@ -3,6 +3,16 @@
 @section('title', 'View Book')
 
 @section('content')
+@php
+    $authorNames = $book->authors->pluck('name')->filter()->implode(', ');
+    $authorDisplay = $authorNames !== '' ? $authorNames : 'Unknown';
+    $publisherDisplay = $book->publisher_name ?? 'Not specified';
+    $courseDisplay = $book->course ?? 'All Programs';
+    $publishedYearDisplay = $book->published_year ?? 'Not specified';
+    $languageDisplay = $book->language ?? 'Not specified';
+    $descriptionDisplay = !empty($book->description) ? $book->description : 'No description provided.';
+@endphp
+
 <div class="mb-6">
     <div class="flex items-center justify-between">
         <div>
@@ -24,9 +34,9 @@
 
 <div class="bg-white rounded-xl shadow-sm border p-6">
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Cover -->
         <div>
-            <div class="aspect-[3/4] w-full rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center border">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Cover Photo</label>
+            <div class="aspect-[3/4] w-full max-w-[260px] rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center border mx-auto lg:mx-0">
                 @if($book->display_cover_url && $book->display_cover_url !== asset('storage/covers/default-book.png'))
                     <img src="{{ $book->display_cover_url }}" alt="{{ $book->title }} cover" class="w-full h-full object-cover">
                 @else
@@ -38,74 +48,48 @@
             </div>
         </div>
 
-        <!-- Details -->
-        <div class="lg:col-span-2 space-y-6">
+        <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-                <div class="flex items-start justify-between gap-4">
-                    <div>
-                        <h2 class="text-2xl font-bold text-gray-900">{{ $book->title ?? 'Untitled' }}</h2>
-                        <p class="text-gray-600 mt-1">by <span class="font-medium">{{ $book->authors->pluck('name')->implode(', ') ?? 'Unknown' }}</span></p>
-                    </div>
-                    <div>
-                        @php($status = $book->availability_status ?? 'available')
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
-                            {{ $status === 'available' ? 'bg-green-100 text-green-700' : '' }}
-                            {{ $status === 'borrowed' ? 'bg-yellow-100 text-yellow-700' : '' }}
-                            {{ $status === 'reserved' ? 'bg-purple-100 text-purple-700' : '' }}
-                            {{ $status === 'maintenance' ? 'bg-gray-100 text-gray-700' : '' }}
-                        ">
-                            <i class="fas fa-circle mr-1 text-[10px]"></i>
-                            {{ ucfirst($status) }}
-                        </span>
-                    </div>
-                </div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                <div class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-gray-50 text-gray-900">{{ $book->title ?? 'Untitled' }}</div>
             </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="bg-gray-50 rounded-lg p-4">
-                    <div class="text-xs uppercase text-gray-500">Author</div>
-                    <div class="text-gray-900 font-medium">{{ $book->authors->pluck('name')->implode(', ') ?? 'Not specified' }}</div>
-                </div>
-                <div class="bg-gray-50 rounded-lg p-4">
-                    <div class="text-xs uppercase text-gray-500">Category</div>
-                    <div class="text-gray-900 font-medium">{{ $book->categories->pluck('name')->implode(', ') ?? '—' }}</div>
-                </div>
-                <div class="bg-gray-50 rounded-lg p-4">
-                    <div class="text-xs uppercase text-gray-500">Course</div>
-                    <div class="text-gray-900 font-medium">{{ $book->course ?? '—' }}</div>
-                </div>
-                                <div class="bg-gray-50 rounded-lg p-4">
-                    <div class="text-xs uppercase text-gray-500">Publisher</div>
-                    <div class="text-gray-900 font-medium">{{ $book->publisher_name ?? '—' }}</div>
-                </div>
-                <div class="bg-gray-50 rounded-lg p-4">
-                    <div class="text-xs uppercase text-gray-500">Published Year</div>
-                    <div class="text-gray-900 font-medium">{{ $book->published_year ?? '—' }}</div>
-                </div>
-                <div class="bg-gray-50 rounded-lg p-4">
-                    <div class="text-xs uppercase text-gray-500">Language</div>
-                    <div class="text-gray-900 font-medium">{{ $book->language ?? '—' }}</div>
-                </div>
-                <div class="bg-gray-50 rounded-lg p-4">
-                    <div class="text-xs uppercase text-gray-500">Created</div>
-                    <div class="text-gray-900 font-medium">{{ optional($book->created_at)->format('Y-m-d H:i') ?? '—' }}</div>
-                </div>
-            </div>
-
             <div>
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">Description</h3>
-                <div class="prose max-w-none text-gray-700">
-                    @if(!empty($book->description))
-                        {!! nl2br(e($book->description)) !!}
-                    @else
-                        <p class="text-gray-500">No description provided.</p>
-                    @endif
-                </div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Author</label>
+                <div class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-gray-50 text-gray-900">{{ $authorDisplay }}</div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Program</label>
+                <div class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-gray-50 text-gray-900">{{ $courseDisplay }}</div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Availability</label>
+                @php($status = $book->availability_status ?? 'available')
+                <div class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-gray-50 text-gray-900 capitalize">{{ $status }}</div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Publisher</label>
+                <div class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-gray-50 text-gray-900">{{ $publisherDisplay }}</div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Published Year</label>
+                <div class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-gray-50 text-gray-900">{{ $publishedYearDisplay }}</div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Language</label>
+                <div class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-gray-50 text-gray-900">{{ $languageDisplay }}</div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Created</label>
+                <div class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-gray-50 text-gray-900">{{ optional($book->created_at)->format('Y-m-d H:i') ?? 'Not specified' }}</div>
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <div class="w-full min-h-[164px] border border-gray-300 rounded-lg px-4 py-3 bg-gray-50 text-gray-900 whitespace-pre-line">{{ $descriptionDisplay }}</div>
             </div>
 
             @if(($book->file_type ?? null) && ($book->pdf_file || $book->epub_file || $book->doc_file))
-            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div class="flex items-center justify-between">
+            <div class="md:col-span-2 rounded-lg border border-blue-200 bg-blue-50 p-4">
+                <div class="flex items-center justify-between gap-4">
                     <div class="flex items-center gap-3">
                         <i class="fas fa-file text-blue-600"></i>
                         <div>
@@ -113,7 +97,7 @@
                             <div class="text-xs text-blue-700">Type: {{ strtoupper($book->file_type) }}</div>
                         </div>
                     </div>
-                    <div class="flex gap-2">
+                    <div class="flex flex-wrap gap-2">
                         @if($book->pdf_file)
                         <a href="{{ asset($book->pdf_file) }}" target="_blank" class="px-3 py-2 text-sm bg-white border border-blue-300 text-blue-700 rounded hover:bg-blue-100">Open PDF</a>
                         @endif

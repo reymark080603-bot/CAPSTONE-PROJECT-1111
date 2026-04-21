@@ -31,6 +31,14 @@ class ViewOnlyPDFViewer {
         return '1';
     }
 
+    getBookDetailsUrl() {
+        return window.readBookRoutes?.bookDetails || `/student/books/${this.getBookId()}`;
+    }
+
+    getBooksIndexUrl() {
+        return window.readBookRoutes?.booksIndex || '/student/books';
+    }
+
     async validatePDFFile(url) {
         try {
             console.log('Validating PDF URL:', url);
@@ -198,7 +206,7 @@ class ViewOnlyPDFViewer {
 
         // Close button
         document.getElementById('viewer-close-btn').addEventListener('click', () => {
-            window.location.replace(`/student/books/${this.getBookId()}`);
+            window.location.replace(this.getBookDetailsUrl());
         });
 
         // Keyboard controls
@@ -214,7 +222,7 @@ class ViewOnlyPDFViewer {
                 this.updateZoomDisplay();
                 this.renderAllPages();
             } else if (e.key === 'Escape') {
-                window.location.replace(`/student/books/${this.getBookId()}`);
+                window.location.replace(this.getBookDetailsUrl());
             }
         });
     }
@@ -344,7 +352,7 @@ class ViewOnlyPDFViewer {
                 <i class="fas fa-exclamation-triangle"></i>
                 <h3>Unable to Load PDF</h3>
                 <p>${message}</p>
-                <button onclick="window.location.replace('/student/books/${this.getBookId()}')" class="viewer-btn">
+                <button onclick="window.location.replace('${this.getBookDetailsUrl()}')" class="viewer-btn">
                     <i class="fas fa-arrow-left"></i> Return to Book Details
                 </button>
             </div>
@@ -357,10 +365,20 @@ window.ViewOnlyPDFViewer = ViewOnlyPDFViewer;
 
 // Define initializePDFViewer globally so it can be called from the head script
 window.initializePDFViewer = async function() {
+    if (window.__pdfViewerInitialized) {
+        console.log('PDF viewer already initialized, skipping duplicate call');
+        return;
+    }
+
     try {
         console.log('initializePDFViewer starting...');
         const loadingDiv = document.getElementById('pdf-loading');
         const viewerContainer = document.getElementById('pdf-viewer-container');
+
+        if (!window.__pdfJsReady || typeof pdfjsLib === 'undefined') {
+            console.log('PDF.js is not ready yet, waiting before initializing viewer');
+            return;
+        }
 
         // Show viewer container immediately (but it will be empty or show loading)
         if (viewerContainer) {
@@ -378,11 +396,14 @@ window.initializePDFViewer = async function() {
             throw new Error('PDF file URL is missing or invalid. Please re-upload the book.');
         }
 
+        window.__pdfViewerInitialized = true;
+
         // Initialize PDF viewer
-        const viewer = new ViewOnlyPDFViewer('pdf-viewer-container', pdfUrl, bookTitle);
+        new ViewOnlyPDFViewer('pdf-viewer-container', pdfUrl, bookTitle);
 
     } catch (error) {
         console.error('Error initializing PDF viewer:', error);
+        window.__pdfViewerInitialized = false;
         const loadingDiv = document.getElementById('pdf-loading');
         const viewerContainer = document.getElementById('pdf-viewer-container');
         
@@ -394,7 +415,7 @@ window.initializePDFViewer = async function() {
                     <p style="color: #d1d5db; font-size: 1rem; margin-bottom: 2rem; line-height: 1.5;">${error.message}</p>
                     <div style="display: flex; gap: 1rem; justify-content: center;">
                         <button onclick="window.location.reload()" style="background: #2563eb; color: #fff; border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; cursor: pointer; font-weight: 600; transition: all 0.2s;">Retry</button>
-                        <button onclick="window.location.href='/student/books'" style="background: #4b5563; color: #fff; border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; cursor: pointer; font-weight: 600; transition: all 0.2s;">Back to Library</button>
+                        <button onclick="window.location.href='${window.readBookRoutes?.booksIndex || '/student/books'}'" style="background: #4b5563; color: #fff; border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; cursor: pointer; font-weight: 600; transition: all 0.2s;">Back to Library</button>
                     </div>
                 </div>
             </div>
@@ -424,8 +445,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle PDF content
     if (hasPdfContent) {
         console.log('Initializing PDF viewer');
-        // Call the global initialization function
-        window.initializePDFViewer();
+        if (window.__pdfJsReady) {
+            window.initializePDFViewer();
+        } else {
+            console.log('Waiting for PDF.js loader before creating the viewer');
+        }
     }
     
     // Handle HTML content (basic font size controls)

@@ -36,7 +36,9 @@ use App\Http\Controllers\RecentBooksController;
     // General login (for backward compatibility)
     Route::post('/login', [LoginController::class, 'login']);
 
-    // Registration routes - REMOVED per client requirements (no account creation needed)
+    // Student registration routes
+    Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
+    Route::post('/register', [RegisterController::class, 'register']);
 
     // Password reset routes
     Route::get('/password/reset', function () {

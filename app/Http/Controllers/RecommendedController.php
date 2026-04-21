@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Book;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class RecommendedController extends Controller
 {
@@ -39,57 +40,96 @@ class RecommendedController extends Controller
     {
         $user = Auth::guard('student')->user();
 
-        // Base query: available books not yet borrowed by this user
-        $baseQuery = Book::where('availability_status', 'available')
+        $recommendedResources = $this->buildCourseResourceQuery($user)
             ->whereDoesntHave('borrowRecords', function ($query) use ($user) {
-                $query->where('user_id', $user->id);
-            });
-
-        // Resolve user course (name and code), then build matching variants
-        $courseVariants = collect();
-        if ($user->course_id) {
-            $course = \Illuminate\Support\Facades\DB::table('courses')->find($user->course_id);
-            if ($course) {
-                $courseVariants = collect([
-                    $course->name ?? null,
-                    $course->code ?? null,
-                ])->filter()->map(fn ($v) => trim((string) $v))->unique()->values();
-            }
-        }
-
-        // Course-related picks first
-        $courseRelatedBooks = collect();
-        if ($courseVariants->isNotEmpty()) {
-            $courseRelatedBooks = (clone $baseQuery)
-                ->where(function ($query) use ($courseVariants) {
-                    foreach ($courseVariants as $variant) {
-                        $query->orWhere('course', $variant)
-                              ->orWhere('course', 'LIKE', '%' . $variant . '%');
-                    }
-                })
-                ->withCount('borrowRecords')
-                ->orderByDesc('borrow_records_count')
-                ->orderByDesc('created_at')
-                ->limit(3)
-                ->get();
-        }
-
-        // Popular picks next, excluding already selected course-related books
-        $popularBooks = (clone $baseQuery)
-            ->whereNotIn('id', $courseRelatedBooks->pluck('id'))
+                $query->where('user_id', $user->id)
+                    ->where('status', 'borrowed');
+            })
             ->withCount('borrowRecords')
             ->orderByDesc('borrow_records_count')
             ->orderByDesc('created_at')
-            ->limit(3)
+            ->limit(6)
             ->get();
 
-        $recommendedBooks = $courseRelatedBooks->concat($popularBooks)->take(6);
-
         return response()->json([
-            'courseRelated' => $courseRelatedBooks->map(fn ($book) => $this->transformBook($book))->values(),
-            'popular' => $popularBooks->map(fn ($book) => $this->transformBook($book))->values(),
-            'recommended' => $recommendedBooks->map(fn ($book) => $this->transformBook($book))->values(),
+            'courseRelated' => $recommendedResources->map(fn ($book) => $this->transformBook($book))->values(),
+            'popular' => collect(),
+            'recommended' => $recommendedResources->map(fn ($book) => $this->transformBook($book))->values(),
         ]);
+    }
+
+    private function buildCourseResourceQuery($user)
+    {
+        $courseVariants = $this->getUserCourseVariants($user);
+
+        $query = Book::where('availability_status', 'available');
+
+        if (empty($courseVariants)) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query->where(function ($courseQuery) use ($courseVariants) {
+            foreach ($courseVariants as $variant) {
+                $courseQuery->orWhere('course', $variant)
+                    ->orWhere('program', $variant)
+                    ->orWhere('course', 'LIKE', '%' . $variant . '%')
+                    ->orWhere('program', 'LIKE', '%' . $variant . '%');
+            }
+        });
+    }
+
+    private function getUserCourseVariants($user): array
+    {
+        $variants = collect([
+            $user->course_name ?? null,
+            $user->course ?? null,
+        ]);
+
+        if ($user->course_id) {
+            $course = DB::table('courses')->find($user->course_id);
+            if ($course) {
+                $variants = $variants->merge([
+                    $course->name ?? null,
+                    $course->code ?? null,
+                ]);
+            }
+        }
+
+        $courseMappings = [
+            'BSIT' => ['Information Technology', 'BS Information Technology'],
+            'BSN' => ['Nursing', 'BS Nursing'],
+            'BSNURSING' => ['Nursing', 'BS Nursing'],
+            'NURSING' => ['BSN', 'BS Nursing'],
+            'BSHM' => ['Hospitality Management', 'BS Hospitality Management'],
+            'HM' => ['BSHM', 'Hospitality Management'],
+            'BSED' => ['Education', 'BS Education'],
+            'EDUCATION' => ['BSED', 'BS Education'],
+            'BSE' => ['Entrepreneurship', 'BS Entrepreneurship'],
+            'BSENTREP' => ['Entrepreneurship', 'BS Entrepreneurship'],
+            'ENTREP' => ['BS Entrepreneurship', 'Entrepreneurship'],
+            'BSBM' => ['Business Management', 'BS Business Management'],
+            'BUSINESS MANAGEMENT' => ['BSBM', 'BS Business Management'],
+            'BSTOURISM' => ['Tourism', 'BS Tourism'],
+            'TOURISM' => ['BSTourism', 'BS Tourism'],
+        ];
+
+        $variants = $variants->flatMap(function ($value) use ($courseMappings) {
+            $value = trim((string) $value);
+            if ($value === '') {
+                return [];
+            }
+
+            $normalized = strtoupper(str_replace(['.', '-', '_'], '', $value));
+
+            return array_merge([$value], $courseMappings[$normalized] ?? []);
+        });
+
+        return $variants
+            ->map(fn ($value) => trim((string) $value))
+            ->filter()
+            ->unique(fn ($value) => strtolower($value))
+            ->values()
+            ->all();
     }
 
     private function transformBook(Book $book): array
@@ -100,6 +140,8 @@ class RecommendedController extends Controller
             'author' => $book->author,
             'category' => $book->category,
             'cover_photo' => $book->display_cover_url,
+            'resource_type' => $book->resource_type ?: 'book',
+            'course' => $book->course ?: $book->program,
             'borrow_records_count' => $book->borrow_records_count ?? 0,
         ];
     }

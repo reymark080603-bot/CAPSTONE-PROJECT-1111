@@ -22,6 +22,19 @@
                 this.init();
             }
 
+            getRoute(name, fallback = '') {
+                return (window.studentDashboardRoutes && window.studentDashboardRoutes[name]) || fallback;
+            }
+
+            getBookUrl(bookId) {
+                const base = this.getRoute('booksBase', '/student/books');
+                return `${base.replace(/\/$/, '')}/${bookId}`;
+            }
+
+            getBorrowUrl(bookId) {
+                return `${this.getBookUrl(bookId)}/borrow`;
+            }
+
             init() {
                 this.bindEvents();
                 this.handleResize();
@@ -235,7 +248,7 @@
             // Load user's borrowed books
             async loadUserBorrowedBooks() {
                 try {
-                    const response = await fetch('/student/loans/api', {
+                    const response = await fetch(this.getRoute('loansApi', '/student/loans/api'), {
                         headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
                     });
                     
@@ -321,6 +334,8 @@
                     const isBorrowed = this.isBookBorrowed(book.id);
                     const bookTitle = this.escapeHtml(book.title || '');
                     const bookAuthor = this.escapeHtml(book.author || '');
+                    const resourceType = this.escapeHtml((book.resource_type || 'book').replace(/_/g, ' '));
+                    const courseLabel = this.escapeHtml(book.course || 'General');
                     
                     // Fix cover photo URL to be absolute
                     const coverUrl = book.cover_photo && !book.cover_photo.startsWith('http') 
@@ -333,6 +348,7 @@
                         <div class="book-card flex-shrink-0 w-40 sm:w-44 md:w-48">
                             <div class="relative group">
                                 <div class="book-cover relative bg-gray-100 rounded-lg shadow-md overflow-hidden h-56 sm:h-60 md:h-64 hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
+                                    <span class="absolute top-2 left-2 z-10 px-2 py-1 rounded-full bg-white/90 text-[10px] font-semibold text-gray-700 uppercase tracking-wide">${resourceType}</span>
                                     ${coverUrl ? 
                                         `<img src="${coverUrl}" alt="${bookTitle} Cover" class="w-full h-full object-cover rounded-lg">` : 
                                         `<div class="w-full h-full bg-gray-200 flex items-center justify-center">
@@ -343,8 +359,9 @@
                                 <div class="mt-3 text-center">
                                     <h5 class="font-semibold text-sm text-gray-900 truncate">${bookTitle}</h5>
                                     <p class="text-xs text-gray-600 mb-2">${bookAuthor}</p>
+                                    <p class="text-[11px] text-gray-500 mb-2 uppercase tracking-wide">${courseLabel}</p>
                                     <div class="flex gap-1">
-                                        <button class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-2 py-2 rounded text-xs font-medium transition-colors" onclick="window.location.href='/student/books/${book.id}'">View</button>
+                                        <button class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-2 py-2 rounded text-xs font-medium transition-colors" onclick="window.location.href='${this.getBookUrl(book.id)}'">View</button>
                                         ${!isBorrowed ? `<button class="flex-1 bg-green-500 hover:bg-green-600 text-white px-2 py-2 rounded text-xs font-medium transition-colors btn-borrow-quick" data-book-id="${book.id}" data-book-title="${bookTitle}"><i class="fas fa-book-reader mr-1"></i>Borrow</button>` : ''}
                                     </div>
                                 </div>
@@ -373,7 +390,7 @@
                 }
                 
                 try {
-                    const response = await fetch('/dashboard/recommended', {
+                    const response = await fetch(this.getRoute('recommended', '/dashboard/recommended'), {
                         headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
                     });
                     
@@ -431,7 +448,7 @@
                                     <p class="text-xs text-gray-600 mb-2">${bookAuthor}</p>
                                     <div class="flex gap-1">
                                         <button class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-2 py-2 rounded text-xs font-medium transition-colors" 
-                                                onclick="window.location.href='/student/books/${book.id}'">
+                                                onclick="window.location.href='${this.getBookUrl(book.id)}'">
                                             View
                                         </button>
                                         ${!isBorrowed ? `<button class="flex-1 bg-green-500 hover:bg-green-600 text-white px-2 py-2 rounded text-xs font-medium transition-colors btn-borrow-quick" 
@@ -521,7 +538,7 @@
 
                 // Try current loans first
                 try {
-                    const resLoans = await fetch('/student/loans/api', {
+                    const resLoans = await fetch(this.getRoute('loansApi', '/student/loans/api'), {
                         headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
                     });
                     if (resLoans.ok) {
@@ -567,7 +584,7 @@
 
                 // Fallback to recommendations
                 try {
-                    const res = await fetch('/dashboard/recommended', {
+                    const res = await fetch(this.getRoute('recommended', '/dashboard/recommended'), {
                         headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
                     });
                     if (!res.ok) throw new Error('failed');
@@ -600,7 +617,7 @@
                 const noRecentBooksElement = document.getElementById('no-recent-books');
                 
                 try {
-                    const response = await fetch('/dashboard/recent', {
+                    const response = await fetch(this.getRoute('recent', '/dashboard/recent'), {
                         headers: {
                             'Accept': 'application/json',
                             'X-Requested-With': 'XMLHttpRequest'
@@ -653,7 +670,7 @@
             // Dashboard Statistics functionality
             async loadDashboardStats() {
                 try {
-                    const response = await fetch('/dashboard/stats', {
+                    const response = await fetch(this.getRoute('stats', '/dashboard/stats'), {
                         headers: {
                             'Accept': 'application/json',
                             'X-Requested-With': 'XMLHttpRequest'
@@ -697,7 +714,7 @@
                     formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
                     formData.append('duration', 1); // 1-day duration
                     
-                    const response = await fetch(`/student/books/${bookId}/borrow`, {
+                    const response = await fetch(this.getBorrowUrl(bookId), {
                         method: 'POST',
                         body: formData
                     });
@@ -716,7 +733,7 @@
                         this.loadContinueReading();
                         
                         setTimeout(() => {
-                            window.location.href = `/student/books/${bookId}`;
+                            window.location.href = this.getBookUrl(bookId);
                         }, 1500);
                     } else {
                         this.showNotification(data.message || 'Failed to borrow book', 'error');
@@ -732,6 +749,7 @@
                 const headerSearchBtn = document.getElementById('header-search-btn');
                 const headerSearchForm = headerSearchInput ? headerSearchInput.closest('form') : null;
                 const resultsPanel = document.getElementById('header-search-results');
+                const isHomepageMobileSearch = document.body.classList.contains('homepage-dashboard');
                 
                 if (!headerSearchInput || !headerSearchBtn) {
                     return; // Exit if elements don't exist
@@ -739,6 +757,40 @@
 
                 let searchDebounce = null;
                 let latestRequestId = 0;
+                let autoHideTimer = null;
+
+                const isMobileViewport = () => window.innerWidth <= 768;
+
+                const clearAutoHideTimer = () => {
+                    if (autoHideTimer) {
+                        clearTimeout(autoHideTimer);
+                        autoHideTimer = null;
+                    }
+                };
+
+                const hideMobileSearch = () => {
+                    if (!isHomepageMobileSearch || !isMobileViewport() || !headerSearchForm) return;
+                    if (document.activeElement === headerSearchInput) return;
+                    if (headerSearchInput.value.trim()) return;
+                    headerSearchForm.classList.remove('mobile-search-open');
+                    closeResults();
+                };
+
+                const startAutoHideTimer = () => {
+                    if (!isHomepageMobileSearch || !isMobileViewport()) return;
+                    clearAutoHideTimer();
+                    autoHideTimer = setTimeout(() => {
+                        hideMobileSearch();
+                    }, 3000);
+                };
+
+                const showMobileSearch = () => {
+                    if (!isHomepageMobileSearch || !isMobileViewport() || !headerSearchForm) return;
+                    headerSearchForm.classList.add('mobile-search-open');
+                    clearAutoHideTimer();
+                    setTimeout(() => headerSearchInput.focus(), 30);
+                    startAutoHideTimer();
+                };
 
                 const closeResults = () => {
                     if (!resultsPanel) return;
@@ -792,7 +844,7 @@
                             Search Results
                         </div>
                         ${rows}
-                        <a href="/student/books?search=${encodeURIComponent(query)}" class="block px-3 py-2 text-xs text-blue-700 hover:bg-blue-50 border-t border-gray-200 font-medium">
+                        <a href="${this.getRoute('booksBase', '/student/books')}?search=${encodeURIComponent(query)}" class="block px-3 py-2 text-xs text-blue-700 hover:bg-blue-50 border-t border-gray-200 font-medium">
                             See all results for "${this.escapeHtml(query)}"
                         </a>
                     `;
@@ -812,7 +864,9 @@
                     resultsPanel.classList.remove('hidden');
 
                     try {
-                        const response = await fetch(`/dashboard/search?q=${encodeURIComponent(term)}`, {
+                        const searchUrl = new URL(this.getRoute('search', '/dashboard/search'), window.location.origin);
+                        searchUrl.searchParams.set('q', term);
+                        const response = await fetch(searchUrl.toString(), {
                             headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
                         });
                         if (!response.ok) throw new Error('Quick search request failed');
@@ -830,14 +884,29 @@
                 const performSearch = () => {
                     const searchTerm = headerSearchInput.value.trim();
                     if (searchTerm) {
+                        clearAutoHideTimer();
                         closeResults();
                         // Redirect to books page with search query
-                        window.location.href = `/student/books?search=${encodeURIComponent(searchTerm)}`;
+                        window.location.href = `${this.getRoute('booksBase', '/student/books')}?search=${encodeURIComponent(searchTerm)}`;
                     }
                 };
                 
                 // Search on button click
-                headerSearchBtn.addEventListener('click', performSearch);
+                headerSearchBtn.addEventListener('click', (e) => {
+                    if (isHomepageMobileSearch && isMobileViewport() && !headerSearchForm.classList.contains('mobile-search-open')) {
+                        e.preventDefault();
+                        showMobileSearch();
+                        return;
+                    }
+
+                    if (isHomepageMobileSearch && isMobileViewport() && !headerSearchInput.value.trim()) {
+                        e.preventDefault();
+                        startAutoHideTimer();
+                        return;
+                    }
+
+                    performSearch();
+                });
                 
                 // Search on Enter key
                 headerSearchInput.addEventListener('keydown', (e) => {
@@ -851,6 +920,7 @@
 
                 headerSearchInput.addEventListener('input', () => {
                     const term = headerSearchInput.value.trim();
+                    clearAutoHideTimer();
                     clearTimeout(searchDebounce);
                     searchDebounce = setTimeout(() => {
                         fetchQuickResults(term);
@@ -858,10 +928,18 @@
                 });
 
                 headerSearchInput.addEventListener('focus', () => {
+                    if (isHomepageMobileSearch && isMobileViewport() && headerSearchForm) {
+                        headerSearchForm.classList.add('mobile-search-open');
+                    }
+                    clearAutoHideTimer();
                     const term = headerSearchInput.value.trim();
                     if (term.length >= 2) {
                         fetchQuickResults(term);
                     }
+                });
+
+                headerSearchInput.addEventListener('blur', () => {
+                    startAutoHideTimer();
                 });
 
                 // Support native form submit as a fallback
@@ -876,6 +954,14 @@
                     if (!headerSearchForm) return;
                     if (!headerSearchForm.contains(e.target)) {
                         closeResults();
+                        startAutoHideTimer();
+                    }
+                });
+
+                window.addEventListener('resize', () => {
+                    if (!isMobileViewport() && headerSearchForm) {
+                        clearAutoHideTimer();
+                        headerSearchForm.classList.remove('mobile-search-open');
                     }
                 });
                 
@@ -988,7 +1074,7 @@
                 const formData = new FormData();
                 formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
                 
-                fetch(`/student/${this.currentBookId}/borrow`, {
+                fetch(this.getBorrowUrl(this.currentBookId), {
                     method: 'POST',
                     body: formData
                 })

@@ -6,8 +6,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>History - Knowly Library</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <link href="{{ asset('css/student-dashboard.css') }}" rel="stylesheet">
-    <link href="{{ asset('css/history.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/student-dashboard.css') }}?v={{ filemtime(public_path('css/student-dashboard.css')) }}" rel="stylesheet">
+    <link href="{{ asset('css/history.css') }}?v={{ filemtime(public_path('css/history.css')) }}" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
 </head>
@@ -97,7 +97,6 @@
         <div class="main-content p-4 sm:p-6">
             <div class="mb-6">
                 <h1 class="text-3xl font-bold text-gray-900">Borrowing History</h1>
-                <p class="text-gray-600 mt-2">Track your book loans and returns</p>
             </div>
             <!-- Filter Controls -->
             <div class="bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-6 relative">
@@ -278,7 +277,16 @@
         </div>
     </div>
 
-    <script src="{{ asset('js/student-dashboard.js') }}"></script>
-    <script src="{{ asset('js/history.js') }}"></script>
+    <script>
+    window.historyPageRoutes = {
+        historyApi: @json(route('student.history.api')),
+        historyClear: @json(route('student.history.clear')),
+        historyExport: @json(route('student.history.export')),
+        booksBase: @json(url('student/books')),
+        renewBase: @json(url('student/borrow-records')),
+    };
+    </script>
+    <script src="{{ asset('js/student-dashboard.js') }}?v={{ filemtime(public_path('js/student-dashboard.js')) }}"></script>
+    <script src="{{ asset('js/history.js') }}?v={{ filemtime(public_path('js/history.js')) }}"></script>
 </body>
 </html>

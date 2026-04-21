@@ -76,11 +76,8 @@ class LibrarianNotificationService
     private function notifyAllLibrarians(string $type, string $message, array $data = []): void
     {
         $librarians = User::query()
-            ->where(function ($query) {
-                $query->where('role', 'librarian')
-                    ->orWhereHas('role', function ($roleQuery) {
-                        $roleQuery->where('name', 'librarian');
-                    });
+            ->whereHas('role', function ($roleQuery) {
+                $roleQuery->where('name', 'librarian');
             })
             ->get();
 

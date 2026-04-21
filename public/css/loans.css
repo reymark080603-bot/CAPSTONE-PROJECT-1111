@@ -6,6 +6,8 @@
     flex-shrink: 0; /* Prevent cards from shrinking on mobile */
     transition: all 0.3s ease;
     box-sizing: border-box;
+    position: relative;
+    z-index: 1;
 }
 
 /* Mobile responsiveness for book cards */
@@ -354,6 +356,52 @@
         font-size: 0.625rem;
         padding: 0.125rem 0.375rem;
     }
+
+    .loans-toolbar {
+        align-items: center;
+        flex-wrap: nowrap;
+    }
+
+    .loans-toolbar h2 {
+        flex: 1 1 auto;
+        min-width: 0;
+        font-size: 1rem;
+        line-height: 1.4;
+        margin: 0;
+    }
+
+    .loans-toolbar-actions {
+        flex: 0 0 auto;
+    }
+
+    .loans-filter-wrap {
+        width: auto !important;
+    }
+
+    .loans-filter-btn {
+        width: auto !important;
+        min-height: 2.5rem;
+        padding: 0.625rem 0.875rem !important;
+        font-size: 0.8125rem;
+        line-height: 1;
+        white-space: nowrap;
+        gap: 0.375rem;
+    }
+
+    .loans-filter-btn i:last-child {
+        font-size: 0.625rem;
+    }
+
+    #filter-sort-dropdown {
+        width: min(18rem, calc(100vw - 1.5rem)) !important;
+        max-width: calc(100vw - 1.5rem) !important;
+        right: 0 !important;
+        left: auto !important;
+        margin-top: 0.5rem;
+        max-height: min(70vh, 32rem);
+        overflow-y: auto;
+        z-index: 90 !important;
+    }
 }
 
 @media (max-width: 640px) {
@@ -363,6 +411,64 @@
     
     .loan-card .p-4 {
         padding: 1rem;
+    }
+
+    .loans-toolbar {
+        gap: 0.625rem;
+    }
+
+    .loans-toolbar h2 {
+        font-size: 0.95rem;
+    }
+
+    .loans-filter-btn {
+        min-height: 2.375rem;
+        padding: 0.5625rem 0.75rem !important;
+        font-size: 0.75rem;
+    }
+
+    #filter-sort-dropdown .filter-sort-tab {
+        padding: 0.75rem 0.875rem;
+        font-size: 0.75rem;
+    }
+
+    #filter-sort-dropdown .p-4 {
+        padding: 0.875rem;
+    }
+
+    #filter-sort-dropdown label,
+    #filter-sort-dropdown select,
+    #filter-sort-dropdown button {
+        font-size: 0.75rem;
+    }
+
+    #filter-sort-dropdown select,
+    #filter-sort-dropdown #apply-filters,
+    #filter-sort-dropdown #clear-filters {
+        min-height: 2.375rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .loans-toolbar {
+        gap: 0.5rem;
+    }
+
+    .loans-toolbar h2 {
+        font-size: 0.875rem;
+    }
+
+    .loans-filter-btn {
+        min-height: 2.25rem;
+        padding: 0.5rem 0.625rem !important;
+        font-size: 0.7rem;
+    }
+
+    #filter-sort-dropdown {
+        width: min(16rem, calc(100vw - 1rem)) !important;
+        max-width: calc(100vw - 1rem) !important;
+        max-height: min(68vh, 30rem);
+        z-index: 90 !important;
     }
 }
 

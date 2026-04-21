@@ -7,11 +7,28 @@
     <title>Browse Books - Knowly</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="{{ asset('css/student-dashboard.css') }}" rel="stylesheet">
-    <link href="{{ asset('css/books.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/student-dashboard.css') }}?v={{ filemtime(public_path('css/student-dashboard.css')) }}" rel="stylesheet">
+    <link href="{{ asset('css/books.css') }}?v={{ filemtime(public_path('css/books.css')) }}" rel="stylesheet">
     @vite('resources/css/components/books.css')
 </head>
 <body class="bg-gray-50 min-h-screen">
+    @php
+        $pageTitle = match($resourceType ?? null) {
+            'e_journal' => 'Browse E-Journals',
+            'thesis' => 'Browse Theses',
+            'book' => 'Browse Books',
+            default => (($scope ?? null) === 'recommended' ? 'Browse Recommended Resources' : 'Browse Resources'),
+        };
+
+        $pageSubtitle = match($resourceType ?? null) {
+            'e_journal' => 'Explore all academic e-journals available for your program',
+            'thesis' => 'Explore all thesis and capstone references available for your program',
+            'book' => 'Explore all books available for your program',
+            default => (($scope ?? null) === 'recommended'
+                ? 'Explore all resources recommended for your program'
+                : 'Discover books, e-journals, and theses for your ' . ($user->course_name ?? 'your') . ' ' . ($user->year_level_name ?? '') . ' program'),
+        };
+    @endphp
     <!-- Header -->
     <div class="header sidebar-expanded bg-green-600 shadow-lg">
         <div class="flex items-center justify-between px-6 py-4 w-full">
@@ -96,8 +113,7 @@
         <!-- Main Content -->
         <div class="main-content flex-1 p-3 sm:p-4 md:p-6 transition-all duration-300">
             <div class="mb-6">
-                <h1 class="text-3xl font-bold text-gray-900">Browse Books</h1>
-                <p class="text-gray-600 mt-2">Discover books for your {{ $user->course_name ?? 'your' }} {{ $user->year_level_name ?? '' }} program and explore our entire collection</p>
+                <h1 class="text-3xl font-bold text-gray-900">{{ $pageTitle }}</h1>
                 
                 @if(session('error'))
                     <div class="mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
@@ -141,19 +157,14 @@
                         <!-- Filter Dropdown Menu -->
                         <div id="filter-dropdown" class="absolute right-0 mt-2 w-72 sm:w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50 hidden">
                             <div class="p-4 space-y-4">
-                                <!-- Category Filter -->
+                                <!-- Type Filter -->
                                 <div>
-                                    <label for="filter-category" class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                                    <label for="filter-category" class="block text-sm font-medium text-gray-700 mb-2">Type</label>
                                     <select id="filter-category" class="w-full border border-gray-300 rounded-lg py-2 pl-3 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                        <option value="">All Categories</option>
-                                        <option value="programming">Programming</option>
-                                        <option value="health">Health</option>
-                                        <option value="mathematics">Mathematics</option>
-                                        <option value="literature">Literature</option>
-                                        <option value="science">Science</option>
-                                        <option value="business">Business</option>
-                                        <option value="technology">Technology</option>
-                                        <option value="education">Education</option>
+                                        <option value="">All Types</option>
+                                        <option value="book">Books</option>
+                                        <option value="e_journal">E-Journal</option>
+                                        <option value="thesis">E-Thesis</option>
                                     </select>
                                 </div>
                                 
@@ -162,12 +173,11 @@
                                     <label for="filter-program" class="block text-sm font-medium text-gray-700 mb-2">Program</label>
                                     <select id="filter-program" class="w-full border border-gray-300 rounded-lg py-2 pl-3 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                                         <option value="">All Programs</option>
-                                        <option value="BSIT">BSIT</option>
-                                        <option value="BSED">BSED</option>
-                                        <option value="BSN">BSN</option>
-                                        <option value="BSTourism">BSTourism</option>
-                                        <option value="BSBM">BSBM</option>
+                                        <option value="BSE">BSE</option>
                                         <option value="BSHM">BSHM</option>
+                                        <option value="BSIT">BSIT</option>
+                                        <option value="BSN">BSN</option>
+                                        <option value="BSTM">BSTM</option>
                                         <option value="All Program">All Program</option>
                                     </select>
                                 </div>
@@ -223,11 +233,12 @@
                 </div>
 
             <!-- Recommended Books Section (Based on Course & Year) -->
+            @if(($scope ?? null) !== 'recommended')
             <div id="recommended-section" class="mb-8">
                 <div class="flex items-center justify-between mb-4">
                     <div>
                         <h2 class="text-xl font-semibold text-gray-900">Recommended for You</h2>
-                        <p class="text-sm text-gray-600">Books for {{ $user->course_name ?? 'your' }} {{ $user->year_level_name ?? '' }} students</p>
+                        <p class="text-sm text-gray-600">Resources matched to {{ $user->course_name ?? 'your program' }}</p>
                     </div>
                     <button id="show-all-recommended" class="text-blue-600 hover:text-blue-700 text-sm font-medium">
                         View All →
@@ -243,6 +254,7 @@
                              data-book-title="{{ $book->title }}"
                              data-book-author="{{ $book->author ?? 'Unknown Author' }}"
                              data-book-category="{{ $book->category ?? 'General' }}"
+                             data-book-resource-type="{{ $book->resource_type ?? 'book' }}"
                              data-book-course="{{ $book->course ?? 'General' }}"
                              data-book-year-level="{{ $book->year_level ?? '' }}"
                              data-book-published-year="{{ $book->published_year ?? '' }}"
@@ -365,27 +377,80 @@
                             <div class="text-gray-300 text-6xl mb-4">
                                 <i class="fas fa-book-open"></i>
                             </div>
-                            <h3 class="text-xl font-semibold text-gray-700 mb-2">No books available</h3>
-                            <p class="text-gray-500">Check back later for new additions to our collection.</p>
+                            <h3 class="text-xl font-semibold text-gray-700 mb-2">No recommended resources available</h3>
+                            <p class="text-gray-500">Add more course-related resources to show suggestions here.</p>
                         </div>
                     @endif
                 </div>
             </div>
+            @endif
 
+            @if(isset($selectedResources) && $selectedResources)
+            @php
+                $selectedLabel = ($scope ?? null) === 'recommended' ? 'All Recommended Resources' : match($resourceType) {
+                    'e_journal' => 'All E-Journals',
+                    'thesis' => 'All Theses',
+                    default => 'All Books',
+                };
+            @endphp
+            <div class="mb-10">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-900">{{ $selectedLabel }}</h2>
+                        <p class="text-sm text-gray-600">Showing all available {{ strtolower(str_replace('All ', '', $selectedLabel)) }}</p>
+                    </div>
+                    <a href="{{ route('student.books') }}" class="text-blue-600 hover:text-blue-700 text-sm font-medium">Back to Overview</a>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3">
+                    @forelse($selectedResources as $resource)
+                        <div class="group relative bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 book-card overflow-hidden">
+                            <div class="relative aspect-[3/4] bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden shadow border border-gray-200">
+                                <img src="{{ $resource->display_cover_url }}" alt="{{ $resource->title }} Cover" class="w-full h-full object-cover book-cover-img" loading="lazy">
+                                <span class="absolute top-2 left-2 px-2 py-1 rounded-full bg-white/90 text-[10px] font-semibold text-gray-700 uppercase tracking-wide">{{ str_replace('_', '-', $resource->resource_type ?: 'book') }}</span>
+                            </div>
+
+                            <div class="p-2 bg-white">
+                                <h3 class="text-sm font-semibold text-gray-900 line-clamp-2">{{ $resource->title }}</h3>
+                                <p class="text-gray-700 text-xs mt-1 mb-2 font-medium line-clamp-1">by {{ $resource->author ?? 'Unknown Author' }}</p>
+
+                                <div class="flex gap-1">
+                                    <a href="{{ route('student.books.show', $resource) }}" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-1.5 px-2 rounded text-xs text-center transition-all duration-200 shadow hover:shadow-md">View</a>
+                                    <button class="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-1.5 px-2 rounded text-xs transition-all duration-200 shadow hover:shadow-md btn-borrow-quick" data-book-id="{{ $resource->id }}" data-book-title="{{ $resource->title }}">Borrow</button>
+                                </div>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="col-span-full text-center py-12">
+                            <div class="text-gray-300 text-6xl mb-4"><i class="fas fa-folder-open"></i></div>
+                            <h3 class="text-xl font-semibold text-gray-700 mb-2">No resources found</h3>
+                            <p class="text-gray-500">There are no resources in this section yet.</p>
+                        </div>
+                    @endforelse
+                </div>
+
+                <div class="mt-6">
+                    {{ $selectedResources->links() }}
+                </div>
+            </div>
+            @endif
+
+            @if(!(isset($selectedResources) && $selectedResources))
                        <!-- All Books Section -->
             <div id="all-books-section">
                 <div class="flex items-center justify-between mb-4">
                     <div>
                         <h2 class="text-xl font-semibold text-gray-900">All Books</h2>
-                        <p class="text-sm text-gray-600">Complete collection from our library</p>
+                        <p class="text-sm text-gray-600">All books for {{ $user->course_name ?? 'your program' }}</p>
                     </div>
+                    <a href="{{ route('student.books', ['resource_type' => 'book']) }}" class="text-blue-600 hover:text-blue-700 text-sm font-medium">See All</a>
                 </div>
                 
                 <!-- All Books Grid - Mobile-First Responsive Design -->
                 <div id="books-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3">
                     @if(isset($books) && $books && $books->count() > 0)
                         @foreach($books as $book)
-                        <div class="group relative bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 book-card overflow-hidden" data-book-id="{{ $book->id }}" data-book-title="{{ $book->title }}">
+                        <div class="group relative bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 book-card overflow-hidden" data-book-id="{{ $book->id }}" data-book-title="{{ $book->title }}" data-book-resource-type="{{ $book->resource_type ?? 'book' }}">
                             <!-- Book Cover -->
                             <div class="relative aspect-[3/4] bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden shadow border border-gray-200">
                                 @if($book->cover_photo)
@@ -521,6 +586,81 @@
                     @endif
                 </div>
             </div>
+
+            <div id="ejournal-section" class="mt-10">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-900">E-Journals</h2>
+                        <p class="text-sm text-gray-600">All e-journals for {{ $user->course_name ?? 'your program' }}</p>
+                    </div>
+                    <a href="{{ route('student.books', ['resource_type' => 'e_journal']) }}" class="text-blue-600 hover:text-blue-700 text-sm font-medium">See All</a>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3">
+                    @forelse($eJournalResources as $resource)
+                        <div class="group relative bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 book-card overflow-hidden">
+                            <div class="relative aspect-[3/4] bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden shadow border border-gray-200">
+                                <img src="{{ $resource->display_cover_url }}" alt="{{ $resource->title }} Cover" class="w-full h-full object-cover book-cover-img" loading="lazy">
+                                <span class="absolute top-2 left-2 px-2 py-1 rounded-full bg-white/90 text-[10px] font-semibold text-indigo-700 uppercase tracking-wide">E-Journal</span>
+                            </div>
+
+                            <div class="p-2 bg-white">
+                                <h3 class="text-sm font-semibold text-gray-900 line-clamp-2">{{ $resource->title }}</h3>
+                                <p class="text-gray-700 text-xs mt-1 mb-2 font-medium line-clamp-1">by {{ $resource->author ?? 'Unknown Author' }}</p>
+
+                                <div class="flex gap-1">
+                                    <a href="{{ route('student.books.show', $resource) }}" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-1.5 px-2 rounded text-xs text-center transition-all duration-200 shadow hover:shadow-md">View</a>
+                                    <button class="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-1.5 px-2 rounded text-xs transition-all duration-200 shadow hover:shadow-md btn-borrow-quick" data-book-id="{{ $resource->id }}" data-book-title="{{ $resource->title }}">Borrow</button>
+                                </div>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="col-span-full text-center py-12">
+                            <div class="text-gray-300 text-6xl mb-4"><i class="fas fa-newspaper"></i></div>
+                            <h3 class="text-xl font-semibold text-gray-700 mb-2">No e-journals available</h3>
+                            <p class="text-gray-500">Check back later for journal resources.</p>
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+
+            <div id="thesis-section" class="mt-10">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-900">Theses</h2>
+                        <p class="text-sm text-gray-600">All e-theses for {{ $user->course_name ?? 'your program' }}</p>
+                    </div>
+                    <a href="{{ route('student.books', ['resource_type' => 'thesis']) }}" class="text-blue-600 hover:text-blue-700 text-sm font-medium">See All</a>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3">
+                    @forelse($thesisResources as $resource)
+                        <div class="group relative bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 book-card overflow-hidden">
+                            <div class="relative aspect-[3/4] bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden shadow border border-gray-200">
+                                <img src="{{ $resource->display_cover_url }}" alt="{{ $resource->title }} Cover" class="w-full h-full object-cover book-cover-img" loading="lazy">
+                                <span class="absolute top-2 left-2 px-2 py-1 rounded-full bg-white/90 text-[10px] font-semibold text-amber-700 uppercase tracking-wide">Thesis</span>
+                            </div>
+
+                            <div class="p-2 bg-white">
+                                <h3 class="text-sm font-semibold text-gray-900 line-clamp-2">{{ $resource->title }}</h3>
+                                <p class="text-gray-700 text-xs mt-1 mb-2 font-medium line-clamp-1">by {{ $resource->author ?? 'Unknown Author' }}</p>
+
+                                <div class="flex gap-1">
+                                    <a href="{{ route('student.books.show', $resource) }}" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-1.5 px-2 rounded text-xs text-center transition-all duration-200 shadow hover:shadow-md">View</a>
+                                    <button class="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-1.5 px-2 rounded text-xs transition-all duration-200 shadow hover:shadow-md btn-borrow-quick" data-book-id="{{ $resource->id }}" data-book-title="{{ $resource->title }}">Borrow</button>
+                                </div>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="col-span-full text-center py-12">
+                            <div class="text-gray-300 text-6xl mb-4"><i class="fas fa-scroll"></i></div>
+                            <h3 class="text-xl font-semibold text-gray-700 mb-2">No theses available</h3>
+                            <p class="text-gray-500">Check back later for thesis resources.</p>
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+            @endif
 
     <!-- Book Details Modal -->
     <div id="book-modal" class="fixed inset-0 z-50 overflow-y-auto hidden">
@@ -1134,8 +1274,16 @@
     </div>  
 
     <!-- JavaScript -->
-    <script src="{{ asset('js/student-dashboard.js') }}"></script>
-    <script src="{{ asset('js/books-sidebar.js') }}"></script>
+    <script>
+    window.booksPageRoutes = {
+        booksIndex: @json(route('student.books')),
+        booksBase: @json(url('student/books')),
+        borrowBase: @json(url('student/books')),
+        borrowedBookIds: @json(array_map('intval', $borrowedBooks ?? [])),
+    };
+    </script>
+    <script src="{{ asset('js/student-dashboard.js') }}?v={{ filemtime(public_path('js/student-dashboard.js')) }}"></script>
+    <script src="{{ asset('js/books-sidebar.js') }}?v={{ filemtime(public_path('js/books-sidebar.js')) }}"></script>
 
     <!-- Helper functions for category styling -->
     <script>
@@ -1209,7 +1357,7 @@
     }
     </script>
 
-    <script src="{{ asset('js/books-new.js') }}"></script>
+    <script src="{{ asset('js/books-new.js') }}?v={{ filemtime(public_path('js/books-new.js')) }}"></script>
 </body>
 </html>
 

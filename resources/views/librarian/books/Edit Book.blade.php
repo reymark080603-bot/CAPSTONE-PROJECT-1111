@@ -48,18 +48,8 @@
                     <input type="text" id="author" name="author" value="{{ $book->author }}" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div>
-                    <label for="category" class="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                    <select id="category" name="category" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="">—</option>
-                        @php($cats = isset($categories) ? $categories : collect(['Science','Technology','Engineering','Mathematics','Literature','History','Philosophy','Business']))
-                        @foreach($cats as $cat)
-                            <option value="{{ $cat }}" {{ (string)$book->category === (string)$cat ? 'selected' : '' }}>{{ $cat }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
                     <label for="course" class="block text-sm font-medium text-gray-700 mb-1">Program</label>
-                    @php($crs = isset($courses) ? $courses : ['BSIT','BSED','BSN','BSTourism','BSBM','BSHM'])
+                    @php($crs = isset($courses) ? $courses : ['BSE','BSHM','BSIT','BSN','BSTM'])
                     <select id="course" name="course" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="">All Programs</option>
                         @foreach($crs as $course)

@@ -99,8 +99,8 @@ class LibrarianDashboardService
             ->groupBy('courses.code', 'courses.name')
             ->get();
 
-        // Borrowed books by course - show all 6 target courses
-        $targetCourses = ['BSI', 'BSN', 'BSHM', 'BST', 'BSED', 'BSEntrep']; // BSI(BSIT), BSN, BSHM, BST(BSTM), BSED, BSEntrep
+        // Borrowed books by program
+        $targetCourses = ['BSE', 'BSHM', 'BSIT', 'BSN', 'BSTM'];
         
         $borrowedBooksByCourse = User::select('courses.code', DB::raw('COUNT(borrow_records.id) as borrowed_count'))
             ->join('borrow_records', 'users.id', '=', 'borrow_records.user_id')

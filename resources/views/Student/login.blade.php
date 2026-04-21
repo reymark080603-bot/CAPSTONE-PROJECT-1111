@@ -70,32 +70,47 @@
                     </div>
                 @endif
 
+                @if (session('status'))
+                    <div class="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-check text-emerald-600 text-sm"></i>
+                                </div>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-semibold text-emerald-800 mb-1">Account Created</h3>
+                                <p class="text-sm text-emerald-700">{{ session('status') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
                 <!-- Student Login Form -->
                 <form method="POST" action="{{ url('student/login') }}" class="space-y-6">
                     @csrf
 
-                    <!-- Library ID Input -->
-                    <div class="space-y-2">
-                        <label for="library_id" class="text-sm font-medium text-gray-700 flex items-center">
-                            <i class="fas fa-id-card mr-2 text-emerald-500"></i>
-                            Library ID
-                        </label>
-                        <div class="relative">
-                            <input 
-                                type="text" 
-                                id="library_id" 
-                                name="library_id" 
-                                value="{{ old('library_id') }}" 
-                                class="w-full px-4 py-3 pl-11 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-300 bg-gray-50/50" 
-                                placeholder="Enter your Library ID"
-                                autocomplete="username"
-                                required
-                                autofocus
-                            >
-                            <i class="fas fa-id-card absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                        </div>
-                        <p class="text-xs text-gray-500 mt-1">Your student portal Library ID</p>
-                    </div>
+                    <!-- Email Input -->
+<div class="space-y-2">
+    <label for="email" class="text-sm font-medium text-gray-700 flex items-center">
+        <i class="fas fa-envelope mr-2 text-emerald-500"></i>
+        Email
+    </label>
+    <div class="relative">
+        <input 
+            type="email" 
+            id="email" 
+            name="email" 
+            value="{{ old('email') }}" 
+            class="w-full px-4 py-3 pl-11 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-300 bg-gray-50/50" 
+            placeholder="Enter your Email"
+            required
+            autofocus
+        >
+        <i class="fas fa-envelope absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+    </div>
+    <p class="text-xs text-gray-500 mt-1">Your student portal email</p>
+</div>
 
                     <!-- Password Input -->
                     <div class="space-y-2">
@@ -148,6 +163,13 @@ class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 
                         <i class="fas fa-sign-in-alt mr-2"></i>
                         Sign In with Portal Account
                     </button>
+
+                    <p class="text-center text-sm text-gray-600">
+                        Need an account?
+                        <a href="{{ route('register') }}" class="font-medium text-emerald-600 hover:text-emerald-700 transition-colors">
+                            Create one here
+                        </a>
+                    </p>
                 </form>
 
             </div>

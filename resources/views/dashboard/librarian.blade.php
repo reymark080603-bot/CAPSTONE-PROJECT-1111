@@ -74,11 +74,11 @@
                 <!-- User Profile -->
                   <div class="flex items-center space-x-3">
                     <div class="text-right">
-                        <p class="text-white font-medium">{{ Auth::user()->name ?? 'Librarian' }}</p>
+                        <p class="text-white font-medium">{{ $user->name ?? $user->firstname ?? 'Librarian' }}</p>
                         <p class="text-blue-100 text-sm">Librarian</p>
                     </div>
                     <div class="w-10 h-10 bg-white text-blue-700 border-2 border-white/60 rounded-full flex items-center justify-center">
-                        <span class="text-blue-700 font-medium flex items-center justify-center w-full h-full">{{ substr(Auth::user()->name ?? 'L', 0, 1) }}</span>
+                        <span class="text-blue-700 font-medium flex items-center justify-center w-full h-full">{{ substr($user->name ?? $user->firstname ?? 'L', 0, 1) }}</span>
                     </div>
                 </div>
             </div>
@@ -127,7 +127,7 @@
                     </a>
                      <a href="{{ route('librarian.loans.index') }}" class="sidebar-link flex items-center space-x-3 text-gray-300 px-4 py-3 rounded-lg transition-all hover:text-white">
                         <i class="fas fa-hand-holding sidebar-icon"></i>
-                        <span class="sidebar-text">Manage Borrowed E-Resource</span>
+                        <span class="sidebar-text">E-Resource Monitoring</span>
                     </a> 
                     <a href="{{ route('librarian.reports.index') }}" class="sidebar-link flex items-center space-x-3 text-gray-300 px-4 py-3 rounded-lg transition-all hover:text-white">
                         <i class="fas fa-chart-bar sidebar-icon"></i>
@@ -354,14 +354,14 @@
                     </div>
                     
                     <div class="mb-4">
-                        <label for="course_filter" class="block text-sm font-medium text-gray-700 mb-2">Course Filter (Optional)</label>
+                        <label for="course_filter" class="block text-sm font-medium text-gray-700 mb-2">Program Filter (Optional)</label>
                         <select id="course_filter" name="course" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="">All Courses</option>
-                            <option value="BSIT">BS Information Technology</option>
-                            <option value="BSN">BS Nursing</option>
-                            <option value="BSHM">BS Hospitality Management</option>
-                            <option value="BSED">BS Education</option>
-                            <option value="BSE">BS Entrepreneurship</option>
+                            <option value="">All Programs</option>
+                            <option value="BSE">BSE</option>
+                            <option value="BSHM">BSHM</option>
+                            <option value="BSIT">BSIT</option>
+                            <option value="BSN">BSN</option>
+                            <option value="BSTM">BSTM</option>
                         </select>
                     </div>
                     

@@ -7,6 +7,26 @@
     <title>{{ $book->title }} - Knowly Library</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     @vite(['resources/css/view-only-pdf.css'])
+    <style>
+        .mobile-watermark {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-watermark {
+                display: block;
+                position: fixed;
+                inset: 0;
+                z-index: 10001;
+                pointer-events: none;
+                opacity: 0.18;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220'%3E%3Cg transform='rotate(-28 110 110)'%3E%3Ctext x='20' y='110' fill='%23ffffff' fill-opacity='0.95' font-size='26' font-family='Arial, Helvetica, sans-serif' font-weight='700' letter-spacing='3'%3EKNOWLY%3C/text%3E%3C/g%3E%3C/svg%3E");
+                background-repeat: repeat;
+                background-size: 220px 220px;
+                background-position: center;
+            }
+        }
+    </style>
     
     @if($book->hasPdfFile())
     <!-- Load PDF.js library -->
@@ -20,6 +40,7 @@
     @endif
 </head>
 <body>
+    <div class="mobile-watermark" aria-hidden="true"></div>
     @if($book->hasPdfFile())
         <!-- Loading indicator -->
         <div id="pdf-loading" class="pdf-loading">

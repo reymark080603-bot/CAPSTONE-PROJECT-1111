@@ -61,7 +61,7 @@ class LibrarianController extends Controller
     public function dashboard()
     {
         // Get the authenticated user
-        $user = Auth::user();
+        $user = Auth::guard('librarian')->user();
         
         return view('dashboard.librarian', compact('user'));
     }
@@ -98,13 +98,24 @@ class LibrarianController extends Controller
         // Overdue books
 
 
-        // Popular categories (top 5) via normalized categories
-        $popularCategories = Category::select('categories.name as category', DB::raw('COUNT(book_category.book_id) as count'))
-            ->join('book_category', 'categories.id', '=', 'book_category.category_id')
-            ->groupBy('categories.name')
+        // Borrowing activity by resource type
+        $popularCategories = BorrowRecord::query()
+            ->join('books', 'borrow_records.book_id', '=', 'books.id')
+            ->selectRaw("COALESCE(NULLIF(books.resource_type, ''), 'book') as resource_type")
+            ->selectRaw('COUNT(borrow_records.id) as count')
+            ->groupBy('books.resource_type')
             ->orderByDesc('count')
-            ->limit(5)
-            ->get();
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'category' => match ($item->resource_type) {
+                        'e_journal' => 'E-Journal',
+                        'thesis' => 'E-Thesis',
+                        default => 'Book',
+                    },
+                    'count' => (int) $item->count,
+                ];
+            });
 
         // Monthly borrowing trends (last 12 months) - database agnostic
         $driver = DB::getDriverName();
@@ -163,7 +174,7 @@ class LibrarianController extends Controller
             ->get();
 
         // Books distribution by course/program for dashboard charts
-        $programOptions = ['BSIT', 'BSED', 'BSN', 'BSTourism', 'BSBM', 'BSHM'];
+        $programOptions = ['BSE', 'BSHM', 'BSIT', 'BSN', 'BSTM'];
         $booksByCourse = array_fill_keys($programOptions, 0);
 
         Book::query()
@@ -293,7 +304,7 @@ class LibrarianController extends Controller
      */
     public function getNotifications(Request $request)
     {
-        $librarian = Auth::user();
+        $librarian = Auth::guard('librarian')->user();
 
         $query = Notification::where('user_id', $librarian->id)
             ->orderBy('created_at', 'desc');
@@ -334,7 +345,7 @@ class LibrarianController extends Controller
      */
     public function getUnreadNotificationsCount(Request $request)
     {
-        $librarian = Auth::user();
+        $librarian = Auth::guard('librarian')->user();
 
         $count = Notification::where('user_id', $librarian->id)
             ->unread()
@@ -352,7 +363,7 @@ class LibrarianController extends Controller
     public function markNotificationAsRead(Request $request, Notification $notification)
     {
         // Ensure the notification belongs to the current librarian
-        if ($notification->user_id !== Auth::id()) {
+        if ($notification->user_id !== Auth::guard('librarian')->id()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized'
@@ -372,7 +383,7 @@ class LibrarianController extends Controller
      */
     public function markAllNotificationsAsRead(Request $request)
     {
-        $librarian = Auth::user();
+        $librarian = Auth::guard('librarian')->user();
 
         Notification::where('user_id', $librarian->id)
             ->unread()
@@ -393,7 +404,7 @@ class LibrarianController extends Controller
     public function deleteNotification(Request $request, Notification $notification)
     {
         // Ensure the notification belongs to the current librarian
-        if ($notification->user_id !== Auth::id()) {
+        if ($notification->user_id !== Auth::guard('librarian')->id()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized'
@@ -413,7 +424,7 @@ class LibrarianController extends Controller
      */
     public function clearAllNotifications(Request $request)
     {
-        $librarian = Auth::user();
+        $librarian = Auth::guard('librarian')->user();
         
         // Delete all notifications for the current librarian
         Notification::where('user_id', $librarian->id)->delete();
@@ -987,7 +998,7 @@ class LibrarianController extends Controller
     public function createBook()
     {
         $categories = Category::orderBy('name')->pluck('name');
-        $courses = ['BSIT', 'BSED', 'BSN', 'BSTourism', 'BSBM', 'BSHM'];
+        $courses = ['BSE', 'BSHM', 'BSIT', 'BSN', 'BSTM'];
         
         return view('librarian.books.Add Book', compact('categories', 'courses'));
     }
@@ -1164,11 +1175,14 @@ class LibrarianController extends Controller
             }
         }
         
-        // Handle category relationship
-        $categoryIds = [];
-        if ($request->filled('category')) {
-            $category = \App\Models\Category::firstOrCreate(['name' => $request->category]);
-            $categoryIds[] = $category->id;
+        // Only update category relationships when the form explicitly sends category.
+        $categoryIds = null;
+        if ($request->has('category')) {
+            $categoryIds = [];
+            if ($request->filled('category')) {
+                $category = \App\Models\Category::firstOrCreate(['name' => $request->category]);
+                $categoryIds[] = $category->id;
+            }
         }
         
         // Handle cover photo upload
@@ -1282,7 +1296,7 @@ class LibrarianController extends Controller
         $book->load(['authors', 'categories', 'publisher']);
         
         $categories = Category::orderBy('name')->pluck('name');
-        $courses = ['BSIT', 'BSED', 'BSN', 'BSTourism', 'BSBM', 'BSHM'];
+        $courses = ['BSE', 'BSHM', 'BSIT', 'BSN', 'BSTM'];
         
         return view('librarian.books.Edit Book', compact('book', 'categories', 'courses'));
     }
@@ -1360,8 +1374,8 @@ class LibrarianController extends Controller
                 $book->authors()->sync($authorIds);
             }
             
-            // Sync category relationships if provided
-            if (isset($categoryIds)) {
+            // Leave existing categories untouched when category is not part of the form.
+            if ($categoryIds !== null) {
                 $book->categories()->sync($categoryIds);
             }
 
@@ -1602,10 +1616,15 @@ class LibrarianController extends Controller
             });
         }
 
-        // Filter by course
-        if ($request->filled('course')) {
-            $query->where('course', $request->course);
-        }
+          // Filter by course
+          if ($request->filled('course')) {
+              $query->where('course', $request->course);
+          }
+
+          // Filter by campus
+          if ($request->filled('campus')) {
+              $query->where('campus', $request->campus);
+          }
 
         // Filter by year level
         if ($request->filled('year')) {
@@ -1649,12 +1668,13 @@ class LibrarianController extends Controller
                 'mi' => $student->mi ?? '',
                 'gender' => $student->gender ?? '',
                 'email' => $student->email ?? '',
-                'library_id' => $student->library_id ?? '',
-                'course' => $student->course?->name ?? '',
-                'year' => $student->yearLevel?->level ?? $student->year ?? '',
-                'created_at' => optional($student->created_at)->format('Y-m-d H:i:s') ?? '',
-                'email_verified_at' => $student->email_verified_at,
-                'status' => $student->email_verified_at ? 'Active' : 'Pending',
+                  'library_id' => $student->library_id ?? '',
+                  'course' => $student->course?->name ?? '',
+                  'year' => $student->yearLevel?->level ?? $student->year ?? '',
+                  'campus' => $student->campus ?? '',
+                  'created_at' => optional($student->created_at)->format('Y-m-d H:i:s') ?? '',
+                  'email_verified_at' => $student->email_verified_at,
+                  'status' => $student->email_verified_at ? 'Active' : 'Pending',
             ];
         })->values()->all();
 

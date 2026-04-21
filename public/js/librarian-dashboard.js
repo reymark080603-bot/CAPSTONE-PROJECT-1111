@@ -571,7 +571,7 @@ class LibrarianDashboard {
         
         if (!data.length) {
             const container = ctx.parentElement;
-            container.innerHTML = '<div class="flex justify-center items-center h-72"><i class="fas fa-chart-bar text-2xl text-gray-400 mr-3"></i><span class="text-gray-600">No category data available</span></div>';
+            container.innerHTML = '<div class="flex justify-center items-center h-72"><i class="fas fa-chart-bar text-2xl text-gray-400 mr-3"></i><span class="text-gray-600">No resource type data available</span></div>';
             return;
         }
 
@@ -587,7 +587,7 @@ class LibrarianDashboard {
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Books',
+                    label: 'Borrowed Resources',
                     data: values,
                     backgroundColor: [
                         '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'
@@ -1228,37 +1228,14 @@ class LibrarianDashboard {
             this.updateNotificationBadge();
             
         } catch (error) {
-            
-            // Create some sample notifications for demo
-            this.createSampleNotifications();
+            this.notifications = [];
+            this.unreadCount = 0;
+            this.renderNotifications('Unable to load notifications right now.');
+            this.updateNotificationBadge();
         }
     }
 
-    createSampleNotifications() {
-        this.notifications = [
-            {
-                id: 1,
-                type: 'info',
-                message: 'Welcome to the Library Dashboard!',
-                description: 'This is a sample notification to test the system.',
-                is_read: false,
-                created_at: new Date().toISOString()
-            },
-            {
-                id: 2,
-                type: 'success',
-                message: 'System operational',
-                description: 'All library systems are functioning normally.',
-                is_read: false,
-                created_at: new Date(Date.now() - 3600000).toISOString()
-            }
-        ];
-        this.unreadCount = this.notifications.filter(n => !n.is_read).length;
-        this.renderNotifications();
-        this.updateNotificationBadge();
-    }
-
-    renderNotifications() {
+    renderNotifications(emptyMessage = 'No notifications') {
         const container = document.getElementById('notifications-list');
         const badge = document.getElementById('notification-badge');
         
@@ -1268,7 +1245,7 @@ class LibrarianDashboard {
             container.innerHTML = `
                 <div class="p-4 text-center text-gray-500">
                     <i class="fas fa-bell-slash text-2xl mb-2"></i>
-                    <p class="text-sm">No notifications</p>
+                    <p class="text-sm">${emptyMessage}</p>
                 </div>
             `;
             return;

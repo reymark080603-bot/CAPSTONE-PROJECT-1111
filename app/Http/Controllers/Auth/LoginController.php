@@ -117,7 +117,7 @@ class LoginController extends Controller
     }
 
     /**
-     * Handle student login request (Library ID + Password only).
+     * Handle student login request (Student Portal Email + Password).
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\RedirectResponse
@@ -127,7 +127,7 @@ class LoginController extends Controller
         try {
             // Validate input
             $validator = Validator::make($request->all(), [
-                'library_id' => 'required|string',
+                'email' => 'required|email',
                 'password' => 'required|string|min:6',
             ]);
 
@@ -139,17 +139,17 @@ class LoginController extends Controller
 
             // Log student login attempt
             Log::info('Student Login Attempt', [
-                'library_id' => $request->library_id,
+                'email' => $request->email,
                 'password_provided' => !empty($request->password),
                 'request_all' => $request->all()
             ]);
 
-            // Find student by library_id
-            Log::info('Looking for student with library_id', ['library_id' => $request->library_id]);
-            
-            $user = User::where('library_id', $request->library_id)->first();
-            
-            Log::info('User found by library_id', [
+            // Find student by email
+            Log::info('Looking for student with email', ['email' => $request->email]);
+
+            $user = User::where('email', $request->email)->first();
+
+            Log::info('User found by email', [
                 'user_found' => !is_null($user),
                 'user_id' => $user ? $user->id : null,
                 'user_email' => $user ? $user->email : null,
@@ -160,13 +160,13 @@ class LoginController extends Controller
             // Check if user exists and is a student
             if (!$user || !$user->isStudent()) {
                 Log::warning('Student login failed - user not found or not student', [
-                    'library_id' => $request->library_id,
+                    'email' => $request->email,
                     'user_exists' => !is_null($user),
                     'is_student' => $user ? $user->isStudent() : false
                 ]);
 
                 return redirect()->back()
-                    ->withErrors(['library_id' => 'The provided Library ID and password do not match our records.'])
+                    ->withErrors(['email' => 'The provided email and password do not match our records.'])
                     ->withInput($request->except('password'));
             }
 
@@ -180,12 +180,12 @@ class LoginController extends Controller
 
             if (!$passwordValid) {
                 Log::warning('Student login failed - invalid password', [
-                    'library_id' => $request->library_id,
+                    'email' => $request->email,
                     'user_id' => $user->id
                 ]);
 
                 return redirect()->back()
-                    ->withErrors(['library_id' => 'The provided Library ID and password do not match our records.'])
+                    ->withErrors(['email' => 'The provided email and password do not match our records.'])
                     ->withInput($request->except('password'));
             }
 
@@ -193,11 +193,11 @@ class LoginController extends Controller
             if (empty($user->email_verified_at)) {
                 Log::warning('Student login blocked - deactivated', [
                     'user_id' => $user->id,
-                    'library_id' => $user->library_id
+                    'email' => $user->email
                 ]);
 
                 return redirect()->back()
-                    ->withErrors(['library_id' => 'Your account is deactivated. Please contact the librarian.'])
+                    ->withErrors(['email' => 'Your account is deactivated. Please contact the librarian.'])
                     ->withInput($request->except('password'));
             }
 
@@ -216,7 +216,7 @@ class LoginController extends Controller
             
             return redirect()->back()
                 ->withErrors([
-                    'library_id' => 'Login failed: ' . $e->getMessage() . '. Please try again.',
+                    'email' => 'Login failed: ' . $e->getMessage() . '. Please try again.',
                 ])
                 ->withInput($request->except('password'));
         }

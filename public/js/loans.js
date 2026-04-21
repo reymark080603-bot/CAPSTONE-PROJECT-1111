@@ -13,6 +13,20 @@ class LoansManager {
 
         this.init();
     }
+
+    getRoute(key, fallback = '') {
+        return window.loansPageRoutes?.[key] || fallback;
+    }
+
+    getBookUrl(bookId) {
+        const base = this.getRoute('booksBase', '/student/books');
+        return `${String(base).replace(/\/$/, '')}/${bookId}`;
+    }
+
+    getReturnUrl(loanId) {
+        const base = this.getRoute('returnBase', '/student/borrow-records');
+        return `${String(base).replace(/\/$/, '')}/${loanId}/return`;
+    }
     
     init() {
         this.setupEventListeners();
@@ -214,7 +228,7 @@ class LoansManager {
         this.showLoadingState();
         
         try {
-            const response = await fetch('/student/loans/api', {
+            const response = await fetch(this.getRoute('loansApi', '/student/loans/api'), {
                 headers: {
                     'Accept': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest'
@@ -240,7 +254,7 @@ class LoansManager {
     
     async loadStatistics() {
         try {
-            const response = await fetch('/student/loans/statistics', {
+            const response = await fetch(this.getRoute('loansStats', '/student/loans/statistics'), {
                 headers: {
                     'Accept': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest'
@@ -312,7 +326,8 @@ class LoansManager {
                 const author = loan.book?.author?.toLowerCase() || '';
                 const status = this.getLoanStatus(loan).toLowerCase();
                 const category = loan.book?.category?.toLowerCase() || '';
-                return title.includes(term) || author.includes(term) || status.includes(term) || category.includes(term);
+                const resourceType = loan.book?.resource_type?.toLowerCase() || '';
+                return title.includes(term) || author.includes(term) || status.includes(term) || category.includes(term) || resourceType.includes(term);
             });
         }
 
@@ -334,8 +349,8 @@ class LoansManager {
             filtered = filtered.filter(loan => this.getLoanStatus(loan).toLowerCase() === f.status.toLowerCase());
         }
 
-        if (f.category) {
-            filtered = filtered.filter(loan => (loan.book?.category || '').toLowerCase() === f.category.toLowerCase());
+        if (f.type) {
+            filtered = filtered.filter(loan => (loan.book?.resource_type || '').toLowerCase() === f.type.toLowerCase());
         }
 
         return filtered;
@@ -432,7 +447,7 @@ class LoansManager {
                     Search Results
                 </div>
                 ${rows}
-                <a href="/student/books?search=${encodeURIComponent(query)}" class="block px-3 py-2 text-xs text-blue-700 hover:bg-blue-50 border-t border-gray-200 font-medium">
+                <a href="${this.escapeHtml(`${this.getRoute('booksIndex', '/student/books')}?search=${encodeURIComponent(query)}`)}" class="block px-3 py-2 text-xs text-blue-700 hover:bg-blue-50 border-t border-gray-200 font-medium">
                     See all results for "${this.escapeHtml(query)}"
                 </a>
             `;
@@ -452,7 +467,9 @@ class LoansManager {
             resultsPanel.classList.remove('hidden');
 
             try {
-                const response = await fetch(`/dashboard/search?q=${encodeURIComponent(term)}`, {
+                const searchUrl = new URL(this.getRoute('search', '/dashboard/search'), window.location.origin);
+                searchUrl.searchParams.set('q', term);
+                const response = await fetch(searchUrl.toString(), {
                     headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
                 });
 
@@ -477,7 +494,7 @@ class LoansManager {
 
             if (searchTerm) {
                 closeResults();
-                window.location.href = `/student/books?search=${encodeURIComponent(searchTerm)}`;
+                window.location.href = `${this.getRoute('booksIndex', '/student/books')}?search=${encodeURIComponent(searchTerm)}`;
             }
         };
 
@@ -787,7 +804,7 @@ class LoansManager {
         let p = String(path);
         if (/^https?:\/\//i.test(p) || p.startsWith('/')) return p;
         p = p.replace(/^\.+\/?/, '');
-        return '/' + p;
+        return `${window.location.origin}/${p}`;
     }
     
     async handleReturnClick(e, loanId) {
@@ -804,7 +821,7 @@ class LoansManager {
         if (!this.selectedLoanId) return;
         
         try {
-            const response = await fetch(`/student/borrow-records/${this.selectedLoanId}/return`, {
+            const response = await fetch(this.getReturnUrl(this.selectedLoanId), {
                 method: 'POST',
                 headers: {
                     'Accept': 'application/json',
@@ -835,7 +852,7 @@ class LoansManager {
         if (!bookId) return;
         
         // Redirect to book details page
-        window.location.href = `/student/books/${bookId}`;
+        window.location.href = this.getBookUrl(bookId);
     }
     
     closeModal(modalId) {

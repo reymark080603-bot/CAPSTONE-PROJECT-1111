@@ -228,8 +228,8 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
         <div class="bg-white rounded-lg shadow-sm border border-gray-200">
             <div class="p-6 border-b border-gray-200">
-                <h3 class="text-xl font-semibold text-gray-900">Category of Books</h3>
-                <p class="text-gray-600 text-sm">Borrowing activity by category</p>
+                <h3 class="text-xl font-semibold text-gray-900">Resource Types</h3>
+                <p class="text-gray-600 text-sm">Borrowing activity by resource type</p>
             </div>
             <div class="p-6">
                 <div class="h-72">

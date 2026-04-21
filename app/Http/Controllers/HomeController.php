@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Book;
-use App\Models\Favorite;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -12,10 +11,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use App\Models\User;
-use App\Models\Role;
 use App\Models\BorrowRecord;
-use App\Models\ReturnRecord;
-use App\Models\Fine;
 use App\Services\LibrarianNotificationService;
 
 
@@ -208,29 +204,101 @@ class HomeController extends Controller
     {
         $user = Auth::guard('student')->user();
         $search = request('search');
+        $resourceType = request('resource_type');
+        $scope = request('scope');
         
         if (!$user) {
             return redirect()->route('login')->with('error', 'Please login to access books.');
         }
         
-        // Get books data - show all available books for open access system
+        // Get program-specific resources for the student and arrange them by type
         try {
-            $query = Book::where('availability_status', 'available')
+            $borrowedBooks = BorrowRecord::query()
+                ->where('user_id', $user->id)
+                ->where('status', 'borrowed')
+                ->pluck('book_id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+
+            $baseQuery = $this->buildCourseResourceQuery($user, false)
                 ->with(['categories', 'authors', 'publisher']);
             
             // Handle search from student dashboard search bar
             if ($search) {
                 $searchTerm = '%' . trim($search) . '%';
-                $query->where(function ($q) use ($searchTerm) {
+                $baseQuery->where(function ($q) use ($searchTerm) {
                     $q->where('title', 'LIKE', $searchTerm)
                       ->orWhere('author', 'LIKE', $searchTerm)
-                      ->orWhere('category', 'LIKE', $searchTerm);
+                      ->orWhere('category', 'LIKE', $searchTerm)
+                      ->orWhere('course', 'LIKE', $searchTerm)
+                      ->orWhere('program', 'LIKE', $searchTerm)
+                      ->orWhere('resource_type', 'LIKE', $searchTerm);
                 });
             }
 
-            $books = $query->orderBy('title')->paginate(12);
+            $books = (clone $baseQuery)
+                ->where(function ($query) {
+                    $query->whereNull('resource_type')
+                        ->orWhere('resource_type', '')
+                        ->orWhere('resource_type', 'book');
+                })
+                ->orderBy('title')
+                ->get();
+
+            $recommendedBooks = $this->buildCourseResourceQuery($user, true)
+                ->with(['categories', 'authors', 'publisher'])
+                ->orderByDesc('created_at')
+                ->limit(6)
+                ->get();
+
+            $selectedResources = null;
+            if ($scope === 'recommended') {
+                $selectedResources = $this->buildCourseResourceQuery($user, true)
+                    ->with(['categories', 'authors', 'publisher'])
+                    ->orderBy('title')
+                    ->paginate(20)
+                    ->withQueryString();
+            } elseif (in_array($resourceType, ['book', 'e_journal', 'thesis'], true)) {
+                $selectedQuery = clone $baseQuery;
+
+                if ($resourceType === 'book') {
+                    $selectedQuery->where(function ($query) {
+                        $query->whereNull('resource_type')
+                            ->orWhere('resource_type', '')
+                            ->orWhere('resource_type', 'book');
+                    });
+                } else {
+                    $selectedQuery->where('resource_type', $resourceType);
+                }
+
+                $selectedResources = $selectedQuery
+                    ->orderBy('title')
+                    ->paginate(20)
+                    ->withQueryString();
+            }
+
+            $eJournalResources = (clone $baseQuery)
+                ->where('resource_type', 'e_journal')
+                ->orderBy('title')
+                ->get();
+
+            $thesisResources = (clone $baseQuery)
+                ->where('resource_type', 'thesis')
+                ->orderBy('title')
+                ->get();
             
-            return view('dashboard.books', compact('books', 'search', 'user'));
+            return view('dashboard.books', compact(
+                'books',
+                'search',
+                'user',
+                'borrowedBooks',
+                'resourceType',
+                'scope',
+                'selectedResources',
+                'recommendedBooks',
+                'eJournalResources',
+                'thesisResources'
+            ));
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Failed to load books.');
         }
@@ -1075,5 +1143,85 @@ class HomeController extends Controller
         }
         
         return view('dashboard.borrow-book', compact('user'));
+    }
+
+    private function buildCourseResourceQuery(User $user, bool $excludeBorrowedByUser = false)
+    {
+        $query = Book::query()->where('availability_status', 'available');
+
+        if ($excludeBorrowedByUser) {
+            $query->whereDoesntHave('borrowRecords', function ($borrowQuery) use ($user) {
+                $borrowQuery->where('user_id', $user->id)
+                    ->where('status', 'borrowed');
+            });
+        }
+
+        $courseVariants = $this->getUserCourseVariants($user);
+        if (empty($courseVariants)) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query->where(function ($courseQuery) use ($courseVariants) {
+            foreach ($courseVariants as $variant) {
+                $courseQuery->orWhere('course', $variant)
+                    ->orWhere('program', $variant)
+                    ->orWhere('course', 'LIKE', '%' . $variant . '%')
+                    ->orWhere('program', 'LIKE', '%' . $variant . '%');
+            }
+        });
+    }
+
+    private function getUserCourseVariants(User $user): array
+    {
+        $variants = collect([
+            $user->course_name ?? null,
+            $user->course ?? null,
+        ]);
+
+        if ($user->course_id) {
+            $course = DB::table('courses')->find($user->course_id);
+            if ($course) {
+                $variants = $variants->merge([
+                    $course->name ?? null,
+                    $course->code ?? null,
+                ]);
+            }
+        }
+
+        $courseMappings = [
+            'BSIT' => ['Information Technology', 'BS Information Technology'],
+            'BSN' => ['Nursing', 'BS Nursing'],
+            'BSNURSING' => ['Nursing', 'BS Nursing'],
+            'NURSING' => ['BSN', 'BS Nursing'],
+            'BSHM' => ['Hospitality Management', 'BS Hospitality Management'],
+            'HM' => ['BSHM', 'Hospitality Management'],
+            'BSED' => ['Education', 'BS Education'],
+            'EDUCATION' => ['BSED', 'BS Education'],
+            'BSE' => ['Entrepreneurship', 'BS Entrepreneurship'],
+            'BSENTREP' => ['Entrepreneurship', 'BS Entrepreneurship'],
+            'ENTREP' => ['BS Entrepreneurship', 'Entrepreneurship'],
+            'BSBM' => ['Business Management', 'BS Business Management'],
+            'BUSINESS MANAGEMENT' => ['BSBM', 'BS Business Management'],
+            'BSTOURISM' => ['Tourism', 'BS Tourism'],
+            'TOURISM' => ['BSTourism', 'BS Tourism'],
+        ];
+
+        $variants = $variants->flatMap(function ($value) use ($courseMappings) {
+            $value = trim((string) $value);
+            if ($value === '') {
+                return [];
+            }
+
+            $normalized = strtoupper(str_replace(['.', '-', '_'], '', $value));
+
+            return array_merge([$value], $courseMappings[$normalized] ?? []);
+        });
+
+        return $variants
+            ->map(fn ($value) => trim((string) $value))
+            ->filter()
+            ->unique(fn ($value) => strtolower($value))
+            ->values()
+            ->all();
     }
 }

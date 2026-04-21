@@ -310,7 +310,7 @@
                                 <i class="fas fa-university text-gray-500 mr-1"></i>
                                 Target Program
                             </label>
-                            @php($crs = isset($courses) ? $courses : ['BSIT','BSED','BSN','BSTourism','BSBM','BSHM'])
+                            @php($crs = isset($courses) ? $courses : ['BSE','BSHM','BSIT','BSN','BSTM'])
                             <select id="course" name="course" class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
                                 <option value="">All Programs</option>
                                 @foreach($crs as $c)

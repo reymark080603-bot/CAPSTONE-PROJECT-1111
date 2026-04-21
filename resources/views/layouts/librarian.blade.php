@@ -108,7 +108,7 @@
                     </a>
                     <a href="{{ route('librarian.loans.index') }}" class="sidebar-link flex items-center space-x-3 {{ request()->routeIs('librarian.loans.*') ? 'text-white active' : 'text-gray-300' }} px-4 py-3 rounded-lg transition-all hover:text-white">
                         <i class="fas fa-hand-holding sidebar-icon"></i>
-                        <span class="sidebar-text">Manage Borrowed E-Resource</span>
+                        <span class="sidebar-text">E-Resource Monitoring</span>
                     </a>
                     <a href="{{ route('librarian.reports.index') }}" class="sidebar-link flex items-center space-x-3 {{ request()->routeIs('librarian.reports.*') ? 'text-white active' : 'text-gray-300' }} px-4 py-3 rounded-lg transition-all hover:text-white">
                         <i class="fas fa-chart-bar sidebar-icon"></i>
@@ -208,15 +208,16 @@
             async function loadAlerts() {
                 try {
                     const res = await fetch('/librarian/dashboard/alerts', {
-                        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                        }
                     });
                     if (!res.ok) return;
                     const data = await res.json();
-                    const alerts = data.alerts || [];
-
-                    // Determine unread based on last read timestamp stored in localStorage
-                    const readAt = parseInt(localStorage.getItem('librarianAlertsReadAt') || '0', 10);
-                    const unread = alerts.filter(a => new Date(a.created_at).getTime() > readAt).length;
+                    const alerts = data.notifications || [];
+                    const unread = data.unread_count ?? alerts.filter(a => !a.is_read).length;
 
                     if (badge) {
                         if (unread > 0) { badge.textContent = unread; badge.classList.remove('hidden'); }
@@ -227,11 +228,11 @@
                             list.innerHTML = '<div class="p-4 text-center text-gray-500">No alerts</div>';
                         } else {
                             list.innerHTML = alerts.map(a => {
-                                const isUnread = new Date(a.created_at).getTime() > readAt;
+                                const isUnread = !a.is_read;
                                 return (
                                 `<div class="p-3 border-b last:border-b-0 ${isUnread ? '' : 'opacity-60'}">
-                                    <div class="font-medium text-sm">${a.title}</div>
-                                    <div class="text-xs text-gray-600 mt-1">${a.message}</div>
+                                    <div class="font-medium text-sm">${a.message || 'Notification'}</div>
+                                    <div class="text-xs text-gray-600 mt-1">${a.description || ''}</div>
                                     <div class="text-xs text-gray-400 mt-1">${new Date(a.created_at).toLocaleString()}</div>
                                 </div>`);
                             }).join('');
@@ -257,18 +258,39 @@
                 const markAll = document.getElementById('layout-mark-all');
                 const clearAll = document.getElementById('layout-clear-all');
                 if (markAll) {
-                    markAll.addEventListener('click', function(e){
+                    markAll.addEventListener('click', async function(e){
                         e.stopPropagation();
-                        if (badge) badge.classList.add('hidden');
-                        localStorage.setItem('librarianAlertsReadAt', Date.now().toString());
+                        try {
+                            await fetch('/librarian/dashboard/notifications/mark-all-read', {
+                                method: 'POST',
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                                }
+                            });
+                        } catch (e) {
+                            // keep UI responsive even if request fails
+                        }
+                        loadAlerts();
                     });
                 }
                 if (clearAll) {
-                    clearAll.addEventListener('click', function(e){
+                    clearAll.addEventListener('click', async function(e){
                         e.stopPropagation();
-                        const list = document.getElementById('layout-notifications-list');
-                        if (list) list.innerHTML = '<div class="p-4 text-center text-gray-500">No alerts</div>';
-                        if (badge) badge.classList.add('hidden');
+                        try {
+                            await fetch('/librarian/dashboard/notifications', {
+                                method: 'DELETE',
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                                }
+                            });
+                        } catch (e) {
+                            // keep UI responsive even if request fails
+                        }
+                        loadAlerts();
                     });
                 }
             }

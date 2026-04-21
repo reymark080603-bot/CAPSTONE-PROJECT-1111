@@ -84,12 +84,11 @@
                 <label for="courseFilter" class="block text-sm font-medium text-gray-700 mb-2">Program</label>
                 <select id="courseFilter" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
                     <option value="">All Programs</option>
-                    <option value="BSIT">BSIT</option>
-                    <option value="BSED">BSED</option>
-                    <option value="BSN">BSN</option>
-                    <option value="BSTourism">BSTourism</option>
-                    <option value="BSBM">BSBM</option>
+                    <option value="BSE">BSE</option>
                     <option value="BSHM">BSHM</option>
+                    <option value="BSIT">BSIT</option>
+                    <option value="BSN">BSN</option>
+                    <option value="BSTM">BSTM</option>
                 </select>
             </div>
             <div>
@@ -224,12 +223,11 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2">Default Program</label>
                 <select id="bulkCourse" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="">All Programs</option>
-                    <option value="BSIT">BSIT</option>
-                    <option value="BSED">BSED</option>
-                    <option value="BSN">BSN</option>
-                    <option value="BSTourism">BSTourism</option>
-                    <option value="BSBM">BSBM</option>
+                    <option value="BSE">BSE</option>
                     <option value="BSHM">BSHM</option>
+                    <option value="BSIT">BSIT</option>
+                    <option value="BSN">BSN</option>
+                    <option value="BSTM">BSTM</option>
                 </select>
             </div>
         </div>

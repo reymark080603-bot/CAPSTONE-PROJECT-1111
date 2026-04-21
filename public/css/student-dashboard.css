@@ -65,6 +65,28 @@ body {
     min-width: 0;
 }
 
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+.quick-search-form {
+    position: relative;
+    flex: 0 1 auto;
+    min-width: 0;
+}
+
+.header-search-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    font-size: 1rem;
+    line-height: 1;
+}
+
 /* Ensure proper header layout on all pages */
 .header > div:first-child {
     flex: 0 0 auto; /* Don't grow, stay natural size */
@@ -115,6 +137,10 @@ body {
         gap: 0.5rem;
     }
 
+    .header-actions {
+        gap: 0.5rem;
+    }
+
     .header .quick-search-form {
         flex: 1 1 auto;
         min-width: 0;
@@ -122,6 +148,32 @@ body {
     }
     
     .header #header-search {
+        width: clamp(8.5rem, 34vw, 12rem) !important;
+    }
+
+    .homepage-dashboard .homepage-profile-group {
+        display: none !important;
+    }
+
+    .homepage-dashboard .header-actions {
+        gap: 0.4rem;
+    }
+
+    .homepage-dashboard .quick-search-form {
+        max-width: 0;
+        opacity: 0;
+        overflow: hidden;
+        pointer-events: none;
+        transition: max-width 0.25s ease, opacity 0.2s ease;
+    }
+
+    .homepage-dashboard .quick-search-form.mobile-search-open {
+        max-width: 12rem;
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .homepage-dashboard .quick-search-form.mobile-search-open #header-search {
         width: clamp(8.5rem, 34vw, 12rem) !important;
     }
 }
@@ -141,6 +193,10 @@ body {
 
     .header .flex.items-center.space-x-4 {
         gap: 0.25rem;
+    }
+
+    .header-actions {
+        gap: 0.35rem;
     }
 
     .header .quick-search-form {
@@ -171,6 +227,26 @@ body {
         font-size: 0.8125rem;
         padding-top: 0.625rem;
         padding-bottom: 0.625rem;
+    }
+
+    .homepage-dashboard .header-actions {
+        gap: 0.25rem;
+    }
+
+    .homepage-dashboard .quick-search-form {
+        max-width: 0;
+    }
+
+    .homepage-dashboard .quick-search-form.mobile-search-open {
+        max-width: 10rem;
+    }
+
+    .homepage-dashboard .quick-search-form.mobile-search-open #header-search {
+        width: clamp(7.5rem, 38vw, 10rem) !important;
+    }
+
+    .header-search-icon-btn {
+        font-size: 0.95rem;
     }
 
     #header-search-results {
@@ -716,6 +792,10 @@ body {
     .book-carousel {
         padding-right: 1.5rem;
         margin-right: -0.5rem;
+    }
+
+    .carousel-arrow {
+        display: none !important;
     }
 }
 

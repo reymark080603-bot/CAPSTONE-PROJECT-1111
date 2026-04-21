@@ -18,6 +18,7 @@ class BooksManager {
             booksPerPage: 18,
             totalPages: 1
         };
+        this.borrowedBookIds = new Set(((window.booksPageRoutes && window.booksPageRoutes.borrowedBookIds) || []).map(id => Number(id)));
 
         // Wait for DOM to be ready before initializing
         if (document.readyState === 'loading') {
@@ -56,6 +57,24 @@ class BooksManager {
         this.initSearchFromUrl();
         this.setupEventListeners();
         this.loadBooks();
+    }
+
+    getRoute(name, fallback = '') {
+        return (window.booksPageRoutes && window.booksPageRoutes[name]) || fallback;
+    }
+
+    getBookUrl(bookId) {
+        const base = this.getRoute('booksBase', '/student/books');
+        return `${base.replace(/\/$/, '')}/${bookId}`;
+    }
+
+    getBorrowUrl(bookId) {
+        const base = this.getRoute('borrowBase', '/student/books');
+        return `${base.replace(/\/$/, '')}/${bookId}/borrow`;
+    }
+
+    isBorrowed(bookId) {
+        return this.borrowedBookIds.has(Number(bookId));
     }
 
     initSearchFromUrl() {
@@ -174,30 +193,7 @@ class BooksManager {
         const showAllRecommendedBtn = document.getElementById('show-all-recommended');
         if (showAllRecommendedBtn) {
             showAllRecommendedBtn.addEventListener('click', () => {
-                console.log('View All recommended button clicked');
-                
-                // Filter to show only recommended books
-                this.filterRecommendedBooks();
-                
-                // Scroll to the books grid
-                const booksContainer = document.getElementById('books-grid');
-                if (booksContainer) {
-                    console.log('Found books container, scrolling...');
-                    booksContainer.scrollIntoView({ 
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                } else {
-                    console.warn('Books container not found');
-                    // Fallback: scroll to All Books section
-                    const allBooksSection = document.getElementById('all-books-section');
-                    if (allBooksSection) {
-                        allBooksSection.scrollIntoView({ 
-                            behavior: 'smooth',
-                            block: 'start'
-                        });
-                    }
-                }
+                window.location.href = `${this.getRoute('booksIndex', '/student/books')}?scope=recommended`;
             });
         } else {
             console.warn('View All recommended button not found');
@@ -262,6 +258,7 @@ class BooksManager {
                     title: bookEl.dataset.bookTitle?.trim() || bookEl.querySelector('h3')?.textContent?.trim() || 'Untitled',
                     author: bookEl.dataset.bookAuthor?.trim() || bookEl.querySelector('.text-gray-600.font-medium')?.textContent?.trim() || 'Unknown Author',
                     category: bookEl.dataset.bookCategory?.trim() || 'General',
+                    resourceType: bookEl.dataset.bookResourceType?.trim() || 'book',
                     course: bookEl.dataset.bookCourse?.trim() || 'General',
                     yearLevel: bookEl.dataset.bookYearLevel?.trim() || '',
                     publishedYear: bookEl.dataset.bookPublishedYear?.trim() || '',
@@ -301,7 +298,7 @@ class BooksManager {
 
         if (this.state.filters.category) {
             const categoryNeedle = this.normalizeFilterValue(this.state.filters.category);
-            results = results.filter(book => this.normalizeFilterValue(book.category).includes(categoryNeedle));
+            results = results.filter(book => this.normalizeFilterValue(book.resourceType).includes(categoryNeedle));
         }
 
         if (this.state.filters.program) {
@@ -439,7 +436,7 @@ class BooksManager {
         }
 
         if (this.state.filters.category) {
-            tags.push(`Category: ${this.elements.filterCategory?.selectedOptions?.[0]?.text || this.state.filters.category}`);
+            tags.push(`Type: ${this.elements.filterCategory?.selectedOptions?.[0]?.text || this.state.filters.category}`);
         }
 
         if (this.state.filters.program) {
@@ -668,6 +665,13 @@ class BooksManager {
         const coverUrl = book.cover || '';
         const cover = coverUrl ? `<img src="${coverUrl}" alt="${this.escapeHtml(book.title)}" class="w-full h-full object-cover book-cover-img" onload="this.style.opacity='1'; this.nextElementSibling.style.display='none';" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" style="opacity: 0; transition: opacity 0.3s ease-in-out;" loading="lazy">` : '';
 
+        const actionButtons = this.isBorrowed(book.id)
+            ? `<a href="${this.getBookUrl(book.id)}" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-1.5 px-2 rounded text-xs text-center transition-all duration-200 shadow hover:shadow-md">View</a>`
+            : `
+                    <a href="${this.getBookUrl(book.id)}" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-1.5 px-2 rounded text-xs text-center transition-all duration-200 shadow hover:shadow-md">View</a>
+                    <button class="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-1.5 px-2 rounded text-xs transition-all duration-200 shadow hover:shadow-md btn-borrow" data-book-id="${book.id}">Borrow</button>
+              `;
+
         return `
         <div class="group relative bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 book-card overflow-hidden" data-book-id="${book.id}">
             <div class="relative aspect-[3/4] bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden shadow border border-gray-200">
@@ -705,12 +709,11 @@ class BooksManager {
                 <div class="absolute right-0 top-0.5 bottom-0.5 w-0.5 bg-gray-300 rounded-r"></div>
             </div>
             <div class="p-2 bg-white">
-                <p class="text-gray-600 text-xs mb-2 line-clamp-1">
-                    ${this.escapeHtml(book.description || 'No description.')}
+                <p class="text-gray-600 text-xs mb-2 line-clamp-1" title="${this.escapeHtml(book.author || 'Unknown Author')}">
+                    ${this.escapeHtml(book.author || 'Unknown Author')}
                 </p>
                 <div class="flex gap-1">
-                    <a href="/student/books/${book.id}" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-1.5 px-2 rounded text-xs text-center transition-all duration-200 shadow hover:shadow-md">View</a>
-                    <button class="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-1.5 px-2 rounded text-xs transition-all duration-200 shadow hover:shadow-md btn-borrow" data-book-id="${book.id}">Borrow</button>
+                    ${actionButtons}
                 </div>
             </div>
         </div>`;
@@ -802,7 +805,7 @@ class BooksManager {
         try {
             console.log('Attempting to borrow book:', bookId);
             
-            const url = `/student/books/${bookId}/borrow`;
+            const url = this.getBorrowUrl(bookId);
             console.log('Request URL:', url);
             console.log('Request method: POST');
             
@@ -828,14 +831,17 @@ class BooksManager {
             console.log('Response data:', data);
 
             if (response.ok && data.success) {
+                this.borrowedBookIds.add(Number(bookId));
                 // Show success message
                 this.showBorrowSuccess();
                 // Hide popup AFTER success
                 this.hideBorrowPopup();
+                this.renderBooks();
+                this.updateResultsCount();
                 
                 // Redirect to book details page after a delay (same as student dashboard)
                 setTimeout(() => {
-                    window.location.href = `/student/books/${bookId}`;
+                    window.location.href = this.getBookUrl(bookId);
                 }, 1500);
             } else {
                 // Show error message

@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>My Borrowed Books - Knowly</title>
+    <title>Borrowed E-Resources - Knowly</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <link href="{{ asset('css/student-dashboard.css') }}" rel="stylesheet">
-    <link href="{{ asset('css/loans.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/student-dashboard.css') }}?v={{ filemtime(public_path('css/student-dashboard.css')) }}" rel="stylesheet">
+    <link href="{{ asset('css/loans.css') }}?v={{ filemtime(public_path('css/loans.css')) }}" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -26,19 +26,20 @@
                 </div>
             </div>
             
-            <div class="flex items-center space-x-4 flex-shrink-0">
+            <div class="header-actions flex items-center flex-shrink-0">
                 <!-- Quick Search Bar -->
-                <form action="{{ route('student.books') }}" method="GET" class="quick-search-form relative">
+                <form action="{{ route('student.books') }}" method="GET" id="header-search-form" class="quick-search-form">
                     <input type="text"
                            id="header-search"
                            name="search"
                            placeholder="Quick search books..."
-                           class="bg-white text-gray-800 placeholder-gray-600 border border-gray-300 rounded-full px-4 py-2 pr-10 w-48 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm">
-                    <button type="submit" id="header-search-btn" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-gray-800 transition-colors">
-                        <i class="fas fa-search"></i>
-                    </button>
+                           class="bg-white text-gray-800 placeholder-gray-600 border border-gray-300 rounded-full px-4 py-2 w-48 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm">
                     <div id="header-search-results" class="quick-search-results hidden absolute right-0 mt-2 w-96 max-h-96 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-xl z-[60]"></div>
                 </form>
+
+                <button type="submit" form="header-search-form" id="header-search-btn" class="header-search-icon-btn text-green-700 hover:text-green-900 transition-colors" aria-label="Search">
+                    <i class="fas fa-search"></i>
+                </button>
                 
                 <!-- User Profile -->
                 <div class="flex items-center space-x-3">
@@ -107,23 +108,22 @@
         <!-- Main Content -->
         <div class="main-content p-4 sm:p-6">
             <div class="mb-6">
-                <h1 class="text-3xl font-bold text-gray-900">My Borrowed Books</h1>
-                <p class="text-gray-600 mt-2">Manage your current book loans and track due dates</p>
+                <h1 class="text-3xl font-bold text-gray-900">Borrowed E-Resources</h1>
             </div>
 
             <!-- Quick Stats removed as loans auto-return after 5 days -->
 
             <!-- Loans Header -->
-            <div class="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-6">
-                <h2 class="text-xl font-semibold text-gray-900" id="loans-count">Loading loans...</h2>
-                <div class="flex w-full sm:w-auto space-x-3">
+            <div class="loans-toolbar flex items-center justify-between gap-3 mb-6">
+                <h2 class="text-xl font-semibold text-gray-900 min-w-0" id="loans-count">Loading loans...</h2>
+                <div class="loans-toolbar-actions flex w-auto flex-shrink-0 space-x-3">
                     <!-- Combined Filter & Sort Dropdown -->
-                    <div class="relative w-full sm:w-auto">
-                        <button id="filter-sort-btn" class="w-full sm:w-auto px-4 py-2 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center">
-                            <i class="fas fa-sliders-h mr-2"></i>Filter & Sort
+                    <div class="loans-filter-wrap relative w-auto">
+                        <button id="filter-sort-btn" class="loans-filter-btn w-auto px-4 py-2 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center">
+                            <i class="fas fa-sliders-h mr-2"></i>Filter
                             <i class="fas fa-chevron-down ml-2 text-xs"></i>
                         </button>
-                        <div id="filter-sort-dropdown" class="absolute right-0 mt-2 w-full sm:w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-10 hidden">
+                        <div id="filter-sort-dropdown" class="absolute right-0 mt-2 w-full sm:w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-[90] hidden">
                             <!-- Tab Navigation -->
                             <div class="border-b border-gray-200">
                                 <div class="flex">
@@ -148,10 +148,12 @@
                                         </select>
                                     </div>
                                     <div class="mb-4">
-                                        <label for="category-filter" class="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                                        <select id="category-filter" name="category" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
-                                            <option value="">All Categories</option>
-                                            <!-- Categories will be populated by JS -->
+                                        <label for="type-filter" class="block text-sm font-medium text-gray-700 mb-2">Type</label>
+                                        <select id="type-filter" name="type" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                                            <option value="">All Types</option>
+                                            <option value="book">Books</option>
+                                            <option value="e_journal">E-Journal</option>
+                                            <option value="thesis">E-Thesis</option>
                                         </select>
                                     </div>
                                     <div class="flex justify-between">
@@ -252,7 +254,17 @@
         </div>
     </div>
 
-    <script src="{{ asset('js/student-dashboard.js') }}"></script>
-    <script src="{{ asset('js/loans.js') }}"></script>
+    <script>
+        window.loansPageRoutes = {
+            loansApi: @json(route('student.loans.api')),
+            loansStats: @json(route('student.loans.statistics')),
+            booksIndex: @json(route('student.books')),
+            booksBase: @json(url('student/books')),
+            search: @json(route('dashboard.search')),
+            returnBase: @json(url('student/borrow-records')),
+        };
+    </script>
+    <script src="{{ asset('js/student-dashboard.js') }}?v={{ filemtime(public_path('js/student-dashboard.js')) }}"></script>
+    <script src="{{ asset('js/loans.js') }}?v={{ filemtime(public_path('js/loans.js')) }}"></script>
 </body>
 </html>

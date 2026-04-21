@@ -64,23 +64,23 @@
                 <label for="searchInput" class="block text-sm font-medium text-gray-700 mb-2">Search</label>
                 <div class="relative">
                     <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="text" id="searchInput" placeholder="Search by name, email, library ID..." class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                    <input type="text" id="searchInput" placeholder="Search by name, email, library ID..." class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
                 </div>
             </div>
             <div>
-                <label for="courseFilter" class="block text-sm font-medium text-gray-700 mb-2">Course</label>
-                <select id="courseFilter" class="w-full border border-gray-300 rounded-lg px-3 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
-                    <option value="">All Courses</option>
+                <label for="courseFilter" class="block text-sm font-medium text-gray-700 mb-2">Program</label>
+                <select id="courseFilter" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                    <option value="">All Programs</option>
+                    <option value="BSE">BSE</option>
+                    <option value="BSHM">BSHM</option>
                     <option value="BSIT">BSIT</option>
                     <option value="BSN">BSN</option>
-                    <option value="BSED">BSED</option>
-                    <option value="BSBM">BSBM</option>
-                    <option value="BSHM">BSHM</option>
+                    <option value="BSTM">BSTM</option>
                 </select>
             </div>
             <div>
                 <label for="yearFilter" class="block text-sm font-medium text-gray-700 mb-2">Year Level</label>
-                <select id="yearFilter" class="w-full border border-gray-300 rounded-lg px-3 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                <select id="yearFilter" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
                     <option value="">All Years</option>
                     <option value="1st Year">1st Year</option>
                     <option value="2nd Year">2nd Year</option>
@@ -88,8 +88,18 @@
                     <option value="4th Year">4th Year</option>
                 </select>
             </div>
+            <div>
+                <label for="campusFilter" class="block text-sm font-medium text-gray-700 mb-2">Campus</label>
+                <select id="campusFilter" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                    <option value="">All Campuses</option>
+                    <option value="Main Campus">Main Campus</option>
+                    <option value="Pagadian Campus">Pagadian Campus</option>
+                    <option value="Dumingag Campus">Dumingag Campus</option>
+                    <option value="Canuto MS Enerio Campus">Canuto MS Enerio Campus</option>
+                </select>
+            </div>
             <div class="flex gap-2">
-                <button id="clearFiltersBtn" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg transition-all duration-200 flex items-center gap-2">
+                <button id="clearFiltersBtn" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2.5 rounded-lg transition-all duration-200 flex items-center gap-2">
                     <i class="fas fa-times"></i>
                     Clear
                 </button>
@@ -249,6 +259,7 @@ function bindStudentFilters() {
     const searchInput = document.getElementById('searchInput');
     const courseFilter = document.getElementById('courseFilter');
     const yearFilter = document.getElementById('yearFilter');
+    const campusFilter = document.getElementById('campusFilter');
     const clearBtn = document.getElementById('clearFiltersBtn');
     const refreshBtn = document.getElementById('refreshBtn');
 
@@ -259,12 +270,13 @@ function bindStudentFilters() {
             timer = setTimeout(loadStudents, 300);
         });
     }
-    [courseFilter, yearFilter].forEach(el => el && el.addEventListener('change', loadStudents));
+    [courseFilter, yearFilter, campusFilter].forEach(el => el && el.addEventListener('change', loadStudents));
     if (clearBtn) {
         clearBtn.addEventListener('click', function() {
             if (searchInput) searchInput.value = '';
             if (courseFilter) courseFilter.value = '';
             if (yearFilter) yearFilter.value = '';
+            if (campusFilter) campusFilter.value = '';
             loadStudents();
         });
     }
@@ -287,9 +299,11 @@ async function loadStudents() {
     const sVal = document.getElementById('searchInput')?.value || '';
     const course = document.getElementById('courseFilter')?.value || '';
     const year = document.getElementById('yearFilter')?.value || '';
+    const campus = document.getElementById('campusFilter')?.value || '';
     if (sVal) params.set('search', sVal);
     if (course) params.set('course', course);
     if (year) params.set('year', year);
+    if (campus) params.set('campus', campus);
     params.set('simple', '1');
 
     try {
@@ -343,6 +357,7 @@ async function loadStudents() {
                         <div class="text-sm">
                             <div class="font-medium text-gray-900">${row.course || 'Not specified'}</div>
                             <div class="text-gray-500">${row.year || 'Not specified'}</div>
+                            <div class="text-gray-500">${row.campus || 'Not specified'}</div>
                         </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap"><span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-md text-sm font-mono">${row.library_id || '-'}</span></td>

@@ -1,11 +1,11 @@
 @extends('layouts.librarian')
 
-@section('title', 'Manage Loans')
+@section('title', 'E-Resource Monitoring')
 
 @section('content')
 <div class="mb-6">
-  <h1 class="text-3xl font-bold text-gray-900">Manage Book Borrowed</h1>
-  <p class="text-gray-600 mt-2">Monitor all active loans</p>
+  <h1 class="text-3xl font-bold text-gray-900">E-Resource Monitoring</h1>
+  <p class="text-gray-600 mt-2">Monitor all borrowed e-resources</p>
 </div>
 
 
@@ -14,7 +14,7 @@
   <div class="flex items-center justify-between mb-4">
     <div class="flex items-center">
       <i class="fas fa-chart-bar text-gray-500 mr-2"></i>
-      <h2 class="text-lg font-semibold text-gray-900">Loans Statistics</h2>
+      <h2 class="text-lg font-semibold text-gray-900">E-Resource Monitoring Statistics</h2>
     </div>
     <div class="text-sm text-gray-500">Auto-updates with filters</div>
   </div>
@@ -24,7 +24,7 @@
     <div class="rounded-lg p-4 bg-blue-50 border border-blue-200">
       <div class="flex items-center justify-between">
         <div>
-          <p class="text-sm text-blue-700">Total Loans</p>
+          <p class="text-sm text-blue-700">Total Borrowed</p>
           <p id="stat-total-loans" class="text-2xl font-bold text-blue-900">0</p>
         </div>
         <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
@@ -35,7 +35,7 @@
     <div class="rounded-lg p-4 bg-green-50 border border-green-200">
       <div class="flex items-center justify-between">
         <div>
-          <p class="text-sm text-green-700">Active Loans</p>
+          <p class="text-sm text-green-700">Active Borrowed</p>
           <p id="stat-active-loans" class="text-2xl font-bold text-green-900">0</p>
         </div>
         <div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
@@ -46,7 +46,7 @@
     <div class="rounded-lg p-4 bg-purple-50 border border-purple-200">
       <div class="flex items-center justify-between">
         <div>
-          <p class="text-sm text-purple-700">Returned Loans</p>
+          <p class="text-sm text-purple-700">Returned E-Resources</p>
           <p id="stat-returned-loans" class="text-2xl font-bold text-purple-900">0</p>
         </div>
         <div class="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
@@ -64,7 +64,7 @@
       <span class="text-sm font-medium">Filters</span>
     </button>
     <div class="relative">
-      <input id="loan-search" type="text" placeholder="Search loans..." class="px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-64">
+      <input id="loan-search" type="text" placeholder="Search e-resources..." class="px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-64">
       <i class="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
     </div>
   </div>
@@ -81,19 +81,14 @@
         </select>
       </div>
       <div>
-        <label for="loan-course" class="block text-sm font-medium text-gray-700 mb-2">Course</label>
+        <label for="loan-course" class="block text-sm font-medium text-gray-700 mb-2">Program</label>
         <select id="loan-course" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
           <option value="">All</option>
-          <option value="BSIT">BSIT</option>
-          <option value="BSCS">BSCS</option>
-          <option value="BSIS">BSIS</option>
-          <option value="BSEE">BSEE</option>
-          <option value="BSME">BSME</option>
-          <option value="BSCE">BSCE</option>
-          <option value="BSN">BSN</option>
           <option value="BSE">BSE</option>
-          <option value="BSED">BSED</option>
-          <option value="BEED">BEED</option>
+          <option value="BSHM">BSHM</option>
+          <option value="BSIT">BSIT</option>
+          <option value="BSN">BSN</option>
+          <option value="BSTM">BSTM</option>
         </select>
       </div>
       <div>
@@ -134,9 +129,9 @@
   <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
     <div class="flex items-center">
       <i class="fas fa-hand-holding text-gray-500 mr-2"></i>
-      <h2 class="text-lg font-semibold text-gray-900">Loans</h2>
+      <h2 class="text-lg font-semibold text-gray-900">Borrowed E-Resources</h2>
     </div>
-    <div class="text-sm text-gray-500" id="loan-count">0 loans</div>
+    <div class="text-sm text-gray-500" id="loan-count">0 borrowed e-resources</div>
   </div>
   <div class="overflow-x-auto">
     <table class="w-full table-auto">
