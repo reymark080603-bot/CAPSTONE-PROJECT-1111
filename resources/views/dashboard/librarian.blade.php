@@ -61,11 +61,8 @@
                     </button>
                     <div id="export-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border z-50">
                         <div class="py-2">
-                            <button onclick="generateCustomReport()" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                <i class="fas fa-chart-bar mr-2"></i>Generate Report
-                            </button>
                             <button onclick="printDashboard()" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                <i class="fas fa-print mr-2"></i>Print Dashboard
+                                <i class="fas fa-print mr-2"></i>Print Monthly Report
                             </button>
                         </div>
                     </div>
@@ -294,6 +291,46 @@
                     </div>
                     <div class="h-80">
                         <canvas id="monthly-trends-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div class="bg-white p-8 rounded-lg shadow-sm">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900">Students per Program</h3>
+                            <p class="text-sm text-gray-500 mt-1">Registered student distribution by program</p>
+                        </div>
+                    </div>
+                    <div class="h-80">
+                        <canvas id="students-program-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white p-8 rounded-lg shadow-sm">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900">Student Gender Distribution</h3>
+                            <p class="text-sm text-gray-500 mt-1">Registered student distribution by gender</p>
+                        </div>
+                    </div>
+                    <div class="h-80">
+                        <canvas id="gender-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <div class="bg-white p-8 rounded-lg shadow-sm">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900">Registered Students by Campus</h3>
+                            <p class="text-sm text-gray-500 mt-1">Total registered students for each campus</p>
+                        </div>
+                    </div>
+                    <div class="h-80">
+                        <canvas id="campus-chart"></canvas>
                     </div>
                 </div>
             </div>

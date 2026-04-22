@@ -163,18 +163,64 @@ class LibrarianController extends Controller
                 ];
             });
 
-        // Course-wise borrowing statistics
-        $courseStats = User::select('courses.name as course', DB::raw('COUNT(DISTINCT users.id) as student_count'))
-            ->leftJoin('borrow_records', 'users.id', '=', 'borrow_records.user_id')
+        $programOptions = ['BSE', 'BSHM', 'BSIT', 'BSN', 'BSTM'];
+
+        // Student distribution by program
+        $courseStatsRaw = User::query()
             ->leftJoin('courses', 'users.course_id', '=', 'courses.id')
             ->whereHas('role', function($query) {
                 $query->where('name', 'student');
             })
-            ->groupBy('courses.name')
+            ->selectRaw("COALESCE(NULLIF(courses.code, ''), 'Unassigned') as program")
+            ->selectRaw('COUNT(users.id) as student_count')
+            ->groupBy('program')
             ->get();
 
+        $courseStats = collect($programOptions)
+            ->map(function ($program) use ($courseStatsRaw) {
+                $match = $courseStatsRaw->firstWhere('program', $program);
+
+                return [
+                    'program' => $program,
+                    'student_count' => (int) optional($match)->student_count,
+                ];
+            })
+            ->values();
+
+        $genderDistribution = User::query()
+            ->whereHas('role', function($query) {
+                $query->where('name', 'student');
+            })
+            ->selectRaw("LOWER(COALESCE(NULLIF(gender, ''), 'not specified')) as gender")
+            ->selectRaw('COUNT(*) as count')
+            ->groupBy('gender')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'gender' => $item->gender,
+                    'count' => (int) $item->count,
+                ];
+            })
+            ->values();
+
+        $campusDistribution = User::query()
+            ->whereHas('role', function($query) {
+                $query->where('name', 'student');
+            })
+            ->selectRaw("COALESCE(NULLIF(campus, ''), 'Unassigned') as campus")
+            ->selectRaw('COUNT(*) as count')
+            ->groupBy('campus')
+            ->orderBy('campus')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'campus' => $item->campus,
+                    'count' => (int) $item->count,
+                ];
+            })
+            ->values();
+
         // Books distribution by course/program for dashboard charts
-        $programOptions = ['BSE', 'BSHM', 'BSIT', 'BSN', 'BSTM'];
         $booksByCourse = array_fill_keys($programOptions, 0);
 
         Book::query()
@@ -206,6 +252,8 @@ class LibrarianController extends Controller
                 'most_borrowed_books' => $mostBorrowedBooks,
                 'course_stats' => $courseStats,
                 'books_by_course' => $booksByCourse,
+                'gender_distribution' => $genderDistribution,
+                'campus_distribution' => $campusDistribution,
             ]);
             
         } catch (\Exception $e) {
@@ -229,7 +277,9 @@ class LibrarianController extends Controller
                 'monthly_trends' => [],
                 'most_borrowed_books' => [],
                 'course_stats' => [],
-                'books_by_course' => []
+                'books_by_course' => [],
+                'gender_distribution' => [],
+                'campus_distribution' => []
             ], 500);
         }
     }
@@ -643,6 +693,11 @@ class LibrarianController extends Controller
                     });
                 });
             }
+            if ($request->filled('campus')) {
+                $query->whereHas('user', function ($uq) use ($request) {
+                    $uq->where('campus', $request->get('campus'));
+                });
+            }
 
             if ($dateFrom) {
                 $query->whereDate('borrowed_date', '>=', $dateFrom);
@@ -654,14 +709,19 @@ class LibrarianController extends Controller
             $query->orderByDesc('borrowed_date');
 
             $loans = $query->limit(200)->get()->map(function ($loan) {
+                $program = $loan->user->course?->code
+                    ?? $loan->user->course?->name
+                    ?? $loan->user->course
+                    ?? '';
+
                 return [
                     'id' => $loan->id,
                     'student' => trim(($loan->user->firstname ?? '') . ' ' . ($loan->user->lastname ?? '')),
-                    'library_id' => $loan->user->library_id ?? '',
-                    'course' => $loan->user->course?->name ?? '',
-                    'year' => $loan->user->yearLevel?->level ?? '',
+                    'program' => $program,
+                    'year' => $loan->user->yearLevel?->level ?? $loan->user->year ?? '',
+                    'campus' => $loan->user->campus ?? '',
                     'book_title' => $loan->book->title ?? 'Unknown',
-                    'author' => $loan->book->authors->pluck('name')->implode(', ') ?? 'Unknown',
+                    'author' => $loan->book?->author ?? 'Unknown Author',
                     'borrowed_date' => optional($loan->borrowed_date)->toDateString(),
                     'due_date' => optional($loan->due_date)->toDateString(),
                     'returned_date' => optional($loan->returned_date)->toDateString(),
@@ -2291,6 +2351,9 @@ class LibrarianController extends Controller
         if ($request->filled('year')) {
             $base->where('year_levels.level', $request->get('year'));
         }
+        if ($request->filled('campus')) {
+            $base->where('users.campus', $request->get('campus'));
+        }
 
         // Summary totals
         $totalLoans = (clone $base)->count();
@@ -2317,6 +2380,9 @@ class LibrarianController extends Controller
             ->when($request->filled('year'), function($query) use ($request) {
                 $query->where('year_levels.level', $request->get('year'));
             })
+            ->when($request->filled('campus'), function($query) use ($request) {
+                $query->where('users.campus', $request->get('campus'));
+            })
             ->groupBy('courses.name')
             ->orderBy('courses.name')
             ->get();
@@ -2340,6 +2406,9 @@ class LibrarianController extends Controller
             })
             ->when($request->filled('year'), function($query) use ($request) {
                 $query->where('year_levels.level', $request->get('year'));
+            })
+            ->when($request->filled('campus'), function($query) use ($request) {
+                $query->where('users.campus', $request->get('campus'));
             })
             ->groupBy('year_levels.level')
             ->orderBy('year_levels.level')
@@ -2367,6 +2436,7 @@ class LibrarianController extends Controller
         
         $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth();
         $endDate = $startDate->copy()->endOfMonth();
+        $programOptions = ['BSE', 'BSHM', 'BSIT', 'BSN', 'BSTM'];
         
         // Basic statistics for the month
         $monthlyStats = [
@@ -2397,6 +2467,59 @@ class LibrarianController extends Controller
                 'returns' => $dayReturns
             ];
         }
+
+        $programDistributionRaw = BorrowRecord::query()
+            ->join('users', 'borrow_records.user_id', '=', 'users.id')
+            ->leftJoin('courses', 'users.course_id', '=', 'courses.id')
+            ->whereBetween('borrow_records.borrowed_date', [$startDate, $endDate])
+            ->whereHas('user.role', function($query) {
+                $query->where('name', 'student');
+            })
+            ->selectRaw("COALESCE(NULLIF(courses.code, ''), 'Unassigned') as program")
+            ->selectRaw('COUNT(DISTINCT users.id) as student_count')
+            ->groupBy('program')
+            ->get();
+
+        $programDistribution = collect($programOptions)
+            ->map(function ($program) use ($programDistributionRaw) {
+                $match = $programDistributionRaw->firstWhere('program', $program);
+
+                return [
+                    'program' => $program,
+                    'student_count' => (int) optional($match)->student_count,
+                ];
+            })
+            ->values();
+
+        $genderDistribution = BorrowRecord::query()
+            ->join('users', 'borrow_records.user_id', '=', 'users.id')
+            ->whereBetween('borrow_records.borrowed_date', [$startDate, $endDate])
+            ->whereHas('user.role', function($query) {
+                $query->where('name', 'student');
+            })
+            ->selectRaw("LOWER(COALESCE(NULLIF(users.gender, ''), 'not specified')) as gender")
+            ->selectRaw('COUNT(DISTINCT users.id) as count')
+            ->groupBy('gender')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'gender' => $item->gender,
+                    'count' => (int) $item->count,
+                ];
+            })
+            ->values();
+
+        $booksByProgram = array_fill_keys($programOptions, 0);
+
+        Book::query()
+            ->get(['course', 'program'])
+            ->each(function ($book) use (&$booksByProgram) {
+                $program = trim((string) ($book->course ?: $book->program ?: ''));
+
+                if (isset($booksByProgram[$program])) {
+                    $booksByProgram[$program]++;
+                }
+            });
         
         // Top categories for the month
         $topCategories = Book::join('borrow_records', 'books.id', '=', 'borrow_records.book_id')
@@ -2442,7 +2565,10 @@ class LibrarianController extends Controller
             'monthly_stats' => $monthlyStats,
             'daily_stats' => $dailyStats,
             'top_categories' => $topCategories,
-            'top_students' => $topStudents
+            'top_students' => $topStudents,
+            'program_distribution' => $programDistribution,
+            'gender_distribution' => $genderDistribution,
+            'books_by_program' => $booksByProgram,
         ];
         
         if ($request && $request->expectsJson()) {
@@ -2472,7 +2598,9 @@ class LibrarianController extends Controller
             case 'course-analysis':
                 return $this->courseAnalysisReport($request);
             case 'monthly-summary':
-                return $this->monthlySummaryReport($request);
+                $data = $this->monthlySummaryReport($request)->getData()['data'];
+                $isPrintView = true;
+                return response()->view('librarian.reports.monthly-summary-pdf', compact('data', 'isPrintView'));
             default:
                 abort(404, 'Report type not found');
         }
@@ -2483,6 +2611,10 @@ class LibrarianController extends Controller
      */
     public function exportReport(Request $request, $type)
     {
+        if ($request->get('format') === 'pdf') {
+            return $this->exportReportAsPdf($request, $type);
+        }
+
         switch ($type) {
             case 'borrowing-statistics':
                 return $this->exportBorrowingStatistics($request);
@@ -2499,6 +2631,78 @@ class LibrarianController extends Controller
             default:
                 abort(404, 'Export type not found');
         }
+    }
+
+    private function exportReportAsPdf(Request $request, string $type)
+    {
+        $request->merge(['pdf' => true]);
+
+        $reports = [
+            'borrowing-statistics' => [
+                'data' => $this->borrowingStatisticsReport($request)->getData()['data'],
+                'view' => 'librarian.reports.borrowing-statistics-pdf',
+                'filename' => 'borrowing-statistics-' . date('Y-m-d') . '.pdf',
+                'paper' => ['A4', 'portrait'],
+            ],
+            'student-activity' => [
+                'data' => $this->studentActivityReport($request)->getData()['data'],
+                'view' => 'librarian.reports.student-activity-pdf',
+                'filename' => 'student-activity-' . date('Y-m-d') . '.pdf',
+                'paper' => ['A4', 'landscape'],
+            ],
+            'book-usage' => [
+                'data' => $this->bookUsageReport($request)->getData()['data'],
+                'view' => 'librarian.reports.book-usage-pdf',
+                'filename' => 'book-usage-' . date('Y-m-d') . '.pdf',
+                'paper' => ['A4', 'landscape'],
+            ],
+            'popular-books' => [
+                'data' => $this->popularBooksReport($request)->getData()['data'],
+                'view' => 'librarian.reports.popular-books-pdf',
+                'filename' => 'popular-books-' . date('Y-m-d') . '.pdf',
+                'paper' => ['A4', 'landscape'],
+            ],
+            'course-analysis' => [
+                'data' => $this->courseAnalysisReport($request)->getData()['data'],
+                'view' => 'librarian.reports.course-analysis-pdf',
+                'filename' => 'course-analysis-' . date('Y-m-d') . '.pdf',
+                'paper' => ['A4', 'landscape'],
+            ],
+            'monthly-summary' => [
+                'data' => $this->monthlySummaryReport($request)->getData()['data'],
+                'view' => 'librarian.reports.monthly-summary-pdf',
+                'filename' => 'monthly-summary-' . date('Y-m-d') . '.pdf',
+                'paper' => ['A4', 'portrait'],
+            ],
+        ];
+
+        if (!isset($reports[$type])) {
+            abort(404, 'Export type not found');
+        }
+
+        $config = $reports[$type];
+
+        $options = new Options();
+        $options->set('defaultFont', 'Arial');
+        $options->set('isRemoteEnabled', true);
+        $options->set('isHtml5ParserEnabled', true);
+
+        $dompdf = new Dompdf($options);
+
+        $isPrintView = false;
+        $htmlContent = view($config['view'], [
+            'data' => $config['data'],
+            'isPrintView' => $isPrintView,
+        ])->render();
+
+        $dompdf->loadHtml($htmlContent);
+        $dompdf->setPaper($config['paper'][0], $config['paper'][1]);
+        $dompdf->render();
+
+        return response($dompdf->output(), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="' . $config['filename'] . '"',
+        ]);
     }
     
     private function exportBorrowingStatistics(Request $request)
@@ -2628,7 +2832,8 @@ class LibrarianController extends Controller
             $dompdf = new Dompdf($options);
             
             // Generate HTML content
-            $htmlContent = view('librarian.reports.monthly-summary-pdf', compact('data'))->render();
+            $isPrintView = false;
+            $htmlContent = view('librarian.reports.monthly-summary-pdf', compact('data', 'isPrintView'))->render();
             
             // Load HTML to DomPDF
             $dompdf->loadHtml($htmlContent);

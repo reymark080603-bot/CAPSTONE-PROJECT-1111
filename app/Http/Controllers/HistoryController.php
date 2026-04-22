@@ -108,6 +108,9 @@ class HistoryController extends Controller
             $record->is_overdue = $record->status === 'borrowed' && $record->due_date < now();
             $record->days_overdue = $record->is_overdue ? now()->diffInDays($record->due_date) : 0;
             $record->fine_amount = $record->fines->sum('amount');
+            if ($record->book) {
+                $record->book->cover_url = $record->book->display_cover_url;
+            }
             return $record;
         });
 

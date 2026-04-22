@@ -11,6 +11,7 @@
     status: 'all',
     course: '',
     year: '',
+    campus: '',
     dateFrom: '',
     dateTo: ''
   };
@@ -44,6 +45,7 @@
       '#loan-status': 'status',
       '#loan-course': 'course',
       '#loan-year': 'year',
+      '#loan-campus': 'campus',
       '#loan-date-from': 'dateFrom',
       '#loan-date-to': 'dateTo'
     };
@@ -67,13 +69,14 @@
     const count = $('#loan-count');
     if (!body) { loading = false; return; }
 
-    body.innerHTML = `<tr><td colspan=\"7\" class=\"px-6 py-8 text-center text-gray-500\">Loading...</td></tr>`;
+    body.innerHTML = `<tr><td colspan=\"6\" class=\"px-6 py-8 text-center text-gray-500\">Loading...</td></tr>`;
     try {
       const params = new URLSearchParams({
         search: state.search,
         status: state.status,
         course: state.course,
         year: state.year,
+        campus: state.campus,
         date_from: state.dateFrom,
         date_to: state.dateTo
       });
@@ -89,7 +92,7 @@
       if (count) count.textContent = `${(data.loans || []).length} borrowed e-resource${(data.loans || []).length === 1 ? '' : 's'}`;
     } catch (e) {
       console.error(e);
-      body.innerHTML = `<tr><td colspan=\"7\" class=\"px-6 py-8 text-center text-red-600\">Failed to load loans</td></tr>`;
+      body.innerHTML = `<tr><td colspan=\"6\" class=\"px-6 py-8 text-center text-red-600\">Failed to load loans</td></tr>`;
     } finally {
       loading = false;
     }
@@ -98,19 +101,21 @@
   function renderLoans(loans) {
     const body = $('#loans-body');
     if (!loans.length) {
-      body.innerHTML = `<tr><td colspan="7" class="px-6 py-8 text-center text-gray-500">No borrowed e-resources found</td></tr>`;
+      body.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500">No borrowed e-resources found</td></tr>`;
       return;
     }
 
     const rows = loans.map(l => {
       const statusBadge = badge(l.status, l.days_remaining);
-      const actions = actionButtons(l);
+      const academicInfo = [l.year, l.program, l.campus].filter(Boolean).join(' | ');
       return `
         <tr>
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="text-sm font-medium text-gray-900">${escapeHtml(l.student || 'Unknown')}</div>
           </td>
-          <td class="px-6 py-4 text-sm text-gray-700">${escapeHtml(l.library_id || '')}</td>
+          <td class="px-6 py-4">
+            <div class="text-sm text-gray-700">${escapeHtml(academicInfo || 'N/A')}</div>
+          </td>
           <td class="px-6 py-4">
             <div class="text-sm font-medium text-gray-900">${escapeHtml(l.book_title || 'Unknown')}</div>
             <div class="text-xs text-gray-500">by ${escapeHtml(l.author || '')}</div>
@@ -207,9 +212,9 @@
   function escapeHtml(t) { const d=document.createElement('div'); d.textContent=t||''; return d.innerHTML; }
   function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
 
-  // Auto-refresh loans table every 15s and on focus/visibility
+  // Auto-refresh loans table every 2 minutes and on focus/visibility
   function setupAutoRefresh() {
-    const REFRESH_MS = 50000; // 50 seconds
+    const REFRESH_MS = 120000; // 2 minutes
     setInterval(loadLoans, REFRESH_MS);
     window.addEventListener('focus', loadLoans);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) loadLoans(); });

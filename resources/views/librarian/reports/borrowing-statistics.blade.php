@@ -38,6 +38,10 @@
         .print-table th { color: var(--report-green-900); }
         .print-table tbody { color: var(--report-text); }
         .report-row:hover { background: rgba(220, 235, 217, 0.45); }
+        .report-action-btn { display:inline-flex; align-items:center; justify-content:center; height:42px; padding:.5rem 1rem; border-radius:.65rem; border:2px solid transparent; font-size:.875rem; font-weight:700; letter-spacing:.01em; box-shadow:0 6px 14px rgba(46, 91, 59, 0.08); white-space:nowrap; }
+        @if(request()->boolean('pdf'))
+        .no-print { display: none !important; }
+        @endif
         @media print {
             html, body { background: #fff !important; font-size: 12px; height: auto !important; min-height: 0 !important; overflow: visible !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .header, .sidebar, .sidebar-backdrop, .no-print { display: none !important; }
@@ -60,8 +64,9 @@
                 <p class="report-period text-base font-medium mt-1">{{ $data['period']['from'] }} to {{ $data['period']['to'] }}</p>
             </div>
             <div class="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end no-print">
-                <a href="{{ route('librarian.reports.index') }}" class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#c8d8c5] bg-white/55 px-5 py-3 text-base font-medium text-[#355246] shadow-sm transition-colors hover:bg-white sm:w-auto sm:justify-start lg:text-lg"><i class="fas fa-arrow-left"></i><span>Back</span></a>
-                <a href="{{ route('librarian.reports.print', 'borrowing-statistics') }}?date_from={{ $data['period']['from'] }}&date_to={{ $data['period']['to'] }}" target="_blank" class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-black bg-[#1f5b45] px-5 py-3 text-base font-semibold text-black shadow-sm transition-colors hover:bg-[#174835] sm:w-auto sm:justify-start lg:text-lg"><i class="fas fa-print"></i><span>Generate Printable Report</span></a>
+                <a href="{{ route('librarian.reports.index') }}" class="report-action-btn border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"><i class="fas fa-arrow-left mr-1"></i><span>Back</span></a>
+                <a href="{{ route('librarian.reports.export', 'borrowing-statistics') }}?date_from={{ $data['period']['from'] }}&date_to={{ $data['period']['to'] }}&format=pdf" class="report-action-btn border border-red-700 bg-red-600 text-white hover:bg-red-700"><i class="fas fa-file-pdf mr-1"></i><span>PDF</span></a>
+                <a href="{{ route('librarian.reports.print', 'borrowing-statistics') }}?date_from={{ $data['period']['from'] }}&date_to={{ $data['period']['to'] }}" target="_blank" class="report-action-btn border-2 border-[#1f5b45] bg-white text-[#1f5b45] hover:bg-[#eef8ea]"><i class="fas fa-print mr-1"></i><span>Generate Printable Report</span></a>
             </div>
         </div>
 

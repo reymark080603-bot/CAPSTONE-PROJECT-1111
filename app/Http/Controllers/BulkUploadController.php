@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
 class BulkUploadController extends Controller
@@ -100,6 +101,7 @@ class BulkUploadController extends Controller
 
         $files = $request->file('pdfs');
         $seenOriginalNames = [];
+        $seenFileHashes = [];
         $uploadedCount = 0;
         $failedCount = 0;
         $errors = [];
@@ -128,8 +130,30 @@ class BulkUploadController extends Controller
                     }
                     $seenOriginalNames[$originalName] = true;
 
+                    $fileHash = hash_file('sha256', $file->getRealPath());
+                    if (!$fileHash) {
+                        throw new \Exception('Failed to calculate uploaded file hash.');
+                    }
+
+                    if (isset($seenFileHashes[$fileHash])) {
+                        $duplicatesSkipped++;
+                        throw new \Exception('Duplicate PDF content detected in current upload batch.');
+                    }
+                    $seenFileHashes[$fileHash] = true;
+
                     // Parse metadata from filename
                     $metadata = $this->parseFilename($originalName);
+
+                    if (Schema::hasColumn('books', 'file_hash')) {
+                        $existingHashMatch = Book::query()
+                            ->where('file_hash', $fileHash)
+                            ->first();
+
+                        if ($existingHashMatch) {
+                            $duplicatesSkipped++;
+                            throw new \Exception("Exact duplicate PDF already exists (Book ID: {$existingHashMatch->id}).");
+                        }
+                    }
 
                     // Prevent duplicate records based on key metadata
                     $existingBook = Book::query()
@@ -204,6 +228,7 @@ class BulkUploadController extends Controller
                         // Keep both for compatibility with existing readers/views
                         'pdf_file' => $filePath,
                         'file_path' => $filePath,
+                        'file_hash' => $fileHash,
                         'cover_image' => $coverToSave,
                         'cover_photo' => $coverToSave, // Also set for compatibility
                         'availability_status' => 'available',

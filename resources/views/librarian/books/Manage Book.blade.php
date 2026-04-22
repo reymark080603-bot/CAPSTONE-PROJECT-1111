@@ -519,29 +519,137 @@
 }
 
 /* Override DataTables pagination with modern Tailwind design */
+.dataTables_wrapper .dataTables_info,
 .dataTables_wrapper .dataTables_paginate {
-    @apply flex justify-center mt-6;
+    margin-top: 1rem;
 }
 
-.dataTables_wrapper .dataTables_paginate .paginate_button {
-    @apply inline-flex items-center justify-center min-w-[2.5rem] h-10 px-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-900 hover:border-gray-400 transition-all duration-200 mx-0.5 no-underline;
+.dataTables_wrapper .row:last-child {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-top: 1px solid #e5e7eb;
+    flex-wrap: wrap;
 }
 
-.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+.dataTables_wrapper .row:last-child > div {
+    width: auto;
+    flex: 0 0 auto;
+}
+
+.dataTables_wrapper .dataTables_paginate {
+    display: flex !important;
+    justify-content: flex-end;
+    width: auto !important;
+    float: none !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .pagination {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center;
+    flex-wrap: nowrap !important;
+    gap: 0.25rem;
+    margin: 0;
+    padding-left: 0;
+    list-style: none;
+    white-space: nowrap;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button,
+.dataTables_wrapper .dataTables_paginate .page-item {
+    display: inline-flex !important;
+    flex: 0 0 auto !important;
+    float: none !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button .page-link,
+.dataTables_wrapper .dataTables_paginate .page-item .page-link {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    height: 2rem;
+    padding: 0 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #374151;
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    line-height: 1;
+    text-decoration: none;
+    white-space: nowrap;
+    margin-left: 0 !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button .page-link:hover,
+.dataTables_wrapper .dataTables_paginate .page-item .page-link:hover {
+    background: #f9fafb;
+    color: #111827;
+    border-color: #9ca3af;
     text-decoration: none !important;
 }
 
-.dataTables_wrapper .dataTables_paginate .paginate_button.current {
-    @apply bg-blue-600 border-blue-600 text-white hover:bg-blue-700 hover:border-blue-700 shadow-sm;
+.dataTables_wrapper .dataTables_paginate .paginate_button.current .page-link,
+.dataTables_wrapper .dataTables_paginate .page-item.active .page-link {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #ffffff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
-.dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
-    @apply opacity-50 cursor-not-allowed text-gray-400 hover:bg-white hover:border-gray-300 hover:text-gray-400;
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled .page-link,
+.dataTables_wrapper .dataTables_paginate .page-item.disabled .page-link {
+    opacity: 0.5;
+    cursor: not-allowed;
+    color: #9ca3af;
+    background: #ffffff;
+    border-color: #d1d5db;
 }
 
-.dataTables_wrapper .dataTables_paginate .paginate_button.previous,
-.dataTables_wrapper .dataTables_paginate .paginate_button.next {
-    @apply px-4 py-2 font-semibold;
+.dataTables_wrapper .dataTables_paginate .paginate_button.previous .page-link,
+.dataTables_wrapper .dataTables_paginate .paginate_button.next .page-link,
+.dataTables_wrapper .dataTables_paginate .page-item.previous .page-link,
+.dataTables_wrapper .dataTables_paginate .page-item.next .page-link {
+    min-width: 0;
+    padding: 0 0.75rem;
+}
+
+.dataTables_wrapper .row:last-child > div:last-child {
+    margin-left: auto;
+}
+
+@media (max-width: 640px) {
+    .dataTables_wrapper .row:last-child {
+        gap: 0.5rem;
+    }
+
+    .dataTables_wrapper .dataTables_info {
+        font-size: 0.75rem;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        min-width: 1.875rem;
+        height: 1.75rem;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button .page-link,
+    .dataTables_wrapper .dataTables_paginate .page-item .page-link {
+        min-width: 1.875rem;
+        height: 1.75rem;
+        padding: 0 0.5rem;
+        font-size: 11px;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.previous .page-link,
+    .dataTables_wrapper .dataTables_paginate .paginate_button.next .page-link,
+    .dataTables_wrapper .dataTables_paginate .page-item.previous .page-link,
+    .dataTables_wrapper .dataTables_paginate .page-item.next .page-link {
+        padding: 0 0.625rem;
+    }
 }
 </style>
 @endpush
@@ -645,6 +753,66 @@ function resolveBookCoverSrc(row) {
     return `{{ asset('storage/covers/default-book.png') }}`;
 }
 
+function forceHorizontalPagination() {
+    const paginate = document.querySelector('#booksTable_wrapper .dataTables_paginate');
+    const info = document.querySelector('#booksTable_wrapper .dataTables_info');
+    const row = paginate ? paginate.closest('.row') : null;
+
+    if (row) {
+        row.style.display = 'flex';
+        row.style.alignItems = 'center';
+        row.style.justifyContent = 'space-between';
+        row.style.gap = '12px';
+        row.style.flexWrap = 'wrap';
+    }
+
+    if (info) {
+        info.style.marginTop = '1rem';
+        info.style.flex = '0 0 auto';
+    }
+
+    if (!paginate) {
+        return;
+    }
+
+    paginate.style.display = 'flex';
+    paginate.style.justifyContent = 'flex-end';
+    paginate.style.alignItems = 'center';
+    paginate.style.width = 'auto';
+    paginate.style.float = 'none';
+    paginate.style.marginTop = '1rem';
+    paginate.style.marginLeft = 'auto';
+
+    const pagination = paginate.querySelector('.pagination');
+    if (pagination) {
+        pagination.style.display = 'flex';
+        pagination.style.flexDirection = 'row';
+        pagination.style.alignItems = 'center';
+        pagination.style.flexWrap = 'nowrap';
+        pagination.style.gap = '4px';
+        pagination.style.margin = '0';
+        pagination.style.paddingLeft = '0';
+        pagination.style.listStyle = 'none';
+        pagination.style.whiteSpace = 'nowrap';
+    }
+
+    paginate.querySelectorAll('.paginate_button, .page-item').forEach((item) => {
+        item.style.display = 'inline-flex';
+        item.style.flex = '0 0 auto';
+        item.style.float = 'none';
+        item.style.margin = '0';
+    });
+
+    paginate.querySelectorAll('.paginate_button .page-link, .page-item .page-link, .paginate_button').forEach((item) => {
+        item.style.display = 'inline-flex';
+        item.style.alignItems = 'center';
+        item.style.justifyContent = 'center';
+        item.style.whiteSpace = 'nowrap';
+        item.style.textDecoration = 'none';
+        item.style.lineHeight = '1';
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize DataTable
     const table = $('#booksTable').DataTable({
@@ -655,9 +823,15 @@ document.addEventListener('DOMContentLoaded', function() {
         pageLength: 10,
         language: {
             paginate: {
-                previous: 'Previous',
+                previous: 'Prev',
                 next: 'Next'
             }
+        },
+        initComplete: function() {
+            forceHorizontalPagination();
+        },
+        drawCallback: function() {
+            forceHorizontalPagination();
         },
         ajax: {
             url: "{{ route('librarian.books.data') }}",
@@ -799,6 +973,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Expose table globally for other functions
     window.table = table;
+    forceHorizontalPagination();
 
     // Filter event listeners
     document.getElementById('searchInput').addEventListener('input', function() {

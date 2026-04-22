@@ -70,8 +70,8 @@
   </div>
 
   <!-- Filter Panel (Dropdown) -->
-  <div id="loan-filter-panel" class="hidden absolute left-4 top-16 z-50 w-[calc(100%-2rem)] md:w-[44rem] bg-white border border-gray-200 rounded-xl shadow-2xl p-4 animate-slide-down">
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+  <div id="loan-filter-panel" class="hidden absolute left-4 top-16 z-50 w-[calc(100%-2rem)] md:w-[56rem] max-w-[calc(100vw-2rem)] bg-white border border-gray-200 rounded-xl shadow-2xl p-4 animate-slide-down">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
       <div>
         <label for="loan-status" class="block text-sm font-medium text-gray-700 mb-2">Status</label>
         <select id="loan-status" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -99,6 +99,16 @@
           <option value="2nd Year">2nd Year</option>
           <option value="3rd Year">3rd Year</option>
           <option value="4th Year">4th Year</option>
+        </select>
+      </div>
+      <div>
+        <label for="loan-campus" class="block text-sm font-medium text-gray-700 mb-2">Campus</label>
+        <select id="loan-campus" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="">All</option>
+          <option value="Main Campus">Main Campus</option>
+          <option value="Pagadian Campus">Pagadian Campus</option>
+          <option value="Dumingag Campus">Dumingag Campus</option>
+          <option value="Canuto MS Enerio Campus">Canuto MS Enerio Campus</option>
         </select>
       </div>
       <div class="grid grid-cols-2 gap-3">
@@ -138,7 +148,7 @@
       <thead class="bg-gray-50">
         <tr>
           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Library ID</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Academic Info</th>
           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Book</th>
           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Borrowed</th>
           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due</th>
@@ -147,7 +157,7 @@
       </thead>
       <tbody id="loans-body" class="bg-white divide-y divide-gray-200">
         <tr>
-          <td colspan="7" class="px-6 py-8 text-center text-gray-500">Loading...</td>
+          <td colspan="6" class="px-6 py-8 text-center text-gray-500">Loading...</td>
         </tr>
       </tbody>
     </table>
@@ -176,6 +186,7 @@
   const toEl = document.getElementById('loan-date-to');
   const courseEl = document.getElementById('loan-course');
   const yearEl = document.getElementById('loan-year');
+  const campusEl = document.getElementById('loan-campus');
 
   function number(n) { return typeof n === 'number' ? n : (parseInt(n, 10) || 0); }
 
@@ -186,6 +197,7 @@
     if (toEl && toEl.value) params.set('date_to', toEl.value);
     if (courseEl && courseEl.value) params.set('course', courseEl.value);
     if (yearEl && yearEl.value) params.set('year', yearEl.value);
+    if (campusEl && campusEl.value) params.set('campus', campusEl.value);
 
     const res = await fetch(`/librarian/loans/statistics?${params.toString()}`, { headers: { 'Accept': 'application/json' } });
     if (!res.ok) return;
@@ -199,7 +211,7 @@
   }
 
   // Hook filters for stats refresh
-  [statusEl, fromEl, toEl, courseEl, yearEl].forEach(el => {
+  [statusEl, fromEl, toEl, courseEl, yearEl, campusEl].forEach(el => {
     if (!el) return;
     el.addEventListener('change', fetchLoanStats);
     el.addEventListener('input', fetchLoanStats);
@@ -210,8 +222,8 @@
     fetchLoanStats();
   }
 
-  // Lightweight auto-refresh: every 15s and on focus/visibility
-  const REFRESH_MS = 15000;
+  // Lightweight auto-refresh: every 2 minutes and on focus/visibility
+  const REFRESH_MS = 120000;
   let statsRefreshTimer = setInterval(fetchLoanStats, REFRESH_MS);
 
   // Refresh when tab gains focus
@@ -239,7 +251,7 @@
   // Apply & Clear
   document.getElementById('loan-apply-filters')?.addEventListener('click', ()=> close());
   document.getElementById('loan-clear-filters')?.addEventListener('click', ()=>{
-    const ids = ['loan-status','loan-course','loan-year','loan-date-from','loan-date-to'];
+    const ids = ['loan-status','loan-course','loan-year','loan-campus','loan-date-from','loan-date-to'];
     ids.forEach(id => { const el = document.getElementById(id); if (el) { el.value = ''; el.dispatchEvent(new Event('change', { bubbles: true })); } });
     const search = document.getElementById('loan-search'); if (search) { search.value=''; search.dispatchEvent(new Event('input', { bubbles: true })); }
     open(); // keep open so user sees cleared state

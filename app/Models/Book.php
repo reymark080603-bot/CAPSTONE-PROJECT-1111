@@ -41,6 +41,7 @@ class Book extends Model
         'year',
         'program',
         'file_path',
+        'file_hash',
     ];
 
     protected $casts = [

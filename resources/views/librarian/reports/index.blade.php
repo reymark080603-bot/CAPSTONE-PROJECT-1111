@@ -84,6 +84,34 @@
         </div>
     </div>
 
+    <!-- Visual Summaries -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-xl font-semibold text-gray-900">Resource Types</h3>
+                <p class="text-gray-600 text-sm">Borrowing activity by resource type</p>
+            </div>
+            <div class="p-6">
+                <div class="h-72">
+                    <canvas id="categories-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-xl font-semibold text-gray-900">Most Borrowed Books</h3>
+                <p class="text-gray-600 text-sm">Top 10 most popular books</p>
+            </div>
+            <div id="most-borrowed-books" class="p-6 max-h-80 overflow-y-auto">
+                <div class="flex justify-center items-center py-12">
+                    <i class="fas fa-spinner fa-spin text-2xl text-gray-400 mr-3"></i>
+                    <span class="text-gray-600">Loading books...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Report Categories -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Borrowing & Usage Reports -->
@@ -105,8 +133,8 @@
                         <a href="{{ route('librarian.reports.borrowing-statistics') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors">
                             <i class="fas fa-eye mr-1"></i> View
                         </a>
-                        <a href="{{ route('librarian.reports.export', 'borrowing-statistics') }}" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors">
-                            <i class="fas fa-download mr-1"></i> Export
+                        <a href="{{ route('librarian.reports.export', 'borrowing-statistics') }}?format=pdf" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors">
+                            <i class="fas fa-file-pdf mr-1"></i> PDF
                         </a>
                     </div>
                 </div>
@@ -123,8 +151,8 @@
                         <a href="{{ route('librarian.reports.book-usage') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors">
                             <i class="fas fa-eye mr-1"></i> View
                         </a>
-                        <a href="{{ route('librarian.reports.export', 'book-usage') }}" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors">
-                            <i class="fas fa-download mr-1"></i> Export
+                        <a href="{{ route('librarian.reports.export', 'book-usage') }}?format=pdf" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors">
+                            <i class="fas fa-file-pdf mr-1"></i> PDF
                         </a>
                     </div>
                 </div>
@@ -141,8 +169,8 @@
                         <a href="{{ route('librarian.reports.popular-books') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors">
                             <i class="fas fa-eye mr-1"></i> View
                         </a>
-                        <a href="{{ route('librarian.reports.export', 'popular-books') }}" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors">
-                            <i class="fas fa-download mr-1"></i> Export
+                        <a href="{{ route('librarian.reports.export', 'popular-books') }}?format=pdf" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors">
+                            <i class="fas fa-file-pdf mr-1"></i> PDF
                         </a>
                     </div>
                 </div>
@@ -168,8 +196,8 @@
                         <a href="{{ route('librarian.reports.student-activity') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors">
                             <i class="fas fa-eye mr-1"></i> View
                         </a>
-                        <a href="{{ route('librarian.reports.export', 'student-activity') }}" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors">
-                            <i class="fas fa-download mr-1"></i> Export
+                        <a href="{{ route('librarian.reports.export', 'student-activity') }}?format=pdf" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors">
+                            <i class="fas fa-file-pdf mr-1"></i> PDF
                         </a>
                     </div>
                 </div>
@@ -186,8 +214,8 @@
                         <a href="{{ route('librarian.reports.course-analysis') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors">
                             <i class="fas fa-eye mr-1"></i> View
                         </a>
-                        <a href="{{ route('librarian.reports.export', 'course-analysis') }}" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors">
-                            <i class="fas fa-download mr-1"></i> Export
+                        <a href="{{ route('librarian.reports.export', 'course-analysis') }}?format=pdf" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors">
+                            <i class="fas fa-file-pdf mr-1"></i> PDF
                         </a>
                     </div>
                 </div>
@@ -208,45 +236,20 @@
                 <div class="flex items-center">
                     <i class="fas fa-chart-bar text-purple-500 mr-3"></i>
                     <div>
-                        <p class="font-medium text-gray-900">Current Month Summary</p>
-                        <p class="text-sm text-gray-600">{{ now()->format('F Y') }} - Complete monthly overview</p>
+                        <p class="font-medium text-gray-900">Monthly Report</p>
+                        <p class="text-sm text-gray-600">{{ now()->format('F Y') }} - View, print, and export the monthly library report</p>
                     </div>
                 </div>
                 <div class="flex space-x-2">
                     <a href="{{ route('librarian.reports.monthly-summary') }}" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors">
                         <i class="fas fa-eye mr-1"></i> View
                     </a>
-                    <a href="{{ route('librarian.reports.export', 'monthly-summary') }}" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors">
-                        <i class="fas fa-download mr-1"></i> Export
+                    <a href="{{ route('librarian.reports.export', 'monthly-summary') }}?format=pdf" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors">
+                        <i class="fas fa-file-pdf mr-1"></i> PDF
                     </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Visual Summaries -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div class="p-6 border-b border-gray-200">
-                <h3 class="text-xl font-semibold text-gray-900">Resource Types</h3>
-                <p class="text-gray-600 text-sm">Borrowing activity by resource type</p>
-            </div>
-            <div class="p-6">
-                <div class="h-72">
-                    <canvas id="categories-chart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div class="p-6 border-b border-gray-200">
-                <h3 class="text-xl font-semibold text-gray-900">Most Borrowed Books</h3>
-                <p class="text-gray-600 text-sm">Top 10 most popular books</p>
-            </div>
-            <div id="most-borrowed-books" class="p-6 max-h-80 overflow-y-auto">
-                <div class="flex justify-center items-center py-12">
-                    <i class="fas fa-spinner fa-spin text-2xl text-gray-400 mr-3"></i>
-                    <span class="text-gray-600">Loading books...</span>
+                    <a href="{{ route('librarian.reports.print', 'monthly-summary') }}" target="_blank" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors">
+                        <i class="fas fa-print mr-1"></i> Generate
+                    </a>
                 </div>
             </div>
         </div>

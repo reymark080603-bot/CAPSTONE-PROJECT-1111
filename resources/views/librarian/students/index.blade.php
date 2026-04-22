@@ -128,8 +128,8 @@
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[260px]">Student Info</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[100px]">Gender</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[220px]">Contact</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[220px]">Academic Info</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[120px]">Library ID</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[220px]">Program</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[180px]">Campus</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[110px]">Status</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[180px]">Registered</th>
                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-[120px]">Actions</th>
@@ -342,7 +342,6 @@ async function loadStudents() {
                             </div>
                             <div>
                                 <h4 class="font-medium text-gray-900">${fullName || '-'}</h4>
-                                <p class="text-sm text-gray-600">${(row.firstname || '')} ${(row.mi || '')} ${(row.lastname || '')}</p>
                             </div>
                         </div>
                     </td>
@@ -357,10 +356,11 @@ async function loadStudents() {
                         <div class="text-sm">
                             <div class="font-medium text-gray-900">${row.course || 'Not specified'}</div>
                             <div class="text-gray-500">${row.year || 'Not specified'}</div>
-                            <div class="text-gray-500">${row.campus || 'Not specified'}</div>
                         </div>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap"><span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-md text-sm font-mono">${row.library_id || '-'}</span></td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-md text-sm">${row.campus || 'Not specified'}</span>
+                    </td>
                     <td class="px-6 py-4 whitespace-nowrap"><span class="px-2 py-1 rounded-full text-xs font-medium ${statusClass}">${status}</span></td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="text-sm">

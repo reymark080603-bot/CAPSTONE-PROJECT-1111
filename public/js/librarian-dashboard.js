@@ -301,7 +301,10 @@ class LibrarianDashboard {
     initializeCharts() {
         this.createBookStatusChart('bar');
         this.createMonthlyTrendsChart();
-        this.createCategoriesChart();
+        this.createStudentsProgramChart();
+        this.createGenderChart();
+        this.createCampusChart();
+        this.createResourceTypesChart();
     }
     
     createBookStatusChart(chartType = 'pie') {
@@ -563,31 +566,31 @@ class LibrarianDashboard {
         });
     }
 
-    createCategoriesChart() {
-        const ctx = document.getElementById('categories-chart');
+    createStudentsProgramChart() {
+        const ctx = document.getElementById('students-program-chart');
         if (!ctx) return;
 
-        const data = this.dashboardData.popular_categories || [];
+        const data = this.dashboardData.course_stats || [];
         
         if (!data.length) {
             const container = ctx.parentElement;
-            container.innerHTML = '<div class="flex justify-center items-center h-72"><i class="fas fa-chart-bar text-2xl text-gray-400 mr-3"></i><span class="text-gray-600">No resource type data available</span></div>';
+            container.innerHTML = '<div class="flex justify-center items-center h-72"><i class="fas fa-chart-bar text-2xl text-gray-400 mr-3"></i><span class="text-gray-600">No student program data available</span></div>';
             return;
         }
 
-        const labels = data.map(item => item.category || 'Unknown');
-        const values = data.map(item => item.count || 0);
+        const labels = data.map(item => this.formatProgramLabel(item.program || item.course || 'Unknown'));
+        const values = data.map(item => Number(item.student_count) || 0);
 
-        if (this.charts.categories) {
-            this.charts.categories.destroy();
+        if (this.charts.studentsProgram) {
+            this.charts.studentsProgram.destroy();
         }
 
-        this.charts.categories = new Chart(ctx, {
+        this.charts.studentsProgram = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Borrowed Resources',
+                    label: 'Students',
                     data: values,
                     backgroundColor: [
                         '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'
@@ -613,7 +616,7 @@ class LibrarianDashboard {
                         cornerRadius: 8,
                         callbacks: {
                             label: (context) => {
-                                return `${context.label}: ${context.raw} books`;
+                                return `${context.label}: ${context.raw} students`;
                             }
                         }
                     }
@@ -650,6 +653,202 @@ class LibrarianDashboard {
         });
     }
 
+    createGenderChart() {
+        const ctx = document.getElementById('gender-chart');
+        if (!ctx) return;
+
+        const data = this.dashboardData.gender_distribution || [];
+
+        if (!data.length) {
+            const container = ctx.parentElement;
+            container.innerHTML = '<div class="flex justify-center items-center h-72"><i class="fas fa-venus-mars text-2xl text-gray-400 mr-3"></i><span class="text-gray-600">No gender data available</span></div>';
+            return;
+        }
+
+        const labels = data.map(item => this.formatGenderLabel(item.gender));
+        const values = data.map(item => Number(item.count) || 0);
+        const colors = ['#3b82f6', '#ec4899', '#94a3b8', '#10b981'];
+
+        if (this.charts.gender) {
+            this.charts.gender.destroy();
+        }
+
+        this.charts.gender = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: labels.map((_, index) => colors[index % colors.length]),
+                    borderColor: '#ffffff',
+                    borderWidth: 2,
+                    hoverOffset: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 16,
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const total = context.dataset.data.reduce((sum, value) => sum + value, 0);
+                                const value = context.raw || 0;
+                                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                return `${context.label}: ${value} students (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    createCampusChart() {
+        const ctx = document.getElementById('campus-chart');
+        if (!ctx) return;
+
+        const data = this.dashboardData.campus_distribution || [];
+
+        if (!data.length) {
+            const container = ctx.parentElement;
+            container.innerHTML = '<div class="flex justify-center items-center h-72"><i class="fas fa-school text-2xl text-gray-400 mr-3"></i><span class="text-gray-600">No campus data available</span></div>';
+            return;
+        }
+
+        const labels = data.map(item => item.campus || 'Unassigned');
+        const values = data.map(item => Number(item.count) || 0);
+        const colors = ['#14b8a6', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444', '#10b981'];
+
+        if (this.charts.campus) {
+            this.charts.campus.destroy();
+        }
+
+        this.charts.campus = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'Students',
+                    data: values,
+                    backgroundColor: labels.map((_, index) => colors[index % colors.length]),
+                    borderColor: labels.map((_, index) => colors[index % colors.length]),
+                    borderWidth: 1,
+                    borderRadius: 8,
+                    borderSkipped: false,
+                    maxBarThickness: 56
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => `${context.label}: ${context.raw} students`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        ticks: {
+                            stepSize: 1,
+                            font: {
+                                size: 12
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    createResourceTypesChart() {
+        const ctx = document.getElementById('categories-chart');
+        if (!ctx) return;
+
+        const data = this.dashboardData.popular_categories || [];
+
+        if (!data.length) {
+            const container = ctx.parentElement;
+            container.innerHTML = '<div class="flex justify-center items-center h-72"><i class="fas fa-chart-pie text-2xl text-gray-400 mr-3"></i><span class="text-gray-600">No resource type data available</span></div>';
+            return;
+        }
+
+        const labels = data.map(item => item.category || 'Unknown');
+        const values = data.map(item => Number(item.count) || 0);
+        const colors = ['#14b8a6', '#f59e0b', '#3b82f6', '#8b5cf6', '#ef4444'];
+
+        if (this.charts.resourceTypes) {
+            this.charts.resourceTypes.destroy();
+        }
+
+        this.charts.resourceTypes = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: labels.map((_, index) => colors[index % colors.length]),
+                    borderColor: '#ffffff',
+                    borderWidth: 2,
+                    hoverOffset: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 16,
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const total = context.dataset.data.reduce((sum, value) => sum + value, 0);
+                                const value = context.raw || 0;
+                                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                return `${context.label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
     formatProgramLabel(program) {
         if (!program) return 'General';
         const programMap = {
@@ -659,6 +858,17 @@ class LibrarianDashboard {
         };
         const normalized = String(program).trim();
         return programMap[normalized.toUpperCase()] || normalized;
+    }
+
+    formatGenderLabel(gender) {
+        const normalized = String(gender || 'not specified').trim().toLowerCase();
+        const genderMap = {
+            male: 'Male',
+            female: 'Female',
+            'not specified': 'Not Specified'
+        };
+
+        return genderMap[normalized] || normalized.replace(/\b\w/g, (char) => char.toUpperCase());
     }
 
     resizeCharts() {
@@ -682,15 +892,86 @@ class LibrarianDashboard {
 
         // Get dashboard data
         const dashboardData = window.librarianDashboard ? window.librarianDashboard.dashboardData : {};
+        const monthTitle = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }).toUpperCase();
+        const monthlyBorrowed = Number(dashboardData.recent_activity?.borrows || 0);
+        const monthlyReturned = Number(dashboardData.recent_activity?.returns || 0);
+        const monthlyRegistrations = Number(dashboardData.recent_activity?.registrations || 0);
+        const monthlyActivityTotal = monthlyBorrowed + monthlyReturned + monthlyRegistrations;
+
+        const programStats = Array.isArray(dashboardData.course_stats) ? dashboardData.course_stats : [];
+        const topProgram = programStats.reduce((top, item) => {
+            const count = Number(item.student_count || 0);
+            if (!top || count > top.count) {
+                return {
+                    label: this.formatProgramLabel(item.program || item.course || 'Unassigned'),
+                    count
+                };
+            }
+            return top;
+        }, null);
+
+        const genderStats = Array.isArray(dashboardData.gender_distribution) ? dashboardData.gender_distribution : [];
+        const topGender = genderStats.reduce((top, item) => {
+            const count = Number(item.count || 0);
+            if (!top || count > top.count) {
+                return {
+                    label: this.formatGenderLabel(item.gender),
+                    count
+                };
+            }
+            return top;
+        }, null);
+
+        const totalStudents = Number(dashboardData.basic_stats?.total_students || 0);
+        const topGenderPercentage = totalStudents > 0 && topGender
+            ? ((topGender.count / totalStudents) * 100).toFixed(1)
+            : '0.0';
+        const totalBooks = Number(dashboardData.basic_stats?.total_books || 0);
+        const activeBorrows = Number(dashboardData.basic_stats?.active_borrows || 0);
+        const totalLoans = Number(dashboardData.basic_stats?.total_loans || 0);
+        const booksByProgram = dashboardData.books_by_course || {};
+        const totalBooksDistributed = Object.values(booksByProgram).reduce((sum, value) => sum + (Number(value) || 0), 0);
+
+        const booksPercentageList = Object.entries(booksByProgram)
+            .map(([program, count]) => ({
+                label: this.formatProgramLabel(program || 'General'),
+                count: Number(count) || 0
+            }))
+            .filter(item => item.count > 0)
+            .sort((a, b) => b.count - a.count)
+            .map(item => `<li><strong>${item.label}</strong>: ${item.count} books (${totalBooksDistributed > 0 ? ((item.count / totalBooksDistributed) * 100).toFixed(1) : '0.0'}%)</li>`)
+            .join('');
+
+        const studentsPercentageList = programStats
+            .map(item => ({
+                label: this.formatProgramLabel(item.program || item.course || 'Unassigned'),
+                count: Number(item.student_count || 0)
+            }))
+            .filter(item => item.count > 0)
+            .sort((a, b) => b.count - a.count)
+            .map(item => `<li><strong>${item.label}</strong>: ${item.count} students (${totalStudents > 0 ? ((item.count / totalStudents) * 100).toFixed(1) : '0.0'}%)</li>`)
+            .join('');
+
+        const genderPercentageList = genderStats
+            .map(item => ({
+                label: this.formatGenderLabel(item.gender),
+                count: Number(item.count || 0)
+            }))
+            .filter(item => item.count > 0)
+            .sort((a, b) => b.count - a.count)
+            .map(item => `<li><strong>${item.label}</strong>: ${item.count} students (${totalStudents > 0 ? ((item.count / totalStudents) * 100).toFixed(1) : '0.0'}%)</li>`)
+            .join('');
 
         // Capture chart images
         const bookStatusCanvas = document.getElementById('book-status-chart');
         const monthlyTrendsCanvas = document.getElementById('monthly-trends-chart');
-        const categoriesCanvas = document.getElementById('categories-chart');
+        const studentsProgramCanvas = document.getElementById('students-program-chart');
+        const genderCanvas = document.getElementById('gender-chart');
 
         let bookStatusImage = '';
         let monthlyTrendsImage = '';
-        let categoriesImage = '';
+        let studentsProgramImage = '';
+        let genderImage = '';
 
         if (bookStatusCanvas) {
             bookStatusImage = bookStatusCanvas.toDataURL('image/png');
@@ -698,8 +979,11 @@ class LibrarianDashboard {
         if (monthlyTrendsCanvas) {
             monthlyTrendsImage = monthlyTrendsCanvas.toDataURL('image/png');
         }
-        if (categoriesCanvas) {
-            categoriesImage = categoriesCanvas.toDataURL('image/png');
+        if (studentsProgramCanvas) {
+            studentsProgramImage = studentsProgramCanvas.toDataURL('image/png');
+        }
+        if (genderCanvas) {
+            genderImage = genderCanvas.toDataURL('image/png');
         }
 
         // Create a new window for printing
@@ -716,236 +1000,393 @@ class LibrarianDashboard {
             <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
             <style>
                 @media print {
-                    body { margin: 0; padding: 20px; }
+                    body { margin: 0; padding: 0; }
                     .no-print { display: none; }
                     .page-break { page-break-before: always; }
                 }
 
                 body {
                     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                    line-height: 1.6;
-                    color: #333;
-                    background: white;
+                    line-height: 1.5;
+                    color: #1f2937;
+                    background: #dfead8;
+                    margin: 0;
+                }
+
+                .report-shell {
+                    max-width: 1100px;
+                    margin: 0 auto;
+                    padding: 18px;
                 }
 
                 .header {
+                    background: linear-gradient(135deg, #d9ecd0 0%, #c5e0bf 100%);
+                    border: 1px solid #a7c6a1;
+                    border-radius: 18px;
+                    padding: 22px 24px 18px;
+                    margin-bottom: 16px;
                     text-align: center;
-                    border-bottom: 3px solid #2563eb;
-                    padding-bottom: 20px;
-                    margin-bottom: 30px;
+                    box-shadow: 0 8px 18px rgba(46, 91, 59, 0.08);
+                }
+
+                .header .eyebrow {
+                    color: #21584a;
+                    font-size: 13px;
+                    font-weight: 700;
+                    letter-spacing: 0.12em;
+                    text-transform: uppercase;
+                    margin-bottom: 4px;
                 }
 
                 .header h1 {
-                    color: #2563eb;
-                    font-size: 28px;
+                    color: #123f38;
+                    font-size: 32px;
                     margin: 0;
-                    font-weight: bold;
+                    font-weight: 800;
+                    letter-spacing: 0.04em;
+                }
+
+                .header h2 {
+                    color: #1d6f5f;
+                    font-size: 18px;
+                    margin: 4px 0 10px;
+                    font-weight: 800;
+                    text-transform: uppercase;
                 }
 
                 .header p {
-                    color: #6b7280;
-                    margin: 5px 0 0 0;
-                    font-size: 14px;
-                }
-
-                .stats-grid {
-                    display: grid;
-                    grid-template-columns: repeat(4, 1fr);
-                    gap: 20px;
-                    margin-bottom: 40px;
-                }
-
-                .stat-card {
-                    border: 2px solid #e5e7eb;
-                    border-radius: 12px;
-                    padding: 20px;
-                    text-align: center;
-                    background: white;
-                }
-
-                .stat-card.blue { border-top: 4px solid #3b82f6; }
-                .stat-card.green { border-top: 4px solid #10b981; }
-                .stat-card.orange { border-top: 4px solid #f59e0b; }
-                .stat-card.red { border-top: 4px solid #ef4444; }
-
-                .stat-card h3 {
-                    font-size: 14px;
-                    color: #6b7280;
-                    margin: 0 0 10px 0;
-                    font-weight: 500;
-                }
-
-                .stat-card .value {
-                    font-size: 32px;
-                    font-weight: bold;
+                    color: #365b50;
                     margin: 0;
+                    font-size: 13px;
                 }
 
-                .stat-card.blue .value { color: #3b82f6; }
-                .stat-card.green .value { color: #10b981; }
-                .stat-card.orange .value { color: #f59e0b; }
-                .stat-card.red .value { color: #ef4444; }
-
-                .charts-section {
-                    display: grid;
-                    grid-template-columns: 1fr 1fr;
-                    gap: 30px;
-                    margin-bottom: 40px;
+                .title-banner {
+                    background: #edf6e8;
+                    border: 1px solid #bfd6b9;
+                    border-radius: 16px;
+                    padding: 14px 18px;
+                    margin-bottom: 16px;
                 }
 
-                .chart-container {
-                    border: 2px solid #e5e7eb;
-                    border-radius: 12px;
-                    padding: 20px;
-                    background: white;
-                }
-
-                .chart-container h3 {
+                .title-banner h3 {
+                    margin: 0;
+                    color: #0f5a50;
                     font-size: 18px;
-                    color: #1f2937;
-                    margin: 0 0 20px 0;
-                    font-weight: 600;
-                    text-align: center;
+                    font-weight: 800;
+                    letter-spacing: 0.03em;
+                    text-transform: uppercase;
                 }
 
-                .chart-image {
-                    width: 100%;
-                    height: auto;
-                    max-height: 300px;
-                    object-fit: contain;
+                .title-banner p {
+                    margin: 8px 0 0;
+                    color: #3f5f57;
+                    font-size: 13px;
+                }
+
+                .summary-section,
+                .chart-container,
+                .insight-card {
+                    background: #f8fcf6;
+                    border: 1px solid #bfd6b9;
+                    border-radius: 16px;
+                    box-shadow: 0 6px 14px rgba(46, 91, 59, 0.06);
                 }
 
                 .summary-section {
-                    border: 2px solid #e5e7eb;
-                    border-radius: 12px;
-                    padding: 20px;
-                    background: white;
-                    margin-bottom: 30px;
+                    padding: 18px;
+                    margin-bottom: 16px;
                 }
 
-                .summary-section h3 {
-                    font-size: 18px;
-                    color: #1f2937;
-                    margin: 0 0 20px 0;
-                    font-weight: 600;
+                .section-title {
+                    margin: 0 0 14px;
+                    color: #185a50;
+                    font-size: 16px;
+                    font-weight: 800;
+                    text-transform: uppercase;
+                    letter-spacing: 0.02em;
                 }
 
                 .summary-grid {
                     display: grid;
                     grid-template-columns: repeat(3, 1fr);
-                    gap: 20px;
+                    gap: 12px;
                 }
 
                 .summary-item {
+                    background: linear-gradient(180deg, #ffffff 0%, #eef8ea 100%);
+                    border: 1px solid #d4e4ce;
+                    border-radius: 14px;
+                    padding: 16px 14px;
                     text-align: center;
-                    padding: 15px;
-                    background: #f8fafc;
-                    border-radius: 8px;
                 }
 
                 .summary-item .value {
-                    font-size: 24px;
-                    font-weight: bold;
+                    font-size: 30px;
+                    font-weight: 800;
                     margin: 0;
                 }
 
-                .summary-item.blue .value { color: #3b82f6; }
-                .summary-item.green .value { color: #10b981; }
-                .summary-item.orange .value { color: #f59e0b; }
+                .summary-item.blue .value { color: #0f766e; }
+                .summary-item.green .value { color: #2f855a; }
+                .summary-item.orange .value { color: #d97706; }
 
                 .summary-item .label {
                     font-size: 12px;
+                    color: #4b635b;
+                    margin-top: 6px;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    letter-spacing: 0.03em;
+                }
+
+                .overview-grid,
+                .charts-section {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 16px;
+                    margin-bottom: 16px;
+                }
+
+                .insight-card,
+                .chart-container {
+                    padding: 16px;
+                    break-inside: avoid;
+                }
+
+                .insight-card p {
+                    margin: 0;
+                    color: #425c53;
+                    font-size: 13px;
+                }
+
+                .insight-card strong {
+                    color: #0f5a50;
+                }
+
+                .chart-container h3 {
+                    font-size: 16px;
+                    color: #0f5a50;
+                    margin: 0 0 12px 0;
+                    font-weight: 800;
+                    text-align: left;
+                    text-transform: uppercase;
+                    letter-spacing: 0.02em;
+                }
+
+                .chart-image {
+                    width: 100%;
+                    height: auto;
+                    max-height: 220px;
+                    object-fit: contain;
+                    background: #ffffff;
+                    border: 1px solid #d8e5d4;
+                    border-radius: 12px;
+                    padding: 8px;
+                }
+
+                .chart-placeholder {
+                    min-height: 210px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    text-align: center;
                     color: #6b7280;
-                    margin-top: 5px;
+                    background: #ffffff;
+                    border: 1px dashed #bfd6b9;
+                    border-radius: 12px;
+                    font-size: 13px;
+                    padding: 16px;
+                }
+
+                .chart-meta {
+                    margin-top: 12px;
+                    padding: 10px 12px;
+                    background: #edf6e8;
+                    border: 1px solid #d4e4ce;
+                    border-radius: 12px;
+                }
+
+                .chart-meta-title {
+                    margin: 0 0 6px;
+                    color: #185a50;
+                    font-size: 12px;
+                    font-weight: 800;
+                    text-transform: uppercase;
+                    letter-spacing: 0.03em;
+                }
+
+                .chart-meta ul {
+                    margin: 0;
+                    padding-left: 18px;
+                    color: #425c53;
+                    font-size: 12px;
+                }
+
+                .chart-meta li + li {
+                    margin-top: 4px;
+                }
+
+                .report-note {
+                    background: #edf7eb;
+                    border: 1px solid #c8ddc2;
+                    border-radius: 16px;
+                    padding: 14px 16px;
+                    margin-bottom: 16px;
+                    color: #3e5e54;
+                    font-size: 13px;
+                }
+
+                .report-note strong {
+                    color: #0f5a50;
                 }
 
                 .footer {
                     text-align: center;
-                    color: #6b7280;
+                    color: #4d665d;
                     font-size: 12px;
-                    border-top: 1px solid #e5e7eb;
-                    padding-top: 20px;
-                    margin-top: 40px;
+                    border-top: 1px solid #b9d0b2;
+                    padding-top: 16px;
+                    margin-top: 20px;
                 }
 
                 @media print {
-                    .stats-grid {
-                        grid-template-columns: repeat(4, 1fr);
+                    body {
+                        margin: 0;
+                        padding: 0;
                     }
 
-                    .charts-section {
-                        grid-template-columns: 1fr;
-                        gap: 20px;
+                    .report-shell {
+                        padding: 12px;
                     }
 
                     .summary-grid {
                         grid-template-columns: repeat(3, 1fr);
+                        gap: 12px;
+                    }
+
+                    .overview-grid,
+                    .charts-section {
+                        grid-template-columns: 1fr 1fr;
+                        gap: 14px;
+                    }
+
+                    .insight-card,
+                    .chart-container,
+                    .summary-section {
+                        break-inside: avoid;
+                    }
+
+                    .header {
+                        margin-bottom: 12px;
+                        padding: 16px 18px 14px;
+                    }
+
+                    .title-banner,
+                    .summary-section,
+                    .report-note,
+                    .overview-grid,
+                    .charts-section {
+                        margin-bottom: 12px;
+                    }
+
+                    .chart-container {
+                        padding: 12px;
+                    }
+
+                    .chart-container h3 {
+                        font-size: 14px;
+                        margin-bottom: 10px;
+                    }
+
+                    .chart-image {
+                        max-height: 175px;
+                    }
+
+                    .chart-meta {
+                        margin-top: 10px;
+                        padding: 8px 10px;
                     }
                 }
             </style>
         </head>
         <body>
-            <div class="header">
-                <h1>Library Management System</h1>
-                <p>Dashboard Report - Generated on ${dateStr}</p>
-            </div>
+            <div class="report-shell">
+                <div class="header">
+                    <div class="eyebrow">Monthly Library Report</div>
+                    <h1>JHSCS KNOWLY</h1>
+                    <h2>College Library</h2>
+                    <p>Generated on ${dateStr}</p>
+                </div>
 
-            <div class="stats-grid">
-                <div class="stat-card blue">
-                    <h3>Total Books</h3>
-                    <p class="value">${dashboardData.basic_stats?.total_books || 0}</p>
+                <div class="title-banner">
+                    <h3>${monthTitle} Statistics</h3>
+                    <p>This monthly report presents borrowing activity, student distribution by program, gender profile, and collection usage trends based on the latest dashboard data.</p>
                 </div>
-                <div class="stat-card green">
-                    <h3>Total Students</h3>
-                    <p class="value">${dashboardData.basic_stats?.total_students || 0}</p>
-                </div>
-                <div class="stat-card orange">
-                    <h3>Active Borrows</h3>
-                    <p class="value">${dashboardData.basic_stats?.active_borrows || 0}</p>
-                </div>
-                <div class="stat-card red">
-                    <h3>Total Loans</h3>
-                    <p class="value">${dashboardData.basic_stats?.total_loans || 0}</p>
-                </div>
-            </div>
 
-            <div class="charts-section">
-                <div class="chart-container">
-                    <h3>Book Status Distribution</h3>
-                    ${bookStatusImage ? `<img src="${bookStatusImage}" alt="Book Status Chart" class="chart-image">` : '<div class="chart-placeholder"><i class="fas fa-chart-pie fa-2x"></i><br><br>No chart data available</div>'}
-                </div>
-                <div class="chart-container">
-                    <h3>Students per Program</h3>
-                    ${categoriesImage ? `<img src="${categoriesImage}" alt="Students per Program Chart" class="chart-image">` : '<div class="chart-placeholder"><i class="fas fa-chart-bar fa-2x"></i><br><br>No chart data available</div>'}
-                </div>
-            </div>
-
-            <div class="chart-container">
-                <h3>Monthly Borrowing Trends</h3>
-                ${monthlyTrendsImage ? `<img src="${monthlyTrendsImage}" alt="Monthly Trends Chart" class="chart-image">` : '<div class="chart-placeholder"><i class="fas fa-chart-line fa-2x"></i><br><br>No chart data available</div>'}
-            </div>
-
-            <div class="summary-section">
-                <h3>Today's Summary</h3>
-                <div class="summary-grid">
-                    <div class="summary-item blue">
-                        <p class="value">${dashboardData.recent_activity?.borrows || 0}</p>
-                        <p class="label">Books Borrowed</p>
-                    </div>
-                    <div class="summary-item green">
-                        <p class="value">${dashboardData.recent_activity?.returns || 0}</p>
-                        <p class="label">Books Returned</p>
-                    </div>
-                    <div class="summary-item orange">
-                        <p class="value">${dashboardData.recent_activity?.registrations || 0}</p>
-                        <p class="label">New Registrations</p>
+                <div class="summary-section">
+                    <h3 class="section-title">Monthly Summary</h3>
+                    <div class="summary-grid">
+                        <div class="summary-item blue">
+                            <p class="value">${monthlyBorrowed}</p>
+                            <p class="label">Borrowed</p>
+                        </div>
+                        <div class="summary-item green">
+                            <p class="value">${monthlyReturned}</p>
+                            <p class="label">Returned</p>
+                        </div>
+                        <div class="summary-item orange">
+                            <p class="value">${monthlyRegistrations}</p>
+                            <p class="label">Registrations</p>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="footer">
-                <p>This report was generated automatically by the Library Management System</p>
-                <p>Report Date: ${dateStr}</p>
+                <div class="overview-grid">
+                    <div class="insight-card">
+                        <h3 class="section-title">Report Highlights</h3>
+                        <p><strong>${monthlyActivityTotal}</strong> total monthly transactions were recorded from borrowed resources, returned resources, and new student registrations.</p>
+                        <p style="margin-top:10px;"><strong>${totalBooks}</strong> total resources are currently tracked in the collection, with <strong>${activeBorrows}</strong> active borrows and <strong>${totalLoans}</strong> total loan records.</p>
+                    </div>
+                    <div class="insight-card">
+                        <h3 class="section-title">Demographic Notes</h3>
+                        <p>${topProgram ? `<strong>${topProgram.label}</strong> has the highest student count in the current dashboard dataset with <strong>${topProgram.count}</strong> students.` : 'Program distribution data is not available for this month.'}</p>
+                        <p style="margin-top:10px;">${topGender ? `<strong>${topGender.label}</strong> represents the largest gender group with <strong>${topGender.count}</strong> students, or approximately <strong>${topGenderPercentage}%</strong> of all registered students.` : 'Gender distribution data is not available for this month.'}</p>
+                    </div>
+                </div>
+
+                <div class="charts-section">
+                    <div class="chart-container">
+                        <h3>Books Distribution by Program</h3>
+                        ${bookStatusImage ? `<img src="${bookStatusImage}" alt="Book Status Chart" class="chart-image">` : '<div class="chart-placeholder"><i class="fas fa-chart-pie fa-2x"></i><br><br>No chart data available</div>'}
+                        ${booksPercentageList ? `<div class="chart-meta"><p class="chart-meta-title">Percentage Breakdown</p><ul>${booksPercentageList}</ul></div>` : ''}
+                    </div>
+                    <div class="chart-container">
+                        <h3>Students per Program</h3>
+                        ${studentsProgramImage ? `<img src="${studentsProgramImage}" alt="Students per Program Chart" class="chart-image">` : '<div class="chart-placeholder"><i class="fas fa-chart-bar fa-2x"></i><br><br>No chart data available</div>'}
+                        ${studentsPercentageList ? `<div class="chart-meta"><p class="chart-meta-title">Percentage Breakdown</p><ul>${studentsPercentageList}</ul></div>` : ''}
+                    </div>
+                </div>
+
+                <div class="charts-section">
+                    <div class="chart-container">
+                        <h3>Monthly Borrowing Trends</h3>
+                        ${monthlyTrendsImage ? `<img src="${monthlyTrendsImage}" alt="Monthly Trends Chart" class="chart-image">` : '<div class="chart-placeholder"><i class="fas fa-chart-line fa-2x"></i><br><br>No chart data available</div>'}
+                    </div>
+                    <div class="chart-container">
+                        <h3>Student Gender Distribution</h3>
+                        ${genderImage ? `<img src="${genderImage}" alt="Gender Distribution Chart" class="chart-image">` : '<div class="chart-placeholder"><i class="fas fa-venus-mars fa-2x"></i><br><br>No chart data available</div>'}
+                        ${genderPercentageList ? `<div class="chart-meta"><p class="chart-meta-title">Percentage Breakdown</p><ul>${genderPercentageList}</ul></div>` : ''}
+                    </div>
+                </div>
+
+                <div class="report-note">
+                    <strong>Interpretation:</strong> This report is intended for monthly library monitoring. It summarizes collection distribution, student participation by program, gender profile, and transaction trends to support planning, resource allocation, and service improvements.
+                </div>
+
+                <div class="footer">
+                    <p>This report was generated automatically by the JHSCS KNOWLY Library Management System.</p>
+                    <p>Report Date: ${dateStr}</p>
+                </div>
             </div>
         </body>
         </html>

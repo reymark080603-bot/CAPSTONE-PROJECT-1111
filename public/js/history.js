@@ -27,6 +27,23 @@ class HistoryManager {
         return `${this.getBookUrl(bookId)}/details`;
     }
 
+    getBookCoverUrl(book) {
+        if (!book) {
+            return '';
+        }
+
+        const coverPath = book.cover_url || book.cover_image || book.cover_photo || '';
+        if (!coverPath) {
+            return '';
+        }
+
+        if (coverPath.startsWith('http://') || coverPath.startsWith('https://') || coverPath.startsWith('/')) {
+            return coverPath;
+        }
+
+        return `/${coverPath.replace(/^\/+/, '')}`;
+    }
+
     getRenewUrl(recordId) {
         const base = this.getRoute('renewBase', '/student/borrow-records');
         return `${base.replace(/\/$/, '')}/${recordId}/renew`;
@@ -454,27 +471,36 @@ class HistoryManager {
         tr.className = 'hover:bg-gray-50 transition-colors';
         
         // Determine record type and status
-        const recordType = record.type || (record.returned_date ? 'return' : 'borrow');
         const status = this.getRecordStatus(record);
         const statusClass = this.getStatusClass(status);
         const categoryClass = record.book?.category ? record.book.category.toLowerCase().replace(/\\s+/g, '') : '';
+        const resourceType = (record.book?.resource_type || 'book').toLowerCase();
+        const resourceTypeLabel = this.formatResourceType(resourceType);
+        const resourceTypeIcon = this.getResourceTypeIcon(resourceType);
+        const resourceTypeClass = this.getResourceTypeClass(resourceType);
+        const coverUrl = this.getBookCoverUrl(record.book);
+        const bookTitle = record.book?.title || 'Unknown';
+        const coverMarkup = coverUrl
+            ? `<img src="${this.escapeHtml(coverUrl)}" alt="${this.escapeHtml(bookTitle)} Cover" class="book-cover-image" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling?.classList.remove('hidden');">`
+            : '';
         
         tr.innerHTML = `
             <td class="px-6 py-4">
                 <div class="book-info">
                     <div class="book-cover-mini ${categoryClass}">
-                        <i class="fas fa-book"></i>
+                        ${coverMarkup}
+                        <i class="fas fa-book ${coverUrl ? 'hidden' : ''}"></i>
                     </div>
                     <div class="book-details">
-                        <div class="book-title">${this.highlightSearch(record.book?.title || 'Unknown')}</div>
+                        <div class="book-title">${this.highlightSearch(bookTitle)}</div>
                         <div class="book-author">${record.book?.author || 'Unknown Author'}</div>
                     </div>
                 </div>
             </td>
             <td class="px-6 py-4">
-                <div class="type-indicator ${this.getTypeClass(recordType)}">
-                    <i class="fas ${this.getTypeIcon(recordType)}"></i>
-                    ${this.formatRecordType(recordType)}
+                <div class="type-indicator ${resourceTypeClass}">
+                    <i class="fas ${resourceTypeIcon}"></i>
+                    ${resourceTypeLabel}
                 </div>
             </td>
             <td class="px-6 py-4">
@@ -494,14 +520,36 @@ class HistoryManager {
                 </span>
                 ${this.renderFineIndicator(record)}
             </td>
-            <td class="px-6 py-4">
-                <div class="flex gap-2">
-                    ${this.renderActionButtons(record)}
-                </div>
-            </td>
         `;
         
         return tr;
+    }
+
+    getResourceTypeClass(type) {
+        switch (type) {
+            case 'e_journal': return 'type-reserve';
+            case 'thesis': return 'type-return';
+            case 'book':
+            default: return 'type-borrow';
+        }
+    }
+
+    getResourceTypeIcon(type) {
+        switch (type) {
+            case 'e_journal': return 'fa-newspaper';
+            case 'thesis': return 'fa-graduation-cap';
+            case 'book':
+            default: return 'fa-book';
+        }
+    }
+
+    formatResourceType(type) {
+        switch (type) {
+            case 'e_journal': return 'E-Journal';
+            case 'thesis': return 'E-Thesis';
+            case 'book':
+            default: return 'Book';
+        }
     }
     
     getRecordStatus(record) {
@@ -809,6 +857,7 @@ class HistoryManager {
     renderDetailsToast(book) {
         const modalContent = document.querySelector('#book-detail-modal .modal-content');
         const categoryClass = book.category ? book.category.toLowerCase().replace(/\\s+/g, '') : '';
+        const coverUrl = this.getBookCoverUrl(book);
         
         modalContent.innerHTML = `
             <div class="p-6">
@@ -822,7 +871,10 @@ class HistoryManager {
                 
                 <div class="flex flex-col md:flex-row gap-6">
                     <div class="book-cover-mini ${categoryClass} w-32 h-44 text-3xl">
-                        <i class="fas fa-book"></i>
+                        ${coverUrl
+                            ? `<img src="${this.escapeHtml(coverUrl)}" alt="${this.escapeHtml(book.title)} Cover" class="book-cover-image" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling?.classList.remove('hidden');">`
+                            : ''}
+                        <i class="fas fa-book ${coverUrl ? 'hidden' : ''}"></i>
                     </div>
                     
                     <div class="flex-1">
