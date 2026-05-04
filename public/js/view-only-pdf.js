@@ -83,7 +83,8 @@ class ViewOnlyPDFViewer {
         toolbar.className = 'viewer-toolbar';
         toolbar.innerHTML = `
             <div class="viewer-page-info">
-                <span id="current-page">1</span> of <span id="total-pages">${this.pdfDoc.numPages}</span>
+                <input type="number" id="page-input" min="1" max="${this.pdfDoc.numPages}" value="1" style="width: 50px; padding: 4px 8px; border: 1px solid #666; border-radius: 4px; background: #333; color: white; text-align: center;">
+                of <span id="total-pages">${this.pdfDoc.numPages}</span>
             </div>
             <div class="viewer-zoom">
                 <button id="zoom-out" class="viewer-btn" title="Zoom Out">
@@ -123,12 +124,46 @@ class ViewOnlyPDFViewer {
         // Bind events
         this.bindEvents();
         this.applySecurityMeasures();
-        
-        // Add scroll detection for page tracking
-        this.setupScrollTracking();
     }
 
     bindEvents() {
+        // Page input for jumping to specific page
+        const pageInput = document.getElementById('page-input');
+        if (pageInput) {
+            pageInput.addEventListener('change', (e) => {
+                let pageNum = parseInt(e.target.value, 10);
+                if (isNaN(pageNum) || pageNum < 1) pageNum = 1;
+                if (pageNum > this.pdfDoc.numPages) pageNum = this.pdfDoc.numPages;
+                
+                // Update input value to valid number
+                pageInput.value = pageNum;
+                
+                // Scroll to the requested page
+                this.goToPage(pageNum);
+            });
+
+            // Allow pressing Enter to jump to page
+            pageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.target.blur();
+                    let pageNum = parseInt(e.target.value, 10);
+                    if (isNaN(pageNum) || pageNum < 1) pageNum = 1;
+                    if (pageNum > this.pdfDoc.numPages) pageNum = this.pdfDoc.numPages;
+                    
+                    pageInput.value = pageNum;
+                    this.goToPage(pageNum);
+                }
+            });
+        }
+
+        // Scroll container to track current page
+        const scrollContainer = document.querySelector('.viewer-scroll-container');
+        if (scrollContainer) {
+            scrollContainer.addEventListener('scroll', () => {
+                this.updateCurrentPage();
+            });
+        }
+
         // Zoom controls only - no page navigation needed for continuous scroll
         document.getElementById('zoom-in').addEventListener('click', () => {
             this.scale = Math.min(this.scale + 0.25, 3.0);
@@ -187,14 +222,6 @@ class ViewOnlyPDFViewer {
         }, { passive: true });
     }
 
-    setupScrollTracking() {
-        const scrollContainer = this.container.querySelector('.viewer-scroll-container');
-        
-        scrollContainer.addEventListener('scroll', () => {
-            this.updateCurrentPage();
-        }, { passive: true });
-    }
-
     updateCurrentPage() {
         const scrollContainer = this.container.querySelector('.viewer-scroll-container');
         const pageContainers = scrollContainer.querySelectorAll('.viewer-page-container');
@@ -215,10 +242,35 @@ class ViewOnlyPDFViewer {
             }
         }
         
-        // Update the page display
-        const currentPageElement = document.getElementById('current-page');
-        if (currentPageElement) {
-            currentPageElement.textContent = currentPage;
+        // Update the page input field
+        const pageInput = document.getElementById('page-input');
+        if (pageInput) {
+            pageInput.value = currentPage;
+        }
+    }
+
+    goToPage(pageNum) {
+        // Validate page number
+        if (isNaN(pageNum) || pageNum < 1 || pageNum > this.pdfDoc.numPages) {
+            return;
+        }
+        
+        // Find the page container and scroll to it
+        const pageContainers = document.querySelectorAll('.viewer-page-container');
+        if (pageNum > 0 && pageNum <= pageContainers.length) {
+            const targetPage = pageContainers[pageNum - 1];
+            const scrollContainer = document.querySelector('.viewer-scroll-container');
+            
+            if (scrollContainer && targetPage) {
+                // Scroll to the target page with smooth animation
+                targetPage.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                
+                // Update the page input immediately
+                const pageInput = document.getElementById('page-input');
+                if (pageInput) {
+                    pageInput.value = pageNum;
+                }
+            }
         }
     }
 

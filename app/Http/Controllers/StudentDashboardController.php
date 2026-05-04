@@ -78,20 +78,24 @@ class StudentDashboardController extends Controller
         $courseRelatedBooks = $recommendedBooks;
         $popularBooks = collect();
 
-        // Get recent e-resources for horizontal carousel
+        // Get recent e-resources for horizontal carousel. Keep this broad so the
+        // home page still shows new resources when none match the user's course.
         $recentBooks = Book::where('availability_status', 'available')
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
 
-        $recentEJournalResources = Book::where('resource_type', 'e_journal')
-            ->where('availability_status', 'available')
+        $recentEJournalResources = $this->buildCourseResourceQuery($user)
+            ->where('resource_type', 'e_journal')
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
 
-        $recentThesisResources = Book::where('resource_type', 'thesis')
-            ->where('availability_status', 'available')
+        // Backward-compatible alias for older dashboard view references.
+        $recentEBookResources = $recentEJournalResources;
+
+        $recentThesisResources = $this->buildCourseResourceQuery($user)
+            ->where('resource_type', 'thesis')
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
@@ -100,7 +104,7 @@ class StudentDashboardController extends Controller
             'user', 'currentBorrows', 'recentHistory',
             'totalBorrows', 'activeBorrows', 'overdueBooks',
             'recommendedBooks', 'courseRelatedBooks', 'popularBooks',
-            'recentBooks', 'recentEJournalResources', 'recentThesisResources'
+            'recentBooks', 'recentEJournalResources', 'recentEBookResources', 'recentThesisResources'
         ));
     }
 

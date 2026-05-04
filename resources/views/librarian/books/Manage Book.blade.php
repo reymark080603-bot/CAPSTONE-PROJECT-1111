@@ -44,10 +44,6 @@
             <p class="text-gray-600 mt-2">Add, edit, and manage library books, e-journals, thesis, and other resources</p>
         </div>
         <div class="flex gap-3">
-            <a href="{{ route('librarian.books.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-all duration-200 hover:transform hover:scale-105 shadow-lg">
-                <i class="fas fa-plus"></i>
-                Add New Resource
-            </a>
             <a href="{{ route('librarian.books.bulk.upload') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-all duration-200 hover:transform hover:scale-105 shadow-lg">
                 <i class="fas fa-file-upload"></i>
                 Upload Resources
@@ -68,7 +64,7 @@
                 <label for="searchInput" class="block text-sm font-medium text-gray-700 mb-2">Search</label>
                 <div class="relative">
                     <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="text" id="searchInput" placeholder="Search by title, author, publisher, ISBN..." class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                    <input type="text" id="searchInput" placeholder="Search by title, author, ISBN..." class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
                 </div>
             </div>
             <div>
@@ -92,15 +88,15 @@
                 </select>
             </div>
             <div>
-                <label for="availabilityFilter" class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                <select id="availabilityFilter" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
-                    <option value="">All Status</option>
-                    <option value="available">Available</option>
-                    <option value="not available">Not Available</option>
+                <label for="titleSortFilter" class="block text-sm font-medium text-gray-700 mb-2">Sort</label>
+                <select id="titleSortFilter" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                    <option value="">Newest First</option>
+                    <option value="asc">Title A-Z</option>
+                    <option value="desc">Title Z-A</option>
                 </select>
             </div>
-            <div class="flex gap-2">
-                <button id="clearFiltersBtn" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2.5 rounded-lg transition-all duration-200 flex items-center gap-2">
+            <div class="flex items-end">
+                <button id="clearFiltersBtn" class="h-[42px] bg-gray-500 hover:bg-gray-600 text-white px-4 rounded-lg transition-all duration-200 inline-flex items-center justify-center gap-2 whitespace-nowrap">
                     <i class="fas fa-times"></i>
                     Clear
                 </button>
@@ -118,15 +114,23 @@
         </div>
     </div>
     <div class="overflow-x-auto">
-        <table id="booksTable" class="w-full table-auto">
+        <table id="booksTable" class="w-full table-fixed">
+            <colgroup>
+                <col class="w-[96px]">
+                <col>
+                <col class="w-[120px]">
+                <col class="w-[120px]">
+                <col class="w-[140px]">
+                <col class="w-[112px]">
+            </colgroup>
             <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cover</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resource Details</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Availability</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cover</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resource Details</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Availability</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
             <tbody class="bg-white divide-y divide-gray-200">
@@ -284,6 +288,47 @@
     border-radius: 1rem;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     border: 1px solid #e5e7eb;
+    overflow: hidden;
+}
+
+#booksTable {
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+
+#booksTable th,
+#booksTable td {
+    vertical-align: middle;
+}
+
+#booksTable tbody td {
+    padding: 0.875rem 1rem;
+}
+
+#booksTable tbody td:first-child {
+    text-align: left;
+}
+
+#booksTable tbody td:nth-child(2) {
+    min-width: 0;
+}
+
+#booksTable tbody td:nth-child(2) h4,
+#booksTable tbody td:nth-child(2) p {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#booksTable tbody td:nth-child(3),
+#booksTable tbody td:nth-child(4),
+#booksTable tbody td:nth-child(5),
+#booksTable tbody td:nth-child(6) {
+    white-space: nowrap;
+}
+
+#booksTable tbody td:nth-child(6) .flex {
+    justify-content: flex-start;
 }
 
 /* Responsive grid adjustments */
@@ -524,6 +569,12 @@
     margin-top: 1rem;
 }
 
+.dataTables_wrapper .row {
+    --bs-gutter-x: 0;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
 .dataTables_wrapper .row:last-child {
     display: flex;
     align-items: center;
@@ -532,11 +583,24 @@
     padding: 0.75rem 1rem;
     border-top: 1px solid #e5e7eb;
     flex-wrap: wrap;
+    background: #f9fafb;
+    color: #374151;
 }
 
 .dataTables_wrapper .row:last-child > div {
     width: auto;
     flex: 0 0 auto;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    max-width: none;
+}
+
+.dataTables_wrapper .dataTables_info {
+    color: #374151 !important;
+    padding-top: 0 !important;
+    font-size: 0.875rem;
+    background: transparent !important;
+    border: 0 !important;
 }
 
 .dataTables_wrapper .dataTables_paginate {
@@ -544,6 +608,22 @@
     justify-content: flex-end;
     width: auto !important;
     float: none !important;
+    padding-top: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+}
+
+.dataTables_wrapper .dataTables_paginate,
+.dataTables_wrapper .dataTables_paginate * {
+    box-shadow: none !important;
+}
+
+.dataTables_wrapper .dataTables_paginate::before,
+.dataTables_wrapper .dataTables_paginate::after,
+.dataTables_wrapper .row:last-child::before,
+.dataTables_wrapper .row:last-child::after {
+    display: none !important;
+    content: none !important;
 }
 
 .dataTables_wrapper .dataTables_paginate .pagination {
@@ -558,15 +638,34 @@
     white-space: nowrap;
 }
 
+#booksTable_wrapper .dataTables_paginate span {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 0.25rem;
+    width: auto !important;
+    background: transparent !important;
+}
+
 .dataTables_wrapper .dataTables_paginate .paginate_button,
 .dataTables_wrapper .dataTables_paginate .page-item {
     display: inline-flex !important;
     flex: 0 0 auto !important;
     float: none !important;
+    width: auto !important;
+    min-width: 0 !important;
+    height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    color: #374151 !important;
 }
 
 .dataTables_wrapper .dataTables_paginate .paginate_button .page-link,
-.dataTables_wrapper .dataTables_paginate .page-item .page-link {
+.dataTables_wrapper .dataTables_paginate .page-item .page-link,
+#booksTable_wrapper .dataTables_paginate > .paginate_button,
+#booksTable_wrapper .dataTables_paginate span .paginate_button {
     display: inline-flex !important;
     align-items: center;
     justify-content: center;
@@ -583,10 +682,14 @@
     text-decoration: none;
     white-space: nowrap;
     margin-left: 0 !important;
+    width: auto !important;
+    float: none !important;
 }
 
 .dataTables_wrapper .dataTables_paginate .paginate_button .page-link:hover,
-.dataTables_wrapper .dataTables_paginate .page-item .page-link:hover {
+.dataTables_wrapper .dataTables_paginate .page-item .page-link:hover,
+#booksTable_wrapper .dataTables_paginate > .paginate_button:hover,
+#booksTable_wrapper .dataTables_paginate span .paginate_button:hover {
     background: #f9fafb;
     color: #111827;
     border-color: #9ca3af;
@@ -594,15 +697,18 @@
 }
 
 .dataTables_wrapper .dataTables_paginate .paginate_button.current .page-link,
-.dataTables_wrapper .dataTables_paginate .page-item.active .page-link {
-    background: #2563eb;
-    border-color: #2563eb;
-    color: #ffffff;
+.dataTables_wrapper .dataTables_paginate .page-item.active .page-link,
+#booksTable_wrapper .dataTables_paginate .paginate_button.current {
+    background: #f9fafb !important;
+    border-color: #d1d5db !important;
+    color: #374151 !important;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    width: auto !important;
 }
 
 .dataTables_wrapper .dataTables_paginate .paginate_button.disabled .page-link,
-.dataTables_wrapper .dataTables_paginate .page-item.disabled .page-link {
+.dataTables_wrapper .dataTables_paginate .page-item.disabled .page-link,
+#booksTable_wrapper .dataTables_paginate .paginate_button.disabled {
     opacity: 0.5;
     cursor: not-allowed;
     color: #9ca3af;
@@ -613,7 +719,9 @@
 .dataTables_wrapper .dataTables_paginate .paginate_button.previous .page-link,
 .dataTables_wrapper .dataTables_paginate .paginate_button.next .page-link,
 .dataTables_wrapper .dataTables_paginate .page-item.previous .page-link,
-.dataTables_wrapper .dataTables_paginate .page-item.next .page-link {
+.dataTables_wrapper .dataTables_paginate .page-item.next .page-link,
+#booksTable_wrapper .dataTables_paginate .paginate_button.previous,
+#booksTable_wrapper .dataTables_paginate .paginate_button.next {
     min-width: 0;
     padding: 0 0.75rem;
 }
@@ -800,7 +908,13 @@ function forceHorizontalPagination() {
         item.style.display = 'inline-flex';
         item.style.flex = '0 0 auto';
         item.style.float = 'none';
+        item.style.width = 'auto';
+        item.style.minWidth = '0';
+        item.style.height = 'auto';
         item.style.margin = '0';
+        item.style.padding = '0';
+        item.style.background = 'transparent';
+        item.style.border = '0';
     });
 
     paginate.querySelectorAll('.paginate_button .page-link, .page-item .page-link, .paginate_button').forEach((item) => {
@@ -810,6 +924,7 @@ function forceHorizontalPagination() {
         item.style.whiteSpace = 'nowrap';
         item.style.textDecoration = 'none';
         item.style.lineHeight = '1';
+        item.style.width = 'auto';
     });
 }
 
@@ -844,7 +959,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 d.search = document.getElementById('searchInput').value;
                 d.resource_type = document.getElementById('resourceTypeFilter').value;
                 d.course = document.getElementById('courseFilter').value;
-                d.availability = document.getElementById('availabilityFilter').value;
+                d.title_sort = document.getElementById('titleSortFilter').value;
             },
             error: function(xhr, textStatus, errorThrown) {
                 console.error('DataTables Ajax Error:');
@@ -905,9 +1020,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 data: null,
                 render: function(data, type, row) {
                     return `
-                        <div>
-                            <h4 class="font-medium text-gray-900">${row.title}</h4>
-                            <p class="text-sm text-gray-600">by ${row.author}</p>
+                        <div class="min-w-0">
+                            <h4 class="font-medium text-gray-900" title="${row.title ?? ''}">${row.title}</h4>
+                            <p class="text-sm text-gray-600" title="${row.author ?? ''}">by ${row.author}</p>
                             ${row.isbn ? `<p class="text-xs text-gray-500">ISBN: ${row.isbn}</p>` : ''}
                         </div>
                     `;
@@ -922,7 +1037,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         'thesis': { icon: 'fa-graduation-cap', color: 'bg-green-100 text-green-800', label: 'Thesis' }
                     };
                     const config = typeConfig[data] || typeConfig.book;
-                    return `<span class="px-2 py-1 rounded-full text-xs font-medium ${config.color}"><i class="fas ${config.icon} mr-1"></i>${config.label}</span>`;
+                    return `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${config.color}"><i class="fas ${config.icon} mr-1"></i>${config.label}</span>`;
                 }
             },
             {
@@ -945,7 +1060,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         'reserved': 'bg-amber-100 text-amber-800',
                         'maintenance': 'bg-slate-100 text-slate-800'
                     };
-                    return `<span class="px-2 py-1 rounded-full text-xs font-medium ${statusClasses[data] || 'bg-gray-100 text-gray-800'}">${data}</span>`;
+                    return `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${statusClasses[data] || 'bg-gray-100 text-gray-800'}">${data}</span>`;
                 }
             },
             {
@@ -954,7 +1069,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 render: function(data, type, row) {
                     const safeTitle = JSON.stringify(row.title ?? '');
                     return `
-                        <div class="flex gap-2">
+                        <div class="flex items-center gap-2">
                             <button onclick="viewBook(${row.id})" class="text-blue-600 hover:text-blue-800" title="View">
                                 <i class="fas fa-eye"></i>
                             </button>
@@ -976,23 +1091,40 @@ document.addEventListener('DOMContentLoaded', function() {
     forceHorizontalPagination();
 
     // Filter event listeners
-    document.getElementById('searchInput').addEventListener('input', function() {
-        table.draw();
+    let searchTimer = null;
+    const searchInput = document.getElementById('searchInput');
+    const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(function() {
+                table.draw();
+            }, 300);
+        });
+    }
+
+    ['resourceTypeFilter', 'courseFilter', 'titleSortFilter'].forEach(filterId => {
+        const element = document.getElementById(filterId);
+        if (element) {
+            element.addEventListener('change', function() {
+                table.draw();
+            });
+        }
     });
 
-    ['resourceTypeFilter', 'courseFilter', 'availabilityFilter'].forEach(filterId => {
-        document.getElementById(filterId).addEventListener('change', function() {
+    if (clearFiltersBtn) {
+        clearFiltersBtn.addEventListener('click', function() {
+            if (searchInput) searchInput.value = '';
+            const resourceTypeFilter = document.getElementById('resourceTypeFilter');
+            const courseFilter = document.getElementById('courseFilter');
+            const titleSortFilter = document.getElementById('titleSortFilter');
+            if (resourceTypeFilter) resourceTypeFilter.value = '';
+            if (courseFilter) courseFilter.value = '';
+            if (titleSortFilter) titleSortFilter.value = '';
             table.draw();
         });
-    });
-
-    document.getElementById('clearFiltersBtn').addEventListener('click', function() {
-        document.getElementById('searchInput').value = '';
-        document.getElementById('resourceTypeFilter').value = '';
-        document.getElementById('courseFilter').value = '';
-        document.getElementById('availabilityFilter').value = '';
-        table.draw();
-    });
+    }
 
     // Debug functionality removed - debugBtn element not present in HTML
     

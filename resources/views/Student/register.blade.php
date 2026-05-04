@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Knowly Library - Create Account</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen bg-gray-100">
 
@@ -18,27 +18,17 @@
     </div>
 
     <div class="relative z-10 flex min-h-screen items-center justify-center p-4 sm:p-6 py-12">
-        <div class="w-full max-w-sm sm:max-w-lg">
+        <div class="w-full max-w-sm sm:max-w-md">
             <div class="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 p-8 transform transition-all duration-500 hover:shadow-3xl">
                 <div class="text-center mb-8">
-                    <div class="relative inline-block mb-6">
-                        <div class="w-20 h-20 bg-emerald-600 rounded-2xl flex items-center justify-center shadow-lg transform rotate-3 transition-transform hover:rotate-6">
-                            <i class="fas fa-book-open text-white text-2xl"></i>
-                        </div>
-                        <div class="absolute -top-2 -right-2 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center">
-                            <i class="fas fa-star text-white text-xs"></i>
-                        </div>
+                    <div class="mx-auto mb-4 w-20 h-20 sm:w-24 sm:h-24 overflow-hidden rounded-full shadow-lg border-2 border-white">
+                        <img src="{{ asset('images/jhcsclibrary-logo.png') }}" alt="J.H. Cerilles State College Library Logo" class="h-full w-full object-cover" />
                     </div>
 
                     <h1 class="text-3xl font-bold text-gray-800 mb-2">
                         Join <span class="text-emerald-600">Knowly</span>
                     </h1>
-                    <p class="text-gray-600 mb-4">Create your Student Portal Library Account</p>
-
-                    <div class="inline-flex items-center px-4 py-2 bg-emerald-50 rounded-full">
-                        <i class="fas fa-user-plus text-emerald-500 mr-2"></i>
-                        <span class="text-emerald-700 font-medium text-sm">Student Registration</span>
-                    </div>
+                    <p class="text-gray-600 mb-4">Create your Knowly Library Account</p>
                 </div>
 
                 @if ($errors->any())
@@ -65,38 +55,46 @@
                 @endif
 
                 <div class="mb-6">
-                    <div class="flex items-center justify-center gap-3 text-sm font-medium">
+                    <div class="flex items-center justify-center gap-2 text-sm font-medium">
                         <div id="step-indicator-1" class="flex items-center gap-2 text-emerald-700">
-                            <span class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-white">1</span>
-                            <span>Account Info</span>
+                            <span class="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-white text-sm">1</span>
+                            <span class="text-xs">Account Info</span>
                         </div>
-                        <div class="h-px w-10 bg-gray-300"></div>
+                        <div class="h-px w-8 bg-gray-300"></div>
                         <div id="step-indicator-2" class="flex items-center gap-2 text-gray-400">
-                            <span class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-gray-600">2</span>
-                            <span>Academic Info</span>
+                            <span class="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 text-gray-600 text-sm">2</span>
+                            <span class="text-xs">Academic Info</span>
+                        </div>
+                        <div class="h-px w-8 bg-gray-300"></div>
+                        <div id="step-indicator-3" class="flex items-center gap-2 text-gray-400">
+                            <span class="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 text-gray-600 text-sm">3</span>
+                            <span class="text-xs">Security</span>
                         </div>
                     </div>
                 </div>
 
-                <form method="POST" action="{{ route('register') }}" class="space-y-5" id="register-form">
+                <form method="POST" action="{{ route('register') }}" class="space-y-6" id="register-form">
                     @csrf
 
-                    <div id="form-step-1" class="space-y-5">
+                    <div id="form-step-1" class="space-y-6">
                         <div class="space-y-2">
                             <label for="name" class="text-sm font-medium text-gray-700 flex items-center">
                                 <i class="fas fa-user mr-2 text-emerald-500"></i>
                                 Full Name
                             </label>
-                            <input
-                                type="text"
-                                id="name"
-                                name="name"
-                                value="{{ old('name') }}"
-                                class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-300 bg-gray-50/50 @error('name') border-red-300 @enderror"
-                                placeholder="Enter your full name"
-                                required
-                                autofocus
-                            >
+                            <div class="relative">
+                                <input
+                                    type="text"
+                                    id="name"
+                                    name="name"
+                                    value="{{ old('name') }}"
+                                    class="w-full px-4 py-3 pl-11 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-300 bg-gray-50/50 @error('name') @enderror"
+                                    placeholder="Enter your full name"
+                                    required
+                                    autofocus
+                                >
+                                <i class="fas fa-user absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            </div>
                             @error('name')
                                 <p class="text-xs text-red-500 flex items-center mt-1">
                                     <i class="fas fa-circle-exclamation mr-1"></i> {{ $message }}
@@ -107,19 +105,21 @@
                         <div class="space-y-2">
                             <label for="email" class="text-sm font-medium text-gray-700 flex items-center">
                                 <i class="fas fa-envelope mr-2 text-emerald-500"></i>
-                                Student Portal Email
+                                Portal Email
                             </label>
-                            <input
-                                type="email"
-                                id="email"
-                                name="email"
-                                value="{{ old('email') }}"
-                                class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-300 bg-gray-50/50 @error('email') border-red-300 @enderror"
-                                placeholder="yourname@jhcsc.edu.ph"
-                                required
-                                autocomplete="email"
-                            >
-                            <p class="text-xs text-gray-500 mt-1">Must be your official JHCSC student portal email</p>
+                            <div class="relative">
+                                <input
+                                    type="email"
+                                    id="email"
+                                    name="email"
+                                    value="{{ old('email') }}"
+                                    class="w-full px-4 py-3 pl-11 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-300 bg-gray-50/50 @error('email') border-red-300 @enderror"
+                                    placeholder="yourname@gmail.com"
+                                    required
+                                    autocomplete="email"
+                                >
+                                <i class="fas fa-envelope absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            </div>
                             @error('email')
                                 <p class="text-xs text-red-500 flex items-center mt-1">
                                     <i class="fas fa-circle-exclamation mr-1"></i> {{ $message }}
@@ -136,7 +136,7 @@
                                 <select
                                     id="gender"
                                     name="gender"
-                                    class="w-full px-4 py-3 pr-11 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-300 bg-gray-50/50 appearance-none @error('gender') border-red-300 @enderror"
+                                    class="w-full px-4 py-3 pl-11 pr-11 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-300 bg-gray-50/50 appearance-none @error('gender') border-red-300 @enderror"
                                     required
                                 >
                                     <option value="" disabled {{ old('gender') ? '' : 'selected' }}>Select your gender</option>
@@ -144,7 +144,6 @@
                                     <option value="Female" {{ old('gender') == 'Female' ? 'selected' : '' }}>Female</option>
                                     <option value="Prefer not to say" {{ old('gender') == 'Prefer not to say' ? 'selected' : '' }}>Prefer not to say</option>
                                 </select>
-                                <span class="pointer-events-none absolute right-4 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rotate-45 border-b-2 border-r-2 border-gray-400"></span>
                             </div>
                             @error('gender')
                                 <p class="text-xs text-red-500 flex items-center mt-1">
@@ -156,15 +155,15 @@
                         <button
                             type="button"
                             id="next-step"
-                            class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/25 transform transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl mt-2"
+                            class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2.5 px-3 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/25 transform transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl mt-2"
                         >
                             Next Step
                             <i class="fas fa-arrow-right ml-2"></i>
                         </button>
                     </div>
 
-                    <div id="form-step-2" class="space-y-5 hidden">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div id="form-step-2" class="space-y-6 hidden">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div class="space-y-2">
                                 <label for="course" class="text-sm font-medium text-gray-700 flex items-center">
                                     <i class="fas fa-graduation-cap mr-2 text-emerald-500"></i>
@@ -174,7 +173,7 @@
                                     <select
                                         id="course"
                                         name="course"
-                                        class="w-full px-4 py-3 pr-11 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-300 bg-gray-50/50 appearance-none @error('course') border-red-300 @enderror"
+                                        class="w-full px-4 py-3 pl-11 pr-11 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-300 bg-gray-50/50 appearance-none @error('course') border-red-300 @enderror"
                                         required
                                     >
                                         <option value="" disabled {{ old('course') ? '' : 'selected' }}>Select your program</option>
@@ -184,7 +183,6 @@
                                         <option value="BSN" {{ old('course') == 'BSN' ? 'selected' : '' }}>BSN</option>
                                         <option value="BSTM" {{ old('course') == 'BSTM' ? 'selected' : '' }}>BSTM</option>
                                     </select>
-                                    <span class="pointer-events-none absolute right-4 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rotate-45 border-b-2 border-r-2 border-gray-400"></span>
                                 </div>
                                 @error('course')
                                     <p class="text-xs text-red-500 flex items-center mt-1">
@@ -202,7 +200,7 @@
                                     <select
                                         id="year_level"
                                         name="year_level"
-                                        class="w-full px-4 py-3 pr-11 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-300 bg-gray-50/50 appearance-none @error('year_level') border-red-300 @enderror"
+                                        class="w-full px-4 py-3 pl-11 pr-11 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-300 bg-gray-50/50 appearance-none @error('year_level') border-red-300 @enderror"
                                         required
                                     >
                                         <option value="" disabled {{ old('year_level') ? '' : 'selected' }}>Select year</option>
@@ -211,7 +209,6 @@
                                         <option value="3rd Year" {{ old('year_level') == '3rd Year' ? 'selected' : '' }}>3rd Year</option>
                                         <option value="4th Year" {{ old('year_level') == '4th Year' ? 'selected' : '' }}>4th Year</option>
                                     </select>
-                                    <span class="pointer-events-none absolute right-4 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rotate-45 border-b-2 border-r-2 border-gray-400"></span>
                                 </div>
                                 @error('year_level')
                                     <p class="text-xs text-red-500 flex items-center mt-1">
@@ -230,7 +227,7 @@
                                 <select
                                     id="campus"
                                     name="campus"
-                                    class="w-full px-4 py-3 pr-11 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-300 bg-gray-50/50 appearance-none @error('campus') border-red-300 @enderror"
+                                    class="w-full px-4 py-3 pl-11 pr-11 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-300 bg-gray-50/50 appearance-none @error('campus') border-red-300 @enderror"
                                     required
                                 >
                                     <option value="" disabled {{ old('campus') ? '' : 'selected' }}>Select your campus</option>
@@ -239,7 +236,6 @@
                                     <option value="Dumingag Campus" {{ old('campus') == 'Dumingag Campus' ? 'selected' : '' }}>Dumingag Campus</option>
                                     <option value="Canuto MS Enerio Campus" {{ old('campus') == 'Canuto MS Enerio Campus' ? 'selected' : '' }}>Canuto MS Enerio Campus</option>
                                 </select>
-                                <span class="pointer-events-none absolute right-4 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rotate-45 border-b-2 border-r-2 border-gray-400"></span>
                             </div>
                             @error('campus')
                                 <p class="text-xs text-red-500 flex items-center mt-1">
@@ -248,6 +244,27 @@
                             @enderror
                         </div>
 
+                        <div class="flex gap-3">
+                            <button
+                                type="button"
+                                id="prev-step"
+                                class="w-1/3 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold py-2.5 px-3 rounded-xl focus:outline-none focus:ring-4 focus:ring-gray-200 transition-all duration-300"
+                            >
+                                Back
+                            </button>
+
+                            <button
+                                type="button"
+                                id="next-step-2"
+                                class="w-2/3 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2.5 px-3 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/25 transform transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
+                            >
+                                Next Step
+                                <i class="fas fa-arrow-right ml-2"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="form-step-3" class="space-y-6 hidden">
                         <div class="space-y-2">
                             <label for="password" class="text-sm font-medium text-gray-700 flex items-center">
                                 <i class="fas fa-lock mr-2 text-emerald-500"></i>
@@ -258,14 +275,16 @@
                                     type="password"
                                     id="password"
                                     name="password"
-                                    class="w-full px-4 py-3 pr-11 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-300 bg-gray-50/50 @error('password') border-red-300 @enderror"
+                                    class="w-full px-4 py-3 pl-11 pr-11 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-300 bg-gray-50/50 @error('password') border-red-300 @enderror"
                                     placeholder="Create a password (min. 8 characters)"
                                     required
                                     autocomplete="new-password"
                                 >
+                                <i class="fas fa-lock absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                                 <button
                                     type="button"
                                     onclick="togglePassword('password')"
+                                    aria-label="Show or hide password"
                                     class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                                 >
                                     <i class="fas fa-eye" id="password-eye"></i>
@@ -288,14 +307,16 @@
                                     type="password"
                                     id="password_confirmation"
                                     name="password_confirmation"
-                                    class="w-full px-4 py-3 pr-11 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-300 bg-gray-50/50"
+                                    class="w-full px-4 py-3 pl-11 pr-11 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-300 bg-gray-50/50"
                                     placeholder="Re-enter your password"
                                     required
                                     autocomplete="new-password"
                                 >
+                                <i class="fas fa-lock absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                                 <button
                                     type="button"
                                     onclick="togglePassword('password_confirmation')"
+                                    aria-label="Show or hide password confirmation"
                                     class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                                 >
                                     <i class="fas fa-eye" id="password_confirmation-eye"></i>
@@ -306,15 +327,15 @@
                         <div class="flex gap-3">
                             <button
                                 type="button"
-                                id="prev-step"
-                                class="w-1/3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded-xl focus:outline-none focus:ring-4 focus:ring-gray-200 transition-all duration-300"
+                                id="prev-step-2"
+                                class="w-1/3 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold py-2.5 px-3 rounded-xl focus:outline-none focus:ring-4 focus:ring-gray-200 transition-all duration-300"
                             >
                                 Back
                             </button>
 
                             <button
                                 type="submit"
-                                class="w-2/3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/25 transform transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
+                                class="w-2/3 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2.5 px-3 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/25 transform transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
                             >
                                 <i class="fas fa-user-plus mr-2"></i>
                                 Create Account
@@ -354,30 +375,52 @@
             const inputs = form.querySelectorAll('input[required], select[required]');
             const step1 = document.getElementById('form-step-1');
             const step2 = document.getElementById('form-step-2');
+            const step3 = document.getElementById('form-step-3');
             const nextButton = document.getElementById('next-step');
+            const nextButton2 = document.getElementById('next-step-2');
             const prevButton = document.getElementById('prev-step');
+            const prevButton2 = document.getElementById('prev-step-2');
             const indicator1 = document.getElementById('step-indicator-1');
             const indicator2 = document.getElementById('step-indicator-2');
+            const indicator3 = document.getElementById('step-indicator-3');
             const indicator1Circle = indicator1.querySelector('span');
             const indicator2Circle = indicator2.querySelector('span');
+            const indicator3Circle = indicator3.querySelector('span');
 
             function showStep(stepNumber) {
-                const isStepOne = stepNumber === 1;
+                // Hide all steps
+                step1.classList.add('hidden');
+                step2.classList.add('hidden');
+                step3.classList.add('hidden');
 
-                step1.classList.toggle('hidden', !isStepOne);
-                step2.classList.toggle('hidden', isStepOne);
+                // Reset all indicators
+                indicator1.className = 'flex items-center gap-2 text-gray-400';
+                indicator1Circle.className = 'flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 text-gray-600 text-sm';
+                indicator2.className = 'flex items-center gap-2 text-gray-400';
+                indicator2Circle.className = 'flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 text-gray-600 text-sm';
+                indicator3.className = 'flex items-center gap-2 text-gray-400';
+                indicator3Circle.className = 'flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 text-gray-600 text-sm';
 
-                indicator1.className = 'flex items-center gap-2 text-emerald-700';
-                indicator1Circle.className = isStepOne
-                    ? 'flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-white'
-                    : 'flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-700';
-
-                indicator2.className = isStepOne
-                    ? 'flex items-center gap-2 text-gray-400'
-                    : 'flex items-center gap-2 text-emerald-700';
-                indicator2Circle.className = isStepOne
-                    ? 'flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-gray-600'
-                    : 'flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-white';
+                // Show active step and update indicators
+                if (stepNumber === 1) {
+                    step1.classList.remove('hidden');
+                    indicator1.className = 'flex items-center gap-2 text-emerald-700';
+                    indicator1Circle.className = 'flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-white text-sm';
+                } else if (stepNumber === 2) {
+                    step2.classList.remove('hidden');
+                    indicator1.className = 'flex items-center gap-2 text-emerald-700';
+                    indicator1Circle.className = 'flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 text-sm';
+                    indicator2.className = 'flex items-center gap-2 text-emerald-700';
+                    indicator2Circle.className = 'flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-white text-sm';
+                } else if (stepNumber === 3) {
+                    step3.classList.remove('hidden');
+                    indicator1.className = 'flex items-center gap-2 text-emerald-700';
+                    indicator1Circle.className = 'flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 text-sm';
+                    indicator2.className = 'flex items-center gap-2 text-emerald-700';
+                    indicator2Circle.className = 'flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 text-sm';
+                    indicator3.className = 'flex items-center gap-2 text-emerald-700';
+                    indicator3Circle.className = 'flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-white text-sm';
+                }
             }
 
             nextButton.addEventListener('click', function () {
@@ -394,11 +437,32 @@
                 }
             });
 
+            nextButton2.addEventListener('click', function () {
+                const stepTwoFields = [
+                    document.getElementById('course'),
+                    document.getElementById('year_level'),
+                    document.getElementById('campus'),
+                ];
+
+                const isValid = stepTwoFields.every(field => field.reportValidity());
+
+                if (isValid) {
+                    showStep(3);
+                }
+            });
+
             prevButton.addEventListener('click', function () {
                 showStep(1);
             });
 
-            if (@json($errors->has('course') || $errors->has('year_level') || $errors->has('campus') || $errors->has('password') || $errors->has('password_confirmation'))) {
+            prevButton2.addEventListener('click', function () {
+                showStep(2);
+            });
+
+            // Show appropriate step based on errors
+            if (@json($errors->has('password') || $errors->has('password_confirmation'))) {
+                showStep(3);
+            } else if (@json($errors->has('course') || $errors->has('year_level') || $errors->has('campus'))) {
                 showStep(2);
             } else {
                 showStep(1);

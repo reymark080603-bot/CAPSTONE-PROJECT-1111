@@ -667,7 +667,7 @@ class LoansManager {
             <!-- Book Details -->
             <div class="p-2 bg-white">
                 <p class="text-gray-600 text-xs mb-2 line-clamp-1">
-                    ${this.escapeHtml(loan.book?.description || 'No description available.')}
+                    ${this.escapeHtml(loan.book?.author || 'Unknown Author')}
                 </p>
                 
                 <div class="space-y-1 text-xs mb-2">
@@ -934,6 +934,7 @@ class LoansManager {
 
             titleEl.textContent = `"${bookTitle}"`;
             container.classList.remove('hidden');
+            container.classList.add('flex');
             requestAnimationFrame(() => {
                 card.classList.remove('scale-95', 'opacity-0');
                 card.classList.add('scale-100', 'opacity-100');
@@ -942,7 +943,10 @@ class LoansManager {
             const cleanup = () => {
                 card.classList.remove('scale-100', 'opacity-100');
                 card.classList.add('scale-95', 'opacity-0');
-                setTimeout(() => container.classList.add('hidden'), 180);
+                setTimeout(() => {
+                    container.classList.add('hidden');
+                    container.classList.remove('flex');
+                }, 180);
                 // remove listeners by cloning
                 confirmBtn.replaceWith(confirmBtn.cloneNode(true));
                 cancelBtn.replaceWith(cancelBtn.cloneNode(true));

@@ -21,7 +21,7 @@
                 </a>
                 
                 <div class="flex items-center">
-                    <i class="fas fa-hand-holding text-white text-2xl mr-3"></i>
+                    <img src="{{ asset('images/jhcsclibrary-logo.png') }}" alt="Knowly logo" class="w-8 h-8 rounded-full object-cover mr-3" />
                     <h1 class="text-white text-2xl font-bold">Borrow Book</h1>
                 </div>
             </div>
@@ -114,7 +114,7 @@
                             
                             <div>
                                 <h2 class="text-3xl font-bold text-gray-900 mb-2">Borrowing Book...</h2>
-                                <p class="text-lg text-gray-600">Setting up your 5-day reading period</p>
+                                <p class="text-lg text-gray-600">Setting up your 1-day reading period</p>
                             </div>
                             
                             <!-- Book Info -->
@@ -128,7 +128,7 @@
                                         <p class="text-gray-600">by {{ $book->author }}</p>
                                         <div class="flex items-center gap-2 mt-2">
                                             <span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">
-                                                5-Day Loan
+                                                1-Day Loan
                                             </span>
                                             <span class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
                                                 Due: <span id="due-date"></span>

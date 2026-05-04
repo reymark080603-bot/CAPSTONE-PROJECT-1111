@@ -24,7 +24,7 @@
             <!-- Left: Cover -->
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Cover Photo</label>
-                <div class="aspect-[3/4] w-full rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center border mb-3">
+                <div class="aspect-[3/4] w-full max-w-[260px] rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center border mb-3 mx-auto lg:mx-0">
                     <img id="coverPreview" src="{{ $book->cover_photo ? $book->display_cover_url : '' }}" alt="Cover preview" class="w-full h-full object-cover {{ $book->cover_photo ? '' : 'hidden' }}">
                     @unless($book->cover_photo)
                     <div id="coverPlaceholder" class="text-gray-400 flex flex-col items-center">
@@ -39,7 +39,7 @@
 
             <!-- Right: Fields -->
             <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+                <div class="md:col-span-2">
                     <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
                     <input type="text" id="title" name="title" value="{{ $book->title }}" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
@@ -57,9 +57,14 @@
                         @endforeach
                     </select>
                 </div>
-                                <div>
-                    <label for="publisher" class="block text-sm font-medium text-gray-700 mb-1">Publisher</label>
-                    <input type="text" id="publisher" name="publisher" value="{{ $book->publisher_name }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <div>
+                    <label for="resource_type" class="block text-sm font-medium text-gray-700 mb-1">Resource Type</label>
+                    @php($resourceType = old('resource_type', $book->resource_type ?: 'book'))
+                    <select id="resource_type" name="resource_type" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="book" {{ $resourceType === 'book' ? 'selected' : '' }}>Book</option>
+                        <option value="e_journal" {{ $resourceType === 'e_journal' ? 'selected' : '' }}>E-Journal</option>
+                        <option value="thesis" {{ $resourceType === 'thesis' ? 'selected' : '' }}>Thesis</option>
+                    </select>
                 </div>
                 <div>
                     <label for="published_year" class="block text-sm font-medium text-gray-700 mb-1">Published Year</label>
@@ -68,10 +73,6 @@
                 <div>
                     <label for="language" class="block text-sm font-medium text-gray-700 mb-1">Language</label>
                     <input type="text" id="language" name="language" value="{{ $book->language }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-                <div class="md:col-span-2">
-                    <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                    <textarea id="description" name="description" rows="5" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">{{ $book->description }}</textarea>
                 </div>
             </div>
         </div>

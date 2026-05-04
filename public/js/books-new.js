@@ -155,6 +155,22 @@ class BooksManager {
                 }
             });
         }
+
+        document.addEventListener('click', (e) => {
+            const quickBorrowButton = e.target.closest('.btn-borrow-quick');
+            if (!quickBorrowButton) return;
+
+            e.preventDefault();
+            const bookId = quickBorrowButton.dataset.bookId;
+            const bookTitle = quickBorrowButton.dataset.bookTitle || quickBorrowButton.closest('.book-card')?.dataset.bookTitle || 'Book Title';
+
+            if (!bookId) {
+                this.showBorrowError('Book ID not found');
+                return;
+            }
+
+            this.showBorrowPopup(bookId, bookTitle);
+        });
         
         // Borrow popup events
         const borrowPopup = document.getElementById('borrowPopup');
@@ -256,10 +272,14 @@ class BooksManager {
                 const book = {
                     id: bookId,
                     title: bookEl.dataset.bookTitle?.trim() || bookEl.querySelector('h3')?.textContent?.trim() || 'Untitled',
-                    author: bookEl.dataset.bookAuthor?.trim() || bookEl.querySelector('.text-gray-600.font-medium')?.textContent?.trim() || 'Unknown Author',
-                    category: bookEl.dataset.bookCategory?.trim() || 'General',
+                    author: bookEl.dataset.bookAuthor?.trim()
+                        || bookEl.querySelector('[data-book-author-text]')?.textContent?.trim()
+                        || bookEl.querySelector('p.text-xs.text-gray-600')?.textContent?.trim()
+                        || 'Unknown Author',
+                    category: bookEl.dataset.bookCategory?.trim() || '',
                     resourceType: bookEl.dataset.bookResourceType?.trim() || 'book',
-                    course: bookEl.dataset.bookCourse?.trim() || 'General',
+                    course: bookEl.dataset.bookCourse?.trim() || '',
+                    program: bookEl.dataset.bookProgram?.trim() || '',
                     yearLevel: bookEl.dataset.bookYearLevel?.trim() || '',
                     publishedYear: bookEl.dataset.bookPublishedYear?.trim() || '',
                     description: bookEl.dataset.bookDescription?.trim() || '',
@@ -636,84 +656,42 @@ class BooksManager {
     }
 
     createBookCard(book) {
-        const categoryColors = {
-            'programming': { bg: 'bg-blue-600', bgLight: 'bg-blue-100', text: 'text-blue-600' },
-            'mathematics': { bg: 'bg-green-600', bgLight: 'bg-green-100', text: 'text-green-600' },
-            'literature': { bg: 'bg-purple-600', bgLight: 'bg-purple-100', text: 'text-purple-600' },
-            'science': { bg: 'bg-red-600', bgLight: 'bg-red-100', text: 'text-red-600' },
-            'business': { bg: 'bg-amber-600', bgLight: 'bg-amber-100', text: 'text-amber-600' },
-            'technology': { bg: 'bg-indigo-600', bgLight: 'bg-indigo-100', text: 'text-indigo-600' },
-            'education': { bg: 'bg-pink-600', bgLight: 'bg-pink-100', text: 'text-pink-600' },
-            'reference': { bg: 'bg-gray-600', bgLight: 'bg-gray-100', text: 'text-gray-600' }
-        };
-        
-        const categoryIcons = {
-            'programming': 'fa-code',
-            'mathematics': 'fa-calculator', 
-            'literature': 'fa-feather-alt',
-            'science': 'fa-flask',
-            'business': 'fa-chart-line',
-            'technology': 'fa-microchip',
-            'education': 'fa-graduation-cap',
-            'reference': 'fa-bookmark'
-        };
-        
-        const categoryKey = (book.category || '').toLowerCase().replace(/\s+/g, '') || 'programming';
-        const colors = categoryColors[categoryKey] || categoryColors['programming'];
-        const icon = categoryIcons[categoryKey] || 'fa-book';
-        
         const coverUrl = book.cover || '';
-        const cover = coverUrl ? `<img src="${coverUrl}" alt="${this.escapeHtml(book.title)}" class="w-full h-full object-cover book-cover-img" onload="this.style.opacity='1'; this.nextElementSibling.style.display='none';" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" style="opacity: 0; transition: opacity 0.3s ease-in-out;" loading="lazy">` : '';
+        const resourceType = this.escapeHtml(String(book.resourceType || 'book').replace(/_/g, ' ')).toUpperCase();
+        const courseLabel = this.escapeHtml(book.course || book.program || '');
+        const cover = coverUrl
+            ? `<img src="${coverUrl}" alt="${this.escapeHtml(book.title)}" class="w-full h-full object-cover rounded-lg book-cover-img" loading="lazy">`
+            : `<div class="w-full h-full bg-gray-200 flex items-center justify-center">
+                    <i class="fas fa-book text-gray-400 text-4xl"></i>
+               </div>`;
 
         const actionButtons = this.isBorrowed(book.id)
-            ? `<a href="${this.getBookUrl(book.id)}" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-1.5 px-2 rounded text-xs text-center transition-all duration-200 shadow hover:shadow-md">View</a>`
+            ? `<a href="${this.getBookUrl(book.id)}" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-2 rounded text-xs text-center transition-colors">View</a>`
             : `
-                    <a href="${this.getBookUrl(book.id)}" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-1.5 px-2 rounded text-xs text-center transition-all duration-200 shadow hover:shadow-md">View</a>
-                    <button class="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-1.5 px-2 rounded text-xs transition-all duration-200 shadow hover:shadow-md btn-borrow" data-book-id="${book.id}">Borrow</button>
+                    <a href="${this.getBookUrl(book.id)}" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-2 rounded text-xs text-center transition-colors">View</a>
+                    <button class="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-2 rounded text-xs transition-colors btn-borrow" data-book-id="${book.id}">Borrow</button>
               `;
 
         return `
-        <div class="group relative bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 book-card overflow-hidden" data-book-id="${book.id}">
-            <div class="relative aspect-[3/4] bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden shadow border border-gray-200">
-                ${cover}
-                <div class="absolute inset-0 bg-white default-book-cover" style="display: ${coverUrl ? 'none' : 'block'};">
-                    <div class="h-8 ${colors.bg} relative">
-                        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
-                    </div>
-                    <div class="p-2 h-full flex flex-col justify-between">
-                        <div class="text-center">
-                            <h3 class="text-xs font-bold text-gray-900 leading-tight mb-0.5 line-clamp-2">
-                                ${this.escapeHtml(this.limitText(book.title, 30))}
-                            </h3>
-                            <p class="text-xs text-gray-600 font-medium line-clamp-1">
-                                ${this.escapeHtml(this.limitText(book.author, 20))}
-                            </p>
-                        </div>
-                        <div class="flex-1 flex items-center justify-center my-1">
-                            <div class="w-8 h-8 ${colors.bgLight} rounded-full flex items-center justify-center">
-                                <i class="fas ${icon} text-xs ${colors.text}"></i>
-                            </div>
-                        </div>
-                        <div class="text-center">
-                            <div class="text-xs text-gray-500 uppercase tracking-wide font-semibold line-clamp-1">
-                                ${this.escapeHtml(book.course || 'General')}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="absolute bottom-0 left-0 right-0 h-4 ${colors.bg}">
-                        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
-                    </div>
+        <div class="book-card flex-shrink-0 w-full" data-book-id="${book.id}">
+            <div class="relative group">
+                <div class="book-cover relative bg-gray-100 rounded-lg shadow-md overflow-hidden h-56 sm:h-60 md:h-64 hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
+                    <span class="absolute top-2 left-2 z-10 px-2 py-1 rounded-full bg-white/90 text-[10px] font-semibold text-gray-700 uppercase tracking-wide">${resourceType}</span>
+                    ${cover}
                 </div>
-                <div class="absolute left-0 top-0 w-0.5 h-full bg-gradient-to-r from-black/20 to-transparent"></div>
-                <div class="absolute top-0 left-0.5 w-px h-full bg-white/40"></div>
-                <div class="absolute right-0 top-0.5 bottom-0.5 w-0.5 bg-gray-300 rounded-r"></div>
-            </div>
-            <div class="p-2 bg-white">
-                <p class="text-gray-600 text-xs mb-2 line-clamp-1" title="${this.escapeHtml(book.author || 'Unknown Author')}">
-                    ${this.escapeHtml(book.author || 'Unknown Author')}
-                </p>
-                <div class="flex gap-1">
-                    ${actionButtons}
+                <div class="mt-3 text-center">
+                    <h3 class="text-sm font-semibold text-gray-900 line-clamp-2">
+                        ${this.escapeHtml(book.title || 'Untitled')}
+                    </h3>
+                    <p class="text-xs text-gray-600 mb-2 line-clamp-1" title="${this.escapeHtml(book.author || 'Unknown Author')}">
+                        ${this.escapeHtml(book.author || 'Unknown Author')}
+                    </p>
+                    <p class="text-[11px] text-gray-500 mb-2 uppercase tracking-wide line-clamp-1">
+                        ${courseLabel}
+                    </p>
+                    <div class="flex gap-1">
+                        ${actionButtons}
+                    </div>
                 </div>
             </div>
         </div>`;
@@ -730,19 +708,12 @@ class BooksManager {
     }
 
     // Borrow popup methods
-    showBorrowPopup(bookId) {
+    showBorrowPopup(bookId, fallbackTitle = 'Book Title') {
         console.log('showBorrowPopup called with bookId:', bookId);
         console.log('typeof bookId:', typeof bookId);
         
         const book = this.state.allBooks.find(b => b.id == bookId); // Use == for string comparison
         console.log('Found book:', book);
-        
-        if (!book) {
-            console.error('Book not found in allBooks array');
-            console.error('Available books:', this.state.allBooks.map(b => ({ id: b.id, title: b.title })));
-            this.showBorrowError('Book not found');
-            return;
-        }
         
         const popup = document.getElementById('borrowPopup');
         const popupCard = document.getElementById('borrowPopupCard');
@@ -751,7 +722,7 @@ class BooksManager {
         if (!popup || !popupCard || !titleElement) return;
         
         // Set book title
-        titleElement.textContent = book.title;
+        titleElement.textContent = book?.title || fallbackTitle;
         
         // Store current book ID for confirmation
         this.currentBorrowBookId = bookId;
@@ -819,7 +790,7 @@ class BooksManager {
                     'X-Requested-With': 'XMLHttpRequest'
                 },
                 body: JSON.stringify({
-                    duration: 5 // Fixed 5-day duration
+                    duration: 1 // Fixed 1-day duration
                 })
             });
 

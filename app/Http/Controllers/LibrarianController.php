@@ -43,10 +43,10 @@ class LibrarianController extends Controller
                 return redirect()->route('librarian.login');
             }
             
-            // Ensure the user has the librarian role
-            if (!Auth::guard('librarian')->user()->isLibrarian()) {
+            // Ensure the user has admin/librarian privileges
+            if (!Auth::guard('librarian')->user()->hasAdminPrivileges()) {
                 if ($request->expectsJson()) {
-                    return response()->json(['error' => 'Librarian access required'], 403);
+                    return response()->json(['error' => 'Admin access required'], 403);
                 }
                 return redirect()->route('login');
             }
@@ -865,10 +865,16 @@ class LibrarianController extends Controller
         $start = $request->get('start', 0);
         $length = $request->get('length', 10);
         
+        $titleSort = $request->get('title_sort');
+        if (in_array($titleSort, ['asc', 'desc'], true)) {
+            $query->orderBy('title', $titleSort);
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
         $books = $query->with(['authors', 'categories', 'publisher'])
                       ->offset($start)
                       ->limit($length)
-                      ->orderBy('created_at', 'desc')
                       ->get();
 
         $totalBooksCount = Book::count();
@@ -1075,6 +1081,7 @@ class LibrarianController extends Controller
             'isbn' => 'nullable|string|max:20|unique:books,isbn',
             'category' => 'nullable|string|max:100',
             'course' => 'nullable|string|max:50',
+            'resource_type' => 'required|in:book,e_journal,thesis',
             'description' => 'nullable|string',
             'published_year' => 'nullable|integer|min:1000|max:' . date('Y'),
             'publisher' => 'nullable|string|max:255',
@@ -1392,12 +1399,14 @@ class LibrarianController extends Controller
             $bookData['published_year'] = $request->published_year;
         }
         
-        // Handle publisher relationship
-        if ($request->filled('publisher')) {
-            $publisher = \App\Models\Publisher::firstOrCreate(['name' => $request->publisher]);
-            $bookData['publisher_id'] = $publisher->id;
-        } else {
-            $bookData['publisher_id'] = null;
+        // Keep publisher unchanged unless a publisher field is explicitly submitted.
+        if ($request->has('publisher')) {
+            if ($request->filled('publisher')) {
+                $publisher = \App\Models\Publisher::firstOrCreate(['name' => $request->publisher]);
+                $bookData['publisher_id'] = $publisher->id;
+            } else {
+                $bookData['publisher_id'] = null;
+            }
         }
         
         // Handle author relationship

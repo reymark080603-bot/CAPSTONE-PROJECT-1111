@@ -5,12 +5,19 @@
 @section('content')
 @php
     $authorNames = $book->authors->pluck('name')->filter()->implode(', ');
-    $authorDisplay = $authorNames !== '' ? $authorNames : 'Unknown';
-    $publisherDisplay = $book->publisher_name ?? 'Not specified';
+    $storedAuthor = trim((string) $book->getOriginal('author'));
+    $authorDisplay = $authorNames !== ''
+        ? $authorNames
+        : ($storedAuthor !== '' && strtolower($storedAuthor) !== 'unknown author' ? $storedAuthor : 'Unknown');
+    $resourceType = $book->resource_type ?: 'book';
+    $resourceTypeDisplay = match ($resourceType) {
+        'e_journal' => 'E-Journal',
+        'thesis' => 'Thesis',
+        default => 'Book',
+    };
     $courseDisplay = $book->course ?? 'All Programs';
     $publishedYearDisplay = $book->published_year ?? 'Not specified';
     $languageDisplay = $book->language ?? 'Not specified';
-    $descriptionDisplay = !empty($book->description) ? $book->description : 'No description provided.';
 @endphp
 
 <div class="mb-6">
@@ -67,8 +74,8 @@
                 <div class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-gray-50 text-gray-900 capitalize">{{ $status }}</div>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Publisher</label>
-                <div class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-gray-50 text-gray-900">{{ $publisherDisplay }}</div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Resource Type</label>
+                <div class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-gray-50 text-gray-900">{{ $resourceTypeDisplay }}</div>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Published Year</label>
@@ -82,11 +89,6 @@
                 <label class="block text-sm font-medium text-gray-700 mb-1">Created</label>
                 <div class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-gray-50 text-gray-900">{{ optional($book->created_at)->format('Y-m-d H:i') ?? 'Not specified' }}</div>
             </div>
-            <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <div class="w-full min-h-[164px] border border-gray-300 rounded-lg px-4 py-3 bg-gray-50 text-gray-900 whitespace-pre-line">{{ $descriptionDisplay }}</div>
-            </div>
-
             @if(($book->file_type ?? null) && ($book->pdf_file || $book->epub_file || $book->doc_file))
             <div class="md:col-span-2 rounded-lg border border-blue-200 bg-blue-50 p-4">
                 <div class="flex items-center justify-between gap-4">

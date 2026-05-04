@@ -39,6 +39,10 @@ class ViewOnlyPDFViewer {
         return window.readBookRoutes?.booksIndex || '/student/books';
     }
 
+    goToBookDetails() {
+        window.location.assign(this.getBookDetailsUrl());
+    }
+
     async validatePDFFile(url) {
         try {
             console.log('Validating PDF URL:', url);
@@ -144,7 +148,8 @@ class ViewOnlyPDFViewer {
         toolbar.className = 'viewer-toolbar';
         toolbar.innerHTML = `
             <div class="viewer-page-info">
-                <span id="current-page">1</span> of <span id="total-pages">${this.pdfDoc.numPages}</span>
+                <input type="number" id="page-input" min="1" max="${this.pdfDoc.numPages}" value="1" style="width: 50px; padding: 4px 8px; border: 1px solid #666; border-radius: 4px; background: #333; color: white; text-align: center;">
+                of <span id="total-pages">${this.pdfDoc.numPages}</span>
             </div>
             <div class="viewer-zoom">
                 <button id="zoom-out" class="viewer-btn" title="Zoom Out">
@@ -187,6 +192,43 @@ class ViewOnlyPDFViewer {
     }
 
     bindEvents() {
+        // Page input for jumping to specific page
+        const pageInput = document.getElementById('page-input');
+        if (pageInput) {
+            pageInput.addEventListener('change', (e) => {
+                let pageNum = parseInt(e.target.value, 10);
+                if (isNaN(pageNum) || pageNum < 1) pageNum = 1;
+                if (pageNum > this.pdfDoc.numPages) pageNum = this.pdfDoc.numPages;
+                
+                // Update input value to valid number
+                pageInput.value = pageNum;
+                
+                // Scroll to the requested page
+                this.goToPage(pageNum);
+            });
+
+            // Allow pressing Enter to jump to page
+            pageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.target.blur();
+                    let pageNum = parseInt(e.target.value, 10);
+                    if (isNaN(pageNum) || pageNum < 1) pageNum = 1;
+                    if (pageNum > this.pdfDoc.numPages) pageNum = this.pdfDoc.numPages;
+                    
+                    pageInput.value = pageNum;
+                    this.goToPage(pageNum);
+                }
+            });
+        }
+
+        // Scroll container to track current page
+        const scrollContainer = document.querySelector('.viewer-scroll-container');
+        if (scrollContainer) {
+            scrollContainer.addEventListener('scroll', () => {
+                this.updateCurrentPage();
+            });
+        }
+
         // Zoom controls
         document.getElementById('zoom-in').addEventListener('click', () => {
             this.scale = Math.min(this.scale + 0.25, 3.0);
@@ -206,7 +248,7 @@ class ViewOnlyPDFViewer {
 
         // Close button
         document.getElementById('viewer-close-btn').addEventListener('click', () => {
-            window.location.replace(this.getBookDetailsUrl());
+            this.goToBookDetails();
         });
 
         // Keyboard controls
@@ -222,7 +264,7 @@ class ViewOnlyPDFViewer {
                 this.updateZoomDisplay();
                 this.renderAllPages();
             } else if (e.key === 'Escape') {
-                window.location.replace(this.getBookDetailsUrl());
+                this.goToBookDetails();
             }
         });
     }
@@ -328,6 +370,62 @@ class ViewOnlyPDFViewer {
 
     updateZoomDisplay() {
         document.getElementById('zoom-level').textContent = Math.round(this.scale * 100) + '%';
+    }
+
+    updateCurrentPage() {
+        // Find which page is currently visible in the viewport
+        const scrollContainer = document.querySelector('.viewer-scroll-container');
+        const pageContainers = document.querySelectorAll('.viewer-page-container');
+        
+        if (!scrollContainer || pageContainers.length === 0) return;
+        
+        let currentPage = 1;
+        const scrollTop = scrollContainer.scrollTop;
+        const containerHeight = scrollContainer.clientHeight;
+        const centerViewport = scrollTop + containerHeight / 2;
+        
+        for (let i = 0; i < pageContainers.length; i++) {
+            const pageElement = pageContainers[i];
+            const pageTop = pageElement.offsetTop;
+            const pageBottom = pageTop + pageElement.clientHeight;
+            
+            // Check if page is in the middle of the viewport
+            if (pageTop <= centerViewport && centerViewport <= pageBottom) {
+                currentPage = i + 1;
+                break;
+            }
+        }
+        
+        // Update the page input
+        const pageInput = document.getElementById('page-input');
+        if (pageInput) {
+            pageInput.value = currentPage;
+        }
+    }
+
+    goToPage(pageNum) {
+        // Validate page number
+        if (isNaN(pageNum) || pageNum < 1 || pageNum > this.pdfDoc.numPages) {
+            return;
+        }
+        
+        // Find the page container and scroll to it
+        const pageContainers = document.querySelectorAll('.viewer-page-container');
+        if (pageNum > 0 && pageNum <= pageContainers.length) {
+            const targetPage = pageContainers[pageNum - 1];
+            const scrollContainer = document.querySelector('.viewer-scroll-container');
+            
+            if (scrollContainer && targetPage) {
+                // Scroll to the target page with smooth animation
+                targetPage.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                
+                // Update the page input immediately
+                const pageInput = document.getElementById('page-input');
+                if (pageInput) {
+                    pageInput.value = pageNum;
+                }
+            }
+        }
     }
 
     async fitToWidth() {
@@ -492,7 +590,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.key === 'Escape') {
             const pdfContainer = document.getElementById('pdf-viewer-container');
             if (pdfContainer) {
-                window.history.back();
+                window.location.assign(window.readBookRoutes?.bookDetails || '/student/books');
             }
         }
     });

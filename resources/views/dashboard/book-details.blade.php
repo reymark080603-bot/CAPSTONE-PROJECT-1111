@@ -16,28 +16,37 @@
         <div class="flex items-center justify-between px-6 py-4 w-full">
             <div class="flex items-center space-x-4 flex-shrink-0">
                 <!-- Back Button -->
-                <button type="button" onclick="goBackToPreviousPage()" class="text-white hover:bg-white/10 p-2 rounded-lg transition-all" title="Back">
+                <button type="button" onclick="window.goBackToPreviousPage()" class="text-white hover:bg-white/10 p-2 rounded-lg transition-all" title="Back">
                     <i class="fas fa-arrow-left text-lg"></i>
                 </button>
                 
                 <script>
-                    function goBackToPreviousPage() {
+                    window.goBackToPreviousPage = function () {
                         const fallbackUrl = @json($backUrl ?? route('student.books'));
-                        const sameOriginReferrer = document.referrer && document.referrer.startsWith(window.location.origin);
-                        const currentPath = window.location.pathname;
-                        const referrerPath = sameOriginReferrer ? new URL(document.referrer).pathname : '';
+                        let targetUrl = fallbackUrl;
 
-                        if (window.history.length > 1 && sameOriginReferrer && referrerPath !== currentPath && !referrerPath.includes('/read')) {
-                            window.history.back();
-                            return;
+                        try {
+                            const referrerUrl = document.referrer ? new URL(document.referrer) : null;
+                            const currentPath = window.location.pathname;
+
+                            if (
+                                referrerUrl &&
+                                referrerUrl.origin === window.location.origin &&
+                                referrerUrl.pathname !== currentPath &&
+                                !referrerUrl.pathname.includes('/read')
+                            ) {
+                                targetUrl = referrerUrl.href;
+                            }
+                        } catch (error) {
+                            targetUrl = fallbackUrl;
                         }
 
-                        window.location.href = fallbackUrl;
-                    }
+                        window.location.assign(targetUrl);
+                    };
                 </script>
                 
                 <div class="flex items-center">
-                    <i class="fas fa-book-open text-white text-2xl mr-3"></i>
+                    <img src="{{ asset('images/jhcsclibrary-logo.png') }}" alt="Knowly logo" class="w-8 h-8 rounded-full object-cover mr-3" />
                     <h1 class="text-white text-2xl font-bold">Book Details</h1>
                 </div>
             </div>
@@ -72,7 +81,10 @@
         <div class="sidebar bg-gray-800 min-h-screen">
             <div class="p-4">
                 <div class="sidebar-welcome text-white mb-6">
-                    <h2 class="font-semibold text-lg">Knowly</h2>
+                    <div class="flex items-center gap-3">
+                        <img src="{{ asset('images/jhcsclibrary-logo.png') }}" alt="Knowly logo" class="w-8 h-8 rounded-full object-cover" />
+                        <h2 class="font-semibold text-lg">Knowly</h2>
+                    </div>
                     <p class="text-gray-400 text-sm">Welcome, {{ $user->firstname ?? 'Student' }}</p>
                 </div>
                 
@@ -220,8 +232,8 @@
     </script>
     <script src="{{ asset('js/student-dashboard.js') }}?v={{ filemtime(public_path('js/student-dashboard.js')) }}"></script>
     @vite('resources/js/components/book-details.js')
-    <!-- Centered Borrow Notification -->
-    <div id="borrowNotification" class="fixed inset-0 hidden flex items-center justify-center z-[9999]">
+    <!-- Hidden borrow notification overlay; kept in markup for future activation but does not block page interactions -->
+    <div id="borrowNotification" class="hidden fixed inset-0 flex items-center justify-center z-[9999] pointer-events-none">
         <div class="bg-white rounded-2xl shadow-2xl border border-gray-200 max-w-md w-[90%] mx-4 p-6 transform transition-all duration-300 scale-95 opacity-0">
             <!-- Icon and Header -->
             <div class="flex items-start gap-3 mb-4">

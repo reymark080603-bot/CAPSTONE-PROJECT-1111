@@ -21,10 +21,10 @@
                     <i class="fas fa-bars text-lg"></i>
                 </button>
                 
-                <div class="flex items-center">
-                    <i class="fas fa-book-open text-white text-2xl mr-3"></i>
+                <a href="{{ route('dashboard') }}" class="flex items-center">
+                    <img src="{{ asset('images/jhcsclibrary-logo.png') }}" alt="Knowly logo" class="w-8 h-8 rounded-full object-cover mr-3" />
                     <h1 class="text-white text-2xl font-bold">Knowly</h1>
-                </div>
+                </a>
             </div>
             
             <div class="flex items-center space-x-4 flex-shrink-0">
@@ -61,7 +61,7 @@
         <div class="sidebar bg-gray-800 min-h-screen">
             <div class="p-4">
                 <div class="sidebar-welcome text-white mb-6">
-                    <h2 class="font-semibold text-lg">Knowly</h2>
+                    <a href="{{ route('dashboard') }}" class="font-semibold text-lg inline-block">Knowly</a>
                     <p class="text-gray-400 text-sm">Welcome, {{ $user->firstname }}</p>
                 </div>
                 
@@ -140,6 +140,16 @@
                                         <option value="">All Status</option>
                                         <option value="borrowed">Currently Borrowed</option>
                                         <option value="returned">Returned</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label for="resource-type-filter" class="block text-sm font-medium text-gray-700 mb-2">Resource Type</label>
+                                    <select id="resource-type-filter" class="w-full border border-gray-300 rounded-lg py-2 pl-3 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="">All Types</option>
+                                        <option value="book">Book</option>
+                                        <option value="e_journal">E-Journal</option>
+                                        <option value="thesis">E-Thesis</option>
                                     </select>
                                 </div>
 

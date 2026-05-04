@@ -243,6 +243,17 @@
         width: 100%;
         font-size: 0.75rem;
     }
+
+    .ejournal-card .flex.gap-1 {
+        flex-direction: row !important;
+        gap: 0.25rem !important;
+    }
+
+    .ejournal-card .flex.gap-1 a,
+    .ejournal-card .flex.gap-1 button {
+        width: auto !important;
+        flex: 1 1 0 !important;
+    }
 }
 
 /* Filter dropdown mobile improvements */
@@ -521,6 +532,16 @@
         justify-content: start;
         align-items: stretch;
         display: grid !important;
+    }
+
+    .ejournal-card a,
+    .ejournal-card button {
+        padding-top: 0.45rem !important;
+        padding-bottom: 0.45rem !important;
+        padding-left: 0.4rem !important;
+        padding-right: 0.4rem !important;
+        font-size: 0.68rem !important;
+        line-height: 1rem !important;
     }
 }
 

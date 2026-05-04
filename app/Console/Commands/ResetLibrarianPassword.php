@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\User;
+use App\Models\Role;
 use Illuminate\Support\Facades\Hash;
 
 class ResetLibrarianPassword extends Command
@@ -18,19 +19,29 @@ class ResetLibrarianPassword extends Command
 
         // Find the user by email
         $user = User::where('email', $email)
-                   ->where('role', 'staff')
-                   ->first();
+            ->whereHas('role', function ($query) {
+                $query->whereIn('name', ['admin', 'librarian']);
+            })
+            ->first();
 
         if (!$user) {
             $this->error("No staff account found with email: {$email}");
             
             // Check if we should create a new librarian account
             if ($this->confirm('Would you like to create a new librarian account with these credentials?', true)) {
+                $role = Role::firstOrCreate(
+                    ['name' => 'librarian'],
+                    [
+                        'display_name' => 'Librarian',
+                        'description' => 'Library staff with admin privileges',
+                    ]
+                );
+
                 $user = User::create([
                     'name' => 'Librarian',
                     'email' => $email,
                     'password' => Hash::make($password),
-                    'role' => 'staff',
+                    'role_id' => $role->id,
                     'email_verified_at' => now(),
                 ]);
                 $this->info("Created new librarian account for {$email} with password: {$password}");

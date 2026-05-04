@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Calculate and display due date
     const today = new Date();
     const dueDate = new Date(today);
-    dueDate.setDate(today.getDate() + 5);
+    dueDate.setDate(today.getDate() + 1);
     document.getElementById('due-date').textContent = dueDate.toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric'

@@ -125,7 +125,7 @@ class CustomPDFViewer {
 
         // Back button
         document.getElementById('pdf-back-btn').addEventListener('click', () => {
-            window.location.href = document.referrer || '/dashboard/books';
+            window.location.assign(window.readBookRoutes?.bookDetails || document.referrer || '/student/books');
         });
 
         // Keyboard navigation
@@ -149,7 +149,7 @@ class CustomPDFViewer {
                 this.updateZoomDisplay();
                 this.queueRenderPage(this.pageNum);
             } else if (e.key === 'Escape') {
-                window.location.href = document.referrer || '/dashboard/books';
+                window.location.assign(window.readBookRoutes?.bookDetails || document.referrer || '/student/books');
             }
         });
 
@@ -284,7 +284,7 @@ class CustomPDFViewer {
                 <i class="fas fa-exclamation-triangle"></i>
                 <h3>Error Loading PDF</h3>
                 <p>${message}</p>
-                <button onclick="window.location.href=document.referrer || '/dashboard/books'" class="pdf-btn">
+                <button onclick="window.location.assign(window.readBookRoutes?.bookDetails || document.referrer || '/student/books')" class="pdf-btn">
                     <i class="fas fa-arrow-left"></i> Back to Books
                 </button>
             </div>

@@ -161,6 +161,7 @@ class BulkUploadController extends Controller
                         ->where('author', $metadata['author'])
                         ->where('published_year', $metadata['year'])
                         ->where('program', $metadata['program'])
+                        ->where('resource_type', $metadata['resource_type'])
                         ->first();
 
                     if ($existingBook) {
@@ -225,6 +226,8 @@ class BulkUploadController extends Controller
                         'published_year' => $metadata['year'],
                         'program' => $metadata['program'],
                         'course' => $metadata['program'],
+                        'resource_type' => $metadata['resource_type'],
+                        'file_type' => 'pdf',
                         // Keep both for compatibility with existing readers/views
                         'pdf_file' => $filePath,
                         'file_path' => $filePath,
@@ -324,8 +327,8 @@ class BulkUploadController extends Controller
 
     /**
      * Parse filename to extract metadata
-     * Format: Title - Author - Year - Program.pdf
-     * Example: Beginning PHP and MySQL - Jason Gilmore - 2018 - BSIT.pdf
+     * Format: Title - Author - Year - Program - Type.pdf
+     * Example: Beginning PHP and MySQL - Jason Gilmore - 2018 - BSIT - Book.pdf
      *
      * @param string $filename
      * @return array
@@ -334,12 +337,24 @@ class BulkUploadController extends Controller
     {
         // Remove file extension
         $filenameWithoutExt = pathinfo($filename, PATHINFO_FILENAME);
+
+        if (preg_match('/^(.*?)\s+-\s*(.*?)\s+-\s*(\d{4})\s+-\s*([A-Za-z0-9][A-Za-z0-9 ]*)\s+-\s*([A-Za-z0-9_\/ -]+)$/', $filenameWithoutExt, $matches)) {
+            return [
+                'title' => trim($matches[1]) !== '' ? trim($matches[1]) : 'Unknown Title',
+                'author' => trim($matches[2]) !== '' ? trim($matches[2]) : 'Unknown Author',
+                'year' => (int) $matches[3],
+                'program' => trim($matches[4]) !== '' ? trim($matches[4]) : 'General',
+                'resource_type' => $this->normalizeResourceType($matches[5]),
+            ];
+        }
+
         if (preg_match('/^(.*?)\s+-\s*(.*?)\s+-\s*(\d{4})\s+-\s*([A-Za-z0-9][A-Za-z0-9 ]*)$/', $filenameWithoutExt, $matches)) {
             return [
                 'title' => trim($matches[1]) !== '' ? trim($matches[1]) : 'Unknown Title',
                 'author' => trim($matches[2]) !== '' ? trim($matches[2]) : 'Unknown Author',
                 'year' => (int) $matches[3],
                 'program' => trim($matches[4]) !== '' ? trim($matches[4]) : 'General',
+                'resource_type' => 'book',
             ];
         }
 
@@ -348,7 +363,21 @@ class BulkUploadController extends Controller
             'author' => 'Unknown Author',
             'year' => date('Y'),
             'program' => 'General',
+            'resource_type' => 'book',
         ];
+    }
+
+    private function normalizeResourceType(?string $type): string
+    {
+        $normalized = strtolower(trim((string) $type));
+        $normalized = str_replace(['-', ' '], '_', $normalized);
+
+        return match ($normalized) {
+            'e_journal', 'ejournal', 'journal' => 'e_journal',
+            'e_thesis', 'thesis' => 'thesis',
+            'ebook', 'ebooks', 'book', 'books' => 'book',
+            default => 'book',
+        };
     }
 
     /**

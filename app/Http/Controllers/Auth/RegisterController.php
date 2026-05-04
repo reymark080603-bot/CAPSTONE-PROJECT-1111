@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\YearLevel;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -106,7 +107,10 @@ class RegisterController extends Controller
                 ]);
             });
 
-            return redirect()->route('login')->with('status', "Account created successfully. Your Library ID is {$user->library_id}.");
+            Auth::guard('student')->login($user);
+            $request->session()->regenerate();
+
+            return redirect()->route('student.dashboard')->with('status', "Account created successfully. Your Library ID is {$user->library_id}.");
         } catch (\Throwable $e) {
             Log::error('Student registration failed', [
                 'email' => $request->email,

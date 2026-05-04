@@ -10,6 +10,11 @@
     <link href="{{ asset('css/student-dashboard.css') }}?v={{ filemtime(public_path('css/student-dashboard.css')) }}" rel="stylesheet">
 </head>
 <body class="bg-gray-50 min-h-screen homepage-dashboard">
+    @php
+        $recentBooks = $recentBooks ?? collect();
+        $recentEJournalResources = $recentEJournalResources ?? ($recentEBookResources ?? collect());
+        $recentThesisResources = $recentThesisResources ?? collect();
+    @endphp
     <!-- Header -->
     <div class="header sidebar-expanded bg-green-600 shadow-lg">
         <div class="flex items-center justify-between px-6 py-4 w-full">
@@ -19,26 +24,27 @@
                     <i class="fas fa-bars text-lg"></i>
                 </button>
                 
-                <div class="flex items-center">
-                    <i class="fas fa-book-open text-white text-2xl mr-3"></i>
+                <a href="{{ route('dashboard') }}" class="flex items-center">
+                    <img src="{{ asset('images/jhcsclibrary-logo.png') }}" alt="Knowly logo" class="w-8 h-8 rounded-full object-cover mr-3" />
                     <h1 class="text-white text-2xl font-bold">Knowly</h1>
-                </div>
+                </a>
             </div>
             
-            <div class="header-actions flex items-center flex-shrink-0">
+            <div class="header-actions flex items-center flex-shrink-0 gap-3">
                 <!-- Quick Search Bar -->
-                <form action="{{ route('student.books') }}" method="GET" id="header-search-form" class="quick-search-form">
-                    <input type="text"
-                           id="header-search"
-                           name="search"
-                           placeholder="Quick search books..."
-                           class="bg-white text-gray-800 placeholder-gray-600 border border-gray-300 rounded-full px-4 py-2 w-48 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm">
-                    <div id="header-search-results" class="quick-search-results hidden absolute right-0 mt-2 w-96 max-h-96 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-xl z-[60]"></div>
+                <form action="{{ route('student.books') }}" method="GET" id="header-search-form" class="quick-search-form relative w-full max-w-[14rem] sm:max-w-xs">
+                    <div class="relative w-full">
+                        <span class="absolute inset-y-0 left-0 z-10 flex items-center pl-4 text-gray-500 pointer-events-none">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text"
+                               id="header-search"
+                               name="search"
+                               placeholder="Quick search books..."
+                               class="block w-full min-w-0 rounded-full border border-gray-300 bg-white py-2 pl-11 pr-4 text-sm text-gray-800 placeholder-gray-600 shadow-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:text-base">
+                    </div>
+                    <div id="header-search-results" class="quick-search-results hidden absolute left-0 right-0 sm:right-0 sm:left-auto mt-2 w-full sm:w-96 max-w-[calc(100vw-2rem)] max-h-96 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-xl z-[60]"></div>
                 </form>
-
-                <button type="submit" form="header-search-form" id="header-search-btn" class="header-search-icon-btn text-green-700 hover:text-green-900 transition-colors" aria-label="Search">
-                    <i class="fas fa-search"></i>
-                </button>
                 
                 <!-- User Profile -->
                 <div class="flex items-center space-x-3 homepage-profile-group">
@@ -72,7 +78,7 @@
         <div class="sidebar bg-gray-800 text-white min-h-screen w-64 fixed md:relative transition-all">
             <div class="p-4">
                 <div class="sidebar-welcome mb-6">
-                    <h2 class="font-semibold text-lg">Knowly</h2>
+                    <a href="{{ route('dashboard') }}" class="font-semibold text-lg inline-block">Knowly</a>
                     <p class="text-gray-400 text-sm">Welcome, {{ $user->firstname ?? 'Student' }}</p>
                 </div>
                 
@@ -130,9 +136,12 @@
             <!-- Recommended for You Section -->
             <div class="bg-white rounded-lg shadow-sm mb-6">
                 <div class="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center px-4 sm:px-6 py-4 border-b border-gray-200">
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-900">Recommended for You</h3>
-                        <p class="text-sm text-gray-600 mt-1">Resources matched to your program or course</p>
+                    <div class="flex items-center justify-between gap-3 w-full">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">Recommended for You</h3>
+                            <p class="text-sm text-gray-600 mt-1">Resources matched to your program or course</p>
+                        </div>
+                        <a href="{{ route('student.books', ['scope' => 'recommended']) }}" class="px-3 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 whitespace-nowrap">See All</a>
                     </div>
                     <div class="flex space-x-2 carousel-nav">
                         <button id="prevBtnRecommended" class="carousel-arrow p-2 hover:bg-gray-100 rounded-lg transition-colors">
@@ -150,7 +159,7 @@
                         <i class="fas fa-spinner fa-spin text-2xl text-gray-400"></i>
                     </div>
                     <div class="mb-6">
-                        <div id="recommendedCarousel" class="book-carousel flex flex-nowrap overflow-x-auto gap-4 sm:gap-6 transition-transform duration-300 hidden snap-x snap-mandatory md:overflow-hidden md:snap-none pb-2" style="scroll-behavior: smooth;">
+                        <div id="recommendedCarousel" class="book-carousel flex flex-nowrap overflow-x-auto gap-4 sm:gap-6 hidden snap-x snap-mandatory pb-2" style="scroll-behavior: smooth;">
                             <!-- Books will be rendered by JavaScript -->
                         </div>
                         <div id="no-recommendations" class="text-center py-8 text-gray-500 hidden">
@@ -174,7 +183,7 @@
                     <div id="loading-continue" class="text-center py-8">
                         <i class="fas fa-spinner fa-spin text-2xl text-gray-400"></i>
                     </div>
-                    <div id="continueCarousel" class="book-carousel flex flex-nowrap overflow-x-auto gap-4 sm:gap-6 transition-transform duration-300 hidden snap-x snap-mandatory md:overflow-hidden md:snap-none pb-2" style="scroll-behavior: smooth;"></div>
+                    <div id="continueCarousel" class="book-carousel flex flex-nowrap overflow-x-auto gap-4 sm:gap-6 transition-transform duration-300 hidden snap-x snap-mandatory pb-2" style="scroll-behavior: smooth;"></div>
                     <div id="no-continue" class="text-center py-8 text-gray-500 hidden">
                         <i class="fas fa-inbox text-3xl mb-2"></i>
                         <p>No current books to continue</p>
@@ -199,22 +208,23 @@
                 </div>
 
                 <div class="p-6">
-                    <div id="recentEJournalsContainer" class="flex flex-nowrap overflow-x-auto gap-4 sm:gap-6 pb-2" style="scroll-behavior: smooth;">
+                    <div id="recentEJournalsContainer" class="book-carousel flex flex-nowrap overflow-x-auto gap-4 sm:gap-6 pb-2" style="scroll-behavior: smooth;">
                         @forelse($recentEJournalResources as $resource)
                             <div class="book-card flex-shrink-0 w-40 sm:w-44 md:w-48">
-                                <div class="bg-white rounded-lg shadow border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
-                                    <div class="relative h-56 sm:h-60 md:h-64 bg-gray-100">
-                                        <img src="{{ $resource->display_cover_url }}" alt="{{ $resource->title }}" class="w-full h-full object-cover" loading="lazy">
-                                        <span class="absolute top-2 left-2 px-2 py-1 text-[10px] font-semibold bg-indigo-100 text-indigo-800 rounded-full">E-Journal</span>
+                                <div class="relative group">
+                                    <div class="book-cover relative bg-gray-100 rounded-lg shadow-md overflow-hidden h-56 sm:h-60 md:h-64 hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
+                                        <span class="absolute top-2 left-2 z-10 px-2 py-1 rounded-full bg-white/90 text-[10px] font-semibold text-gray-700 uppercase tracking-wide">E Journal</span>
+                                        <img src="{{ $resource->display_cover_url }}" alt="{{ $resource->title }}" class="w-full h-full object-cover rounded-lg" loading="lazy">
                                     </div>
 
-                                    <div class="p-3">
+                                    <div class="mt-3 text-center">
                                         <h5 class="font-semibold text-sm text-gray-900 truncate" title="{{ $resource->title }}">{{ $resource->title }}</h5>
-                                        <p class="text-xs text-gray-600 mt-1 truncate" title="{{ $resource->author }}">{{ $resource->author }}</p>
+                                        <p class="text-xs text-gray-600 mb-2 truncate" title="{{ $resource->author }}">{{ $resource->author }}</p>
+                                        <p class="text-[11px] text-gray-500 mb-2 uppercase tracking-wide">{{ $resource->course ?: ($resource->program ?: '') }}</p>
 
-                                        <div class="flex gap-2 mt-3">
-                                            <a href="{{ route('student.books.show', $resource->id) }}" class="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white py-2 rounded text-xs font-medium">View</a>
-                                            <button onclick="quickBorrowBook({{ $resource->id }}, '{{ addslashes($resource->title) }}')" class="flex-1 text-center bg-green-600 hover:bg-green-700 text-white py-2 rounded text-xs font-medium">Borrow</button>
+                                        <div class="flex gap-1">
+                                            <a href="{{ route('student.books.show', $resource->id) }}" class="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white px-2 py-2 rounded text-xs font-medium transition-colors">View</a>
+                                            <button onclick="quickBorrowBook({{ $resource->id }}, '{{ addslashes($resource->title) }}')" class="flex-1 text-center bg-green-500 hover:bg-green-600 text-white px-2 py-2 rounded text-xs font-medium transition-colors">Borrow</button>
                                         </div>
                                     </div>
                                 </div>
@@ -232,44 +242,45 @@
             <div class="bg-white rounded-lg shadow-sm mb-6">
                 <div class="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center px-4 sm:px-6 py-4 border-b border-gray-200">
                     <div class="flex items-center justify-between gap-3 w-full">
-                        <h3 class="text-lg font-semibold text-gray-900">Latest Theses</h3>
+                        <h3 class="text-lg font-semibold text-gray-900">Latest E-Thesis</h3>
                         <a href="{{ route('student.books', ['resource_type' => 'thesis']) }}" class="px-3 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 whitespace-nowrap">See All</a>
                     </div>
                     <div class="flex space-x-2 carousel-nav">
-                        <button type="button" onclick="document.getElementById('recentThesesContainer').scrollLeft -= 220" class="carousel-arrow p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                        <button type="button" onclick="document.getElementById('recentThesisContainer').scrollLeft -= 220" class="carousel-arrow p-2 hover:bg-gray-100 rounded-lg transition-colors">
                             <i class="fas fa-chevron-left"></i>
                         </button>
-                        <button type="button" onclick="document.getElementById('recentThesesContainer').scrollLeft += 220" class="carousel-arrow p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                        <button type="button" onclick="document.getElementById('recentThesisContainer').scrollLeft += 220" class="carousel-arrow p-2 hover:bg-gray-100 rounded-lg transition-colors">
                             <i class="fas fa-chevron-right"></i>
                         </button>
                     </div>
                 </div>
 
                 <div class="p-6">
-                    <div id="recentThesesContainer" class="flex flex-nowrap overflow-x-auto gap-4 sm:gap-6 pb-2" style="scroll-behavior: smooth;">
+                    <div id="recentThesisContainer" class="book-carousel flex flex-nowrap overflow-x-auto gap-4 sm:gap-6 pb-2" style="scroll-behavior: smooth;">
                         @forelse($recentThesisResources as $resource)
                             <div class="book-card flex-shrink-0 w-40 sm:w-44 md:w-48">
-                                <div class="bg-white rounded-lg shadow border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
-                                    <div class="relative h-56 sm:h-60 md:h-64 bg-gray-100">
-                                        <img src="{{ $resource->display_cover_url }}" alt="{{ $resource->title }}" class="w-full h-full object-cover" loading="lazy">
-                                        <span class="absolute top-2 left-2 px-2 py-1 text-[10px] font-semibold bg-amber-100 text-amber-800 rounded-full">Thesis</span>
+                                <div class="relative group">
+                                    <div class="book-cover relative bg-gray-100 rounded-lg shadow-md overflow-hidden h-56 sm:h-60 md:h-64 hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
+                                        <span class="absolute top-2 left-2 z-10 px-2 py-1 rounded-full bg-white/90 text-[10px] font-semibold text-gray-700 uppercase tracking-wide">Thesis</span>
+                                        <img src="{{ $resource->display_cover_url }}" alt="{{ $resource->title }}" class="w-full h-full object-cover rounded-lg" loading="lazy">
                                     </div>
 
-                                    <div class="p-3">
+                                    <div class="mt-3 text-center">
                                         <h5 class="font-semibold text-sm text-gray-900 truncate" title="{{ $resource->title }}">{{ $resource->title }}</h5>
-                                        <p class="text-xs text-gray-600 mt-1 truncate" title="{{ $resource->author }}">{{ $resource->author }}</p>
+                                        <p class="text-xs text-gray-600 mb-2 truncate" title="{{ $resource->author }}">{{ $resource->author }}</p>
+                                        <p class="text-[11px] text-gray-500 mb-2 uppercase tracking-wide">{{ $resource->course ?: ($resource->program ?: '') }}</p>
 
-                                        <div class="flex gap-2 mt-3">
-                                            <a href="{{ route('student.books.show', $resource->id) }}" class="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white py-2 rounded text-xs font-medium">View</a>
-                                            <button onclick="quickBorrowBook({{ $resource->id }}, '{{ addslashes($resource->title) }}')" class="flex-1 text-center bg-green-600 hover:bg-green-700 text-white py-2 rounded text-xs font-medium">Borrow</button>
+                                        <div class="flex gap-1">
+                                            <a href="{{ route('student.books.show', $resource->id) }}" class="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white px-2 py-2 rounded text-xs font-medium transition-colors">View</a>
+                                            <button onclick="quickBorrowBook({{ $resource->id }}, '{{ addslashes($resource->title) }}')" class="flex-1 text-center bg-green-500 hover:bg-green-600 text-white px-2 py-2 rounded text-xs font-medium transition-colors">Borrow</button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         @empty
                             <div class="w-full text-center py-8 text-gray-500">
-                                <i class="fas fa-scroll text-4xl mb-2"></i>
-                                <p>No theses available yet</p>
+                                <i class="fas fa-book-reader text-4xl mb-2"></i>
+                                <p>No e-thesis available yet</p>
                             </div>
                         @endforelse
                     </div>
@@ -281,7 +292,7 @@
                 <div class="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center px-4 sm:px-6 py-4 border-b border-gray-200">
                     <div class="flex items-center justify-between gap-3 w-full">
                         <h3 class="text-lg font-semibold text-gray-900">Recently Added E-Resources</h3>
-                        <a href="{{ route('student.books') }}" class="px-3 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 whitespace-nowrap">See All</a>
+                        <a href="{{ route('student.books', ['scope' => 'recent']) }}" class="px-3 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 whitespace-nowrap">See All</a>
                     </div>
                     <div class="flex space-x-2 carousel-nav">
                         <button type="button" onclick="document.getElementById('recentBooksContainer').scrollLeft -= 220" class="carousel-arrow p-2 hover:bg-gray-100 rounded-lg transition-colors">
@@ -294,36 +305,32 @@
                 </div>
                 
                 <div class="p-6">
-                    <div id="recentBooksContainer" class="flex flex-nowrap overflow-x-auto gap-4 sm:gap-6 pb-2" style="scroll-behavior: smooth;">
+                    <div id="recentBooksContainer" class="book-carousel flex flex-nowrap overflow-x-auto gap-4 sm:gap-6 pb-2" style="scroll-behavior: smooth;">
                         @forelse($recentBooks as $book)
                             <div class="book-card flex-shrink-0 w-40 sm:w-44 md:w-48">
-                                <div class="bg-white rounded-lg shadow border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
-                                    <div class="relative h-56 sm:h-60 md:h-64 bg-gray-100">
+                                <div class="relative group">
+                                    <div class="book-cover relative bg-gray-100 rounded-lg shadow-md overflow-hidden h-56 sm:h-60 md:h-64 hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
+                                        <span class="absolute top-2 left-2 z-10 px-2 py-1 rounded-full bg-white/90 text-[10px] font-semibold text-gray-700 uppercase tracking-wide">{{ strtoupper(str_replace('_', ' ', $book->resource_type ?: 'book')) }}</span>
                                         @if($book->display_cover_url)
-                                            <img src="{{ $book->display_cover_url }}" alt="{{ $book->title }}" class="w-full h-full object-cover" loading="lazy">
+                                            <img src="{{ $book->display_cover_url }}" alt="{{ $book->title }}" class="w-full h-full object-cover rounded-lg" loading="lazy">
                                         @else
-                                            <div class="w-full h-full bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-                                <i class="fas fa-book text-4xl text-blue-400"></i>
+                                            <div class="w-full h-full bg-gray-200 flex items-center justify-center">
+                                                <i class="fas fa-book text-gray-400 text-4xl"></i>
                                             </div>
-                                        @endif
-                                        
-                                        @if($book->availability_status === 'available')
-                                            <span class="absolute top-2 right-2 px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">Available</span>
-                                        @else
-                                            <span class="absolute top-2 right-2 px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">Unavailable</span>
                                         @endif
                                     </div>
                                     
-                                    <div class="p-3">
+                                    <div class="mt-3 text-center">
                                         <h5 class="font-semibold text-sm text-gray-900 truncate" title="{{ $book->title }}">{{ $book->title }}</h5>
-                                        <p class="text-xs text-gray-600 mt-1 truncate" title="{{ $book->author }}">{{ $book->author }}</p>
+                                        <p class="text-xs text-gray-600 mb-2 truncate" title="{{ $book->author }}">{{ $book->author }}</p>
+                                        <p class="text-[11px] text-gray-500 mb-2 uppercase tracking-wide">{{ $book->course ?: ($book->program ?: '') }}</p>
                                         
-                                        <div class="flex gap-2 mt-3">
-                                            <a href="{{ route('student.books.show', $book->id) }}" class="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white py-2 rounded text-xs font-medium">View</a>
+                                        <div class="flex gap-1">
+                                            <a href="{{ route('student.books.show', $book->id) }}" class="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white px-2 py-2 rounded text-xs font-medium transition-colors">View</a>
                                             @if($book->availability_status === 'available')
-                                                <button onclick="quickBorrowBook({{ $book->id }}, '{{ addslashes($book->title) }}')" class="flex-1 text-center bg-green-600 hover:bg-green-700 text-white py-2 rounded text-xs font-medium">Borrow</button>
+                                                <button onclick="quickBorrowBook({{ $book->id }}, '{{ addslashes($book->title) }}')" class="flex-1 text-center bg-green-500 hover:bg-green-600 text-white px-2 py-2 rounded text-xs font-medium transition-colors">Borrow</button>
                                             @else
-                                                <button disabled class="flex-1 text-center bg-gray-300 text-gray-500 py-2 rounded text-xs font-medium cursor-not-allowed">Unavailable</button>
+                                                <button disabled class="flex-1 text-center bg-gray-300 text-gray-500 px-2 py-2 rounded text-xs font-medium cursor-not-allowed">Unavailable</button>
                                             @endif
                                         </div>
                                     </div>
@@ -342,8 +349,8 @@
     </div>
 
     <!-- Borrow Confirmation Popup (center card with subtle overlay) -->
-    <div id="borrowPopup" class="fixed inset-0 items-center justify-center z-[9999] bg-black/40 hidden">
-        <div id="borrowPopupCard" class="bg-white rounded-2xl shadow-2xl max-w-md w-[90%] p-8 transform transition-all duration-200 scale-95 opacity-0 border border-gray-100">
+    <div id="borrowPopup" class="fixed inset-0 flex items-center justify-center z-[9999] bg-black/40 hidden p-4">
+        <div id="borrowPopupCard" class="bg-white rounded-2xl shadow-2xl max-w-md w-full sm:w-[90%] p-6 sm:p-8 transform transition-all duration-200 scale-95 opacity-0 border border-gray-100">
             <div class="flex justify-center mb-6">
                 <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center border-2 border-blue-200">
                     <i class="fas fa-book text-3xl text-blue-600"></i>
@@ -361,11 +368,7 @@
                 <div class="space-y-2 mb-6 text-sm">
                     <div class="flex items-center justify-center text-gray-600">
                         <i class="fas fa-calendar-alt text-blue-600 mr-2"></i>
-                        <span>Loan period: <strong>1 days</strong></span>
-                    </div>
-                    <div class="flex items-center justify-center text-gray-600">
-                        <i class="fas fa-undo text-green-600 mr-2"></i>
-                        <span>Auto-return enabled</span>
+                        <span>Loan period: <strong>1 day</strong></span>
                     </div>
                 </div>
             </div>
@@ -400,27 +403,8 @@
     <script>
     // Quick Borrow function for Recently Added Books carousel
     function quickBorrowBook(bookId, bookTitle) {
-        if(confirm('Borrow "' + bookTitle + '"?')) {
-            const booksBase = (window.studentDashboardRoutes && window.studentDashboardRoutes.booksBase) || '/student/books';
-            fetch(booksBase.replace(/\/$/, '') + '/' + bookId + '/borrow', {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if(data.success) {
-                    alert('Book borrowed successfully!');
-                    location.reload();
-                } else {
-                    alert(data.message || 'Failed to borrow book');
-                }
-            })
-            .catch(error => {
-                alert('An error occurred. Please try again.');
-            });
+        if (window.__studentDashboard && typeof window.__studentDashboard.showBorrowPopup === 'function') {
+            window.__studentDashboard.showBorrowPopup(bookId, bookTitle);
         }
     }
     </script>

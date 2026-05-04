@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Knowly Library - Student Login</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen bg-gray-100">
     <!-- Background Pattern -->
@@ -25,26 +25,14 @@
                 <!-- Header -->
                 <div class="text-center mb-8">
                     <!-- Logo -->
-                    <div class="relative inline-block mb-6">
-<div class="w-20 h-20 bg-emerald-600 rounded-2xl flex items-center justify-center shadow-lg transform rotate-3 transition-transform hover:rotate-6">
-                            <i class="fas fa-book-open text-white text-2xl"></i>
-                        </div>
-                        <div class="absolute -top-2 -right-2 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center">
-                            <i class="fas fa-star text-white text-xs"></i>
-                        </div>
+                    <div class="mx-auto mb-4 w-20 h-20 sm:w-24 sm:h-24 overflow-hidden rounded-full shadow-lg border-2 border-white">
+                        <img src="{{ asset('images/jhcsclibrary-logo.png') }}" alt="J.H. Cerilles State College Library Logo" class="h-full w-full object-cover" />
                     </div>
-                    
+
                     <!-- Title -->
                     <h1 class="text-3xl font-bold text-gray-800 mb-2">
                         Welcome to <span class="text-emerald-600">Knowly</span>
                     </h1>
-                    <p class="text-gray-600 mb-4">Your Student Portal Library Account</p>
-                    
-                    <!-- Subtitle for Students -->
-                    <div class="inline-flex items-center px-4 py-2 bg-emerald-50 rounded-full">
-                        <i class="fas fa-id-card text-emerald-500 mr-2"></i>
-                        <span class="text-emerald-700 font-medium text-sm">Student Portal Login</span>
-                    </div>
                 </div>
 
                 @if ($errors->any())
@@ -86,8 +74,8 @@
                     </div>
                 @endif
 
-                <!-- Student Login Form -->
-                <form method="POST" action="{{ url('student/login') }}" class="space-y-6">
+                <!-- Login Form -->
+                <form method="POST" action="{{ route('login') }}" class="space-y-6">
                     @csrf
 
                     <!-- Email Input -->
@@ -106,10 +94,10 @@
             placeholder="Enter your Email"
             required
             autofocus
+            autocomplete="email"
         >
         <i class="fas fa-envelope absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
     </div>
-    <p class="text-xs text-gray-500 mt-1">Your student portal email</p>
 </div>
 
                     <!-- Password Input -->
@@ -132,6 +120,7 @@
                             <button 
                                 type="button" 
                                 onclick="togglePassword('password')" 
+                                aria-label="Show or hide password"
                                 class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                             >
                                 <i class="fas fa-eye" id="password-eye"></i>
@@ -161,7 +150,7 @@
 class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/25 transform transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
                     >
                         <i class="fas fa-sign-in-alt mr-2"></i>
-                        Sign In with Portal Account
+                        Sign In
                     </button>
 
                     <p class="text-center text-sm text-gray-600">
@@ -174,6 +163,7 @@ class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 
 
             </div>
         </div>
+    </div>
     <!-- JavaScript for Password Toggle -->
     <script>
         function togglePassword(inputId) {

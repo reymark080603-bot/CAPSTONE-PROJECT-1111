@@ -73,13 +73,16 @@
                             Use this format for filenames to auto-extract metadata:
                         </p>
                         <code class="block mt-2 bg-white px-2 py-1 rounded text-xs text-gray-700">
-                            Title - Author - Year - Program.pdf
+                            Title - Author - Year - Program - Type.pdf
                         </code>
                         <p class="text-xs text-blue-600 mt-2">
-                            Example: <code>Beginning PHP and MySQL - Jason Gilmore - 2018 - BSIT.pdf</code>
+                            Example: <code>Beginning PHP and MySQL - Jason Gilmore - 2018 - BSIT - Book.pdf</code>
+                        </p>
+                        <p class="text-xs text-blue-600 mt-1">
+                            Allowed type values: <code>Book</code>, <code>E-Journal</code>, <code>Thesis</code>
                         </p>
                         <p class="text-xs text-blue-500 mt-1">
-                            If any part is missing, default values will be used.
+                            If type is missing or invalid, it will default to <code>Book</code>.
                         </p>
                     </div>
 
@@ -120,7 +123,7 @@
                 </h3>
                 <ol class="list-decimal list-inside space-y-3 text-sm text-gray-600">
                     <li>Prepare your PDF files with proper naming</li>
-                    <li>Name format: <strong>Title - Author - Year - Program.pdf</strong></li>
+                    <li>Name format: <strong>Title - Author - Year - Program - Type.pdf</strong></li>
                     <li>Click to select or drag and drop files</li>
                     <li>Click "Upload PDFs" to begin</li>
                     <li>Review the results below</li>
@@ -134,13 +137,13 @@
                 </h3>
                 <div class="space-y-3 text-sm">
                     <div class="p-2 bg-gray-50 rounded">
-                        <code class="text-xs text-green-600">Introduction to Programming - John Smith - 2023 - BSIT.pdf</code>
+                        <code class="text-xs text-green-600">Introduction to Programming - John Smith - 2023 - BSIT - Book.pdf</code>
                     </div>
                     <div class="p-2 bg-gray-50 rounded">
-                        <code class="text-xs text-green-600">Database Systems - Jane Doe - 2022 - BSCS.pdf</code>
+                        <code class="text-xs text-green-600">Database Systems - Jane Doe - 2022 - BSCS - E-Journal.pdf</code>
                     </div>
                     <div class="p-2 bg-gray-50 rounded">
-                        <code class="text-xs text-green-600">Research Methods - Dr. Wilson - 2024 - BSED.pdf</code>
+                        <code class="text-xs text-green-600">Research Methods - Dr. Wilson - 2024 - BSED - Thesis.pdf</code>
                     </div>
                     <div class="p-2 bg-yellow-50 rounded border border-yellow-200">
                         <p class="text-xs text-yellow-600">If filename is incomplete:</p>

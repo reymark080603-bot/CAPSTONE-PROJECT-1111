@@ -13,12 +13,12 @@ use App\Http\Controllers\RecommendedController;
     
 use App\Http\Controllers\RecentBooksController;
     
-// Librarian login routes (using regular login system)
+// Admin/librarian login routes redirect to the shared login page.
     Route::get('/librarian/login', function () {
-        return view('Staff.login');
+        return redirect()->route('login');
     })->name('librarian.login');
 
-    Route::post('/librarian/login', [LoginController::class, 'staffLogin'])->name('librarian.login.post');
+    Route::post('/librarian/login', [LoginController::class, 'login'])->name('librarian.login.post');
 
     // Main route - redirect to login
     Route::get('/', function () {
@@ -30,8 +30,8 @@ use App\Http\Controllers\RecentBooksController;
         return view('Student.login');
     })->name('login');
 
-    // Student login with Library ID only
-    Route::post('/student/login', [LoginController::class, 'studentLogin']);
+    // Student login route kept for backward compatibility.
+    Route::post('/student/login', [LoginController::class, 'login']);
 
     // General login (for backward compatibility)
     Route::post('/login', [LoginController::class, 'login']);
@@ -65,10 +65,11 @@ use App\Http\Controllers\RecentBooksController;
             Route::get('/', [HomeController::class, 'books'])->name('student.books');
             Route::get('/api', [HomeController::class, 'booksApi'])->name('student.books.api');
             Route::post('/{book}/borrow', [HomeController::class, 'borrowBook'])->name('student.books.borrow');
-            Route::get('/{book}', [HomeController::class, 'showBookDetailsPage'])->name('student.books.show');
-            Route::get('/{book}/details', [HomeController::class, 'bookDetails'])->name('student.books.details');
-            // Route::post('/{book}/reserve', [HomeController::class, 'reserveBook'])->name('student.books.reserve'); // Disabled for open access
+            // More specific routes must be declared before the generic book detail route
             Route::get('/{book}/read', [HomeController::class, 'viewBook'])->name('student.books.read');
+            Route::get('/{book}/details', [HomeController::class, 'bookDetails'])->name('student.books.details');
+            Route::get('/{book}', [HomeController::class, 'showBookDetailsPage'])->name('student.books.show');
+            // Route::post('/{book}/reserve', [HomeController::class, 'reserveBook'])->name('student.books.reserve'); // Disabled for open access
             // Route::get('/{book}/download', [HomeController::class, 'downloadBook'])->name('student.books.download'); // Disabled for online ebook system
         });
 

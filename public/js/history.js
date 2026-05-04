@@ -7,6 +7,7 @@ class HistoryManager {
         this.dateFrom = '';
         this.dateTo = '';
         this.statusFilter = '';
+        this.resourceTypeFilter = '';
         this.currentPage = 1;
         this.isLoading = false;
         this.selectedRecordId = null;
@@ -32,16 +33,26 @@ class HistoryManager {
             return '';
         }
 
-        const coverPath = book.cover_url || book.cover_image || book.cover_photo || '';
+        let coverPath = book.cover_url || book.cover_image || book.cover_photo || '';
         if (!coverPath) {
             return '';
         }
 
-        if (coverPath.startsWith('http://') || coverPath.startsWith('https://') || coverPath.startsWith('/')) {
+        coverPath = String(coverPath).trim();
+
+        if (coverPath.startsWith('http://') || coverPath.startsWith('https://')) {
             return coverPath;
         }
 
-        return `/${coverPath.replace(/^\/+/, '')}`;
+        if (!coverPath.startsWith('/')) {
+            coverPath = `/${coverPath.replace(/^\/+/, '')}`;
+        }
+
+        if (coverPath.startsWith('/covers/')) {
+            return coverPath.replace(/^\/covers\//, '/storage/covers/');
+        }
+
+        return coverPath;
     }
 
     getRenewUrl(recordId) {
@@ -117,12 +128,14 @@ class HistoryManager {
 
         // Status filter
         const statusFilter = document.getElementById('status-filter');
+        const resourceTypeFilter = document.getElementById('resource-type-filter');
 
         if (applyFiltersBtn) {
             applyFiltersBtn.addEventListener('click', () => {
                 this.dateFrom = dateFrom?.value || '';
                 this.dateTo = dateTo?.value || '';
                 this.statusFilter = statusFilter?.value || '';
+                this.resourceTypeFilter = resourceTypeFilter?.value || '';
                 this.currentPage = 1;
                 this.loadHistoryData();
                 this.renderActiveFilters();
@@ -289,12 +302,14 @@ class HistoryManager {
         document.getElementById('date-from').value = '';
         document.getElementById('date-to').value = '';
         document.getElementById('status-filter').value = '';
+        document.getElementById('resource-type-filter').value = '';
         
         // Reset filter values
         this.searchTerm = '';
         this.dateFrom = '';
         this.dateTo = '';
         this.statusFilter = '';
+        this.resourceTypeFilter = '';
         this.currentPage = 1;
         
         // Reload data
@@ -314,7 +329,8 @@ class HistoryManager {
                 search: this.searchTerm,
                 date_from: this.dateFrom,
                 date_to: this.dateTo,
-                status: this.statusFilter
+                status: this.statusFilter,
+                resource_type: this.resourceTypeFilter
             });
             
             const historyApiUrl = new URL(this.getRoute('historyApi', '/student/history/api'), window.location.origin);
@@ -384,6 +400,15 @@ class HistoryManager {
         if (this.statusFilter) {
             const label = this.statusFilter === 'borrowed' ? 'Currently Borrowed' : 'Returned';
             tags.push(`Status: ${label}`);
+        }
+
+        if (this.resourceTypeFilter) {
+            const labels = {
+                book: 'Book',
+                e_journal: 'E-Journal',
+                thesis: 'E-Thesis'
+            };
+            tags.push(`Type: ${labels[this.resourceTypeFilter] || this.resourceTypeFilter}`);
         }
 
         activeFilters.innerHTML = tags.map(tag => `

@@ -151,30 +151,15 @@ body {
         width: clamp(8.5rem, 34vw, 12rem) !important;
     }
 
-    .homepage-dashboard .homepage-profile-group {
-        display: none !important;
-    }
-
     .homepage-dashboard .header-actions {
         gap: 0.4rem;
     }
 
     .homepage-dashboard .quick-search-form {
-        max-width: 0;
-        opacity: 0;
-        overflow: hidden;
-        pointer-events: none;
-        transition: max-width 0.25s ease, opacity 0.2s ease;
-    }
-
-    .homepage-dashboard .quick-search-form.mobile-search-open {
         max-width: 12rem;
         opacity: 1;
+        overflow: visible;
         pointer-events: auto;
-    }
-
-    .homepage-dashboard .quick-search-form.mobile-search-open #header-search {
-        width: clamp(8.5rem, 34vw, 12rem) !important;
     }
 }
 
@@ -234,15 +219,7 @@ body {
     }
 
     .homepage-dashboard .quick-search-form {
-        max-width: 0;
-    }
-
-    .homepage-dashboard .quick-search-form.mobile-search-open {
         max-width: 10rem;
-    }
-
-    .homepage-dashboard .quick-search-form.mobile-search-open #header-search {
-        width: clamp(7.5rem, 38vw, 10rem) !important;
     }
 
     .header-search-icon-btn {
@@ -664,6 +641,8 @@ body {
     position: relative;
     /* Mobile scrolling */
     -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
+    overscroll-behavior-x: contain;
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* IE/Edge */
     /* Ensure proper spacing and prevent cutoff */
@@ -824,6 +803,15 @@ body {
     .book-card button {
         font-size: 0.7rem;
         line-height: 1rem;
+    }
+
+    #recentEJournalsContainer .book-card a,
+    #recentEJournalsContainer .book-card button {
+        padding-top: 0.45rem;
+        padding-bottom: 0.45rem;
+        padding-left: 0.4rem;
+        padding-right: 0.4rem;
+        font-size: 0.68rem;
     }
 }
 

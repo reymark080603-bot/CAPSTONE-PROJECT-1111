@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\User;
+use App\Models\Role;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
@@ -59,6 +60,13 @@ class CreateLibrarianAccount extends Command
         $nameParts = explode(' ', trim($name), 2);
         $firstname = $nameParts[0];
         $lastname = isset($nameParts[1]) ? $nameParts[1] : '';
+        $role = Role::firstOrCreate(
+            ['name' => 'librarian'],
+            [
+                'display_name' => 'Librarian',
+                'description' => 'Library staff with admin privileges',
+            ]
+        );
 
         // Create librarian account
         try {
@@ -68,7 +76,8 @@ class CreateLibrarianAccount extends Command
                 'lastname' => $lastname,
                 'email' => $email,
                 'password' => Hash::make($password),
-                'role' => 'staff',
+                'role_id' => $role->id,
+                'email_verified_at' => now(),
             ]);
 
             $this->newLine();
@@ -87,7 +96,7 @@ class CreateLibrarianAccount extends Command
             
             $this->newLine();
             $this->info('The librarian can now login at:');
-            $this->line('🔗 ' . config('app.url') . '/staff/login');
+            $this->line(config('app.url') . '/login');
             $this->newLine();
             $this->info('Login credentials:');
             $this->line('📧 Email: ' . $email);

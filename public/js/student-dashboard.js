@@ -49,6 +49,7 @@
                 });
                 this.loadDashboardStats();
                 this.initQuickBorrowListeners();
+                this.initBorrowPopupEvents();
                 this.initHeaderSearch();
             }
 
@@ -335,7 +336,7 @@
                     const bookTitle = this.escapeHtml(book.title || '');
                     const bookAuthor = this.escapeHtml(book.author || '');
                     const resourceType = this.escapeHtml((book.resource_type || 'book').replace(/_/g, ' '));
-                    const courseLabel = this.escapeHtml(book.course || 'General');
+                    const courseLabel = this.escapeHtml(book.course || book.program || '');
                     
                     // Fix cover photo URL to be absolute
                     const coverUrl = book.cover_photo && !book.cover_photo.startsWith('http') 
@@ -424,6 +425,8 @@
                     const isBorrowed = this.isBookBorrowed(book.id);
                     const bookTitle = this.escapeHtml(book.title || '');
                     const bookAuthor = this.escapeHtml(book.author || '');
+                    const resourceType = this.escapeHtml((book.resource_type || 'book').replace(/_/g, ' '));
+                    const courseLabel = this.escapeHtml(book.course || book.program || '');
                     
                     // Fix cover photo URL to be absolute
                     const coverUrl = book.cover_photo && !book.cover_photo.startsWith('http') 
@@ -436,6 +439,7 @@
                         <div class="book-card flex-shrink-0 w-40 sm:w-44 md:w-48">
                             <div class="relative group">
                                 <div class="book-cover relative bg-gray-100 rounded-lg shadow-md overflow-hidden h-56 sm:h-60 md:h-64 hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
+                                    <span class="absolute top-2 left-2 z-10 px-2 py-1 rounded-full bg-white/90 text-[10px] font-semibold text-gray-700 uppercase tracking-wide">${resourceType}</span>
                                     ${coverUrl ? 
                                         `<img src="${coverUrl}" alt="${bookTitle} Cover" class="w-full h-full object-cover rounded-lg">` : 
                                         `<div class="w-full h-full bg-gray-200 flex items-center justify-center">
@@ -446,6 +450,7 @@
                                 <div class="mt-3 text-center">
                                     <h5 class="font-semibold text-sm text-gray-900 truncate">${bookTitle}</h5>
                                     <p class="text-xs text-gray-600 mb-2">${bookAuthor}</p>
+                                    <p class="text-[11px] text-gray-500 mb-2 uppercase tracking-wide">${courseLabel}</p>
                                     <div class="flex gap-1">
                                         <button class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-2 py-2 rounded text-xs font-medium transition-colors" 
                                                 onclick="window.location.href='${this.getBookUrl(book.id)}'">
@@ -528,13 +533,16 @@
                 return uniqueBooks;
             }
 
-            // Continue Reading: show currently borrowed books; fallback to recommendations
+            // Continue Reading: show currently borrowed books, otherwise show empty state.
             async loadContinueReading() {
                 const loading = document.getElementById('loading-continue');
                 const track = document.getElementById('continueCarousel');
                 const emptyElement = document.getElementById('no-continue');
                 const headerNote = document.querySelector('[data-continue-note]');
                 if (!loading || !track || !emptyElement) return;
+
+                track.classList.add('hidden');
+                emptyElement.classList.add('hidden');
 
                 // Try current loans first
                 try {
@@ -559,8 +567,9 @@
                                         id: b.id,
                                         title: b.title,
                                         author: b.author,
-                                        category: b.category || 'General',
+                                        category: b.category || '',
                                         cover_photo: cp,
+                                        program: b.program || '',
                                         publication_year: b.published_year || b.publication_year || b.year,
                                         availability_status: 'borrowed'
                                     };
@@ -571,6 +580,7 @@
                                         
                             loading.classList.add('hidden');
                             track.classList.remove('hidden');
+                            emptyElement.classList.add('hidden');
                             if (headerNote) headerNote.textContent = 'Pick up where you left off';
                             this.renderRecentBooks(uniqueBooks, 'continueCarousel');
                             // Initialize mobile scrolling for continue reading carousel
@@ -582,38 +592,17 @@
                     
                 }
 
-                // Fallback to recommendations
-                try {
-                    const res = await fetch(this.getRoute('recommended', '/dashboard/recommended'), {
-                        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
-                    });
-                    if (!res.ok) throw new Error('failed');
-                    const data = await res.json();
-                    const books = data.recommended || [];
-                    
-                    // Remove duplicates from recommendations
-                    const uniqueBooks = this.removeDuplicateBooks(books);
-                    
-                    loading.classList.add('hidden');
-                    if (uniqueBooks.length === 0) {
-                        emptyElement.classList.remove('hidden');
-                    } else {
-                        track.classList.remove('hidden');
-                        if (headerNote) headerNote.textContent = 'No current books — here are some picks for you';
-                        this.renderRecommendedBooks(uniqueBooks);
-                        // Initialize mobile scrolling for continue reading carousel (fallback)
-                        this.initMobileScrolling(track);
-                    }
-                } catch (e) {
-                    loading.classList.add('hidden');
-                    emptyElement.classList.remove('hidden');
-                }
+                loading.classList.add('hidden');
+                track.classList.add('hidden');
+                track.innerHTML = '';
+                emptyElement.classList.remove('hidden');
+                if (headerNote) headerNote.textContent = 'Continue Reading';
             }
 
             // Recent Books functionality
             async loadRecentBooks() {
                 const loadingElement = document.getElementById('loading-recent');
-                const carouselElement = document.getElementById('bookCarousel');
+                const carouselElement = document.getElementById('recentBooksContainer');
                 const noRecentBooksElement = document.getElementById('no-recent-books');
                 
                 try {
@@ -644,10 +633,11 @@
                     } else {
                         // Render books and show carousel
                         const uniqueBooks = this.removeDuplicateBooks(books);
-                        this.renderRecentBooks(uniqueBooks);
+                        this.renderRecentBooks(uniqueBooks, 'recentBooksContainer');
                         if (carouselElement) {
                             carouselElement.classList.remove('hidden');
                         }
+                        this.initMobileScrolling(carouselElement);
                         
                         // Update carousel settings for recent books (use unique count)
                         this.totalBooks = uniqueBooks.length;
@@ -703,7 +693,7 @@
                         e.preventDefault();
                         const bookId = borrowButton.getAttribute('data-book-id');
                         const bookTitle = borrowButton.getAttribute('data-book-title');
-                        this.borrowBookQuick(bookId, bookTitle);
+                        this.showBorrowPopup(bookId, bookTitle);
                     }
                 });
             }
@@ -751,8 +741,8 @@
                 const resultsPanel = document.getElementById('header-search-results');
                 const isHomepageMobileSearch = document.body.classList.contains('homepage-dashboard');
                 
-                if (!headerSearchInput || !headerSearchBtn) {
-                    return; // Exit if elements don't exist
+                if (!headerSearchInput) {
+                    return; // Exit if search input doesn't exist
                 }
 
                 let searchDebounce = null;
@@ -892,21 +882,23 @@
                 };
                 
                 // Search on button click
-                headerSearchBtn.addEventListener('click', (e) => {
-                    if (isHomepageMobileSearch && isMobileViewport() && !headerSearchForm.classList.contains('mobile-search-open')) {
-                        e.preventDefault();
-                        showMobileSearch();
-                        return;
-                    }
+                if (headerSearchBtn) {
+                    headerSearchBtn.addEventListener('click', (e) => {
+                        if (isHomepageMobileSearch && isMobileViewport() && !headerSearchForm.classList.contains('mobile-search-open')) {
+                            e.preventDefault();
+                            showMobileSearch();
+                            return;
+                        }
 
-                    if (isHomepageMobileSearch && isMobileViewport() && !headerSearchInput.value.trim()) {
-                        e.preventDefault();
-                        startAutoHideTimer();
-                        return;
-                    }
+                        if (isHomepageMobileSearch && isMobileViewport() && !headerSearchInput.value.trim()) {
+                            e.preventDefault();
+                            startAutoHideTimer();
+                            return;
+                        }
 
-                    performSearch();
-                });
+                        performSearch();
+                    });
+                }
                 
                 // Search on Enter key
                 headerSearchInput.addEventListener('keydown', (e) => {
@@ -1009,9 +1001,9 @@
             initMobileScrolling(carousel) {
                 if (!carousel) return;
                 
-                // Check if mobile
-                const isMobile = window.innerWidth < 768;
-                if (!isMobile) return;
+                // Enable touch and horizontal swipe behavior on phones and tablets.
+                const isTouchViewport = window.innerWidth <= 1024;
+                if (!isTouchViewport) return;
                 
                 // Touch events for better mobile experience
                 let startX = 0;
@@ -1039,11 +1031,12 @@
                 // Update popup content with book details
                 const titleElement = document.getElementById('borrowPopupTitle');
                 if (titleElement) {
-                    titleElement.textContent = bookTitle;
+                    titleElement.textContent = bookTitle || 'Book Title';
                 }
 
                 // Store book ID for borrowing
                 this.currentBookId = bookId;
+                this.currentBookTitle = bookTitle || '';
 
                 // Show popup
                 const popup = document.getElementById('borrowPopup');
@@ -1055,11 +1048,36 @@
                         card.classList.remove('scale-95', 'opacity-0');
                         card.classList.add('scale-100', 'opacity-100');
                     }, 10);
+                    document.body.style.overflow = 'hidden';
                 }
             }
 
-            confirmBorrow() {
+            initBorrowPopupEvents() {
+                const popup = document.getElementById('borrowPopup');
+                const cancelButton = document.getElementById('borrowPopupCancel');
+
+                if (cancelButton) {
+                    cancelButton.addEventListener('click', () => this.hideBorrowPopup());
+                }
+
+                if (popup) {
+                    popup.addEventListener('click', (e) => {
+                        if (e.target === popup) {
+                            this.hideBorrowPopup();
+                        }
+                    });
+                }
+
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && popup && !popup.classList.contains('hidden')) {
+                        this.hideBorrowPopup();
+                    }
+                });
+            }
+
+            async confirmBorrow() {
                 if (!this.currentBookId) return;
+                const bookId = this.currentBookId;
 
                 // Show loading state
                 const confirmBtn = document.getElementById('borrowPopupConfirm');
@@ -1070,34 +1088,43 @@
                     confirmText.textContent = 'Borrowing...';
                 }
 
-                // Send borrow request
-                const formData = new FormData();
-                formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
-                
-                fetch(this.getBorrowUrl(this.currentBookId), {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
+                try {
+                    const response = await fetch(this.getBorrowUrl(bookId), {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({ duration: 1 })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.success) {
                         this.hideBorrowPopup();
-                        this.loadRecommendedBooks(); // Refresh the recommendations
-                        this.showNotification('Book borrowed successfully!', 'success');
+                        this.showNotification(data.message || 'Book borrowed successfully!', 'success');
+                        await this.loadUserBorrowedBooks();
+                        this.loadRecommendedBooks();
+                        this.loadRecentBooks();
+                        this.loadContinueReading();
+
+                        setTimeout(() => {
+                            window.location.href = this.getBookUrl(bookId);
+                        }, 1500);
                     } else {
                         this.showNotification(data.message || 'Failed to borrow book', 'error');
                     }
-                })
-                .catch(error => {
+                } catch (error) {
                     this.showNotification('Error borrowing book', 'error');
-                })
-                .finally(() => {
+                } finally {
                     // Reset button state
                     if (confirmBtn && confirmText) {
                         confirmBtn.disabled = false;
                         confirmText.textContent = 'Confirm Borrow';
                     }
-                });
+                }
             }
 
             hideBorrowPopup() {
@@ -1109,8 +1136,11 @@
                     card.classList.remove('scale-100', 'opacity-100');
                     setTimeout(() => {
                         popup.classList.add('hidden');
+                        document.body.style.overflow = '';
                     }, 200);
                 }
+                this.currentBookId = null;
+                this.currentBookTitle = '';
             }
 
         }
@@ -1128,3 +1158,4 @@
         module.exports = StudentDashboard;
     }
 })();
+

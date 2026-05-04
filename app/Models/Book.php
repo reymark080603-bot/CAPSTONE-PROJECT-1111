@@ -224,16 +224,16 @@ class Book extends Model
 
     public function getAuthorAttribute()
     {
-        $storedAuthor = $this->attributes['author'] ?? null;
-        if (!empty($storedAuthor)) {
-            return $storedAuthor;
-        }
-
         if ($this->relationLoaded('authors')) {
             $names = $this->authors->pluck('name')->all();
             if (!empty($names)) {
                 return implode(', ', $names);
             }
+        }
+
+        $storedAuthor = trim((string)($this->attributes['author'] ?? ''));
+        if ($storedAuthor !== '' && strtolower($storedAuthor) !== 'unknown author') {
+            return $storedAuthor;
         }
         
         return 'Unknown Author';

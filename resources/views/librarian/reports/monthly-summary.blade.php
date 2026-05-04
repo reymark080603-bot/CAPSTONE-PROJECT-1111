@@ -37,7 +37,7 @@
             overflow: hidden;
         }
 
-        .monthly-header {
+        .monthly-header {55
             background: linear-gradient(135deg, #d9ecd0 0%, #c5e0bf 100%);
             border-bottom: 1px solid var(--report-border-strong);
         }

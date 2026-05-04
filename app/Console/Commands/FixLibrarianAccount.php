@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\User;
+use App\Models\Role;
 use Illuminate\Support\Facades\Hash;
 
 class FixLibrarianAccount extends Command
@@ -23,12 +24,20 @@ class FixLibrarianAccount extends Command
             return 1;
         }
 
-        // Update the user to be a staff member
-        $user->role = 'staff';
+        // Update the user to be a librarian/admin account.
+        $role = Role::firstOrCreate(
+            ['name' => 'librarian'],
+            [
+                'display_name' => 'Librarian',
+                'description' => 'Library staff with admin privileges',
+            ]
+        );
+
+        $user->role_id = $role->id;
         $user->email_verified_at = now();
         $user->save();
 
-        $this->info("Updated user {$email} to staff role");
+        $this->info("Updated user {$email} to librarian role");
         
         // Now reset the password
         $password = 'librarian123';

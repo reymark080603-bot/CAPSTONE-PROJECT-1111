@@ -220,7 +220,8 @@ class HomeController extends Controller
                 ->map(fn ($id) => (int) $id)
                 ->all();
 
-            $baseQuery = $this->buildCourseResourceQuery($user, false)
+            $baseQuery = Book::query()
+                ->where('availability_status', 'available')
                 ->with(['categories', 'authors', 'publisher']);
             
             // Handle search from student dashboard search bar
@@ -256,6 +257,11 @@ class HomeController extends Controller
                 $selectedResources = $this->buildCourseResourceQuery($user, true)
                     ->with(['categories', 'authors', 'publisher'])
                     ->orderBy('title')
+                    ->paginate(20)
+                    ->withQueryString();
+            } elseif ($scope === 'recent') {
+                $selectedResources = (clone $baseQuery)
+                    ->orderByDesc('created_at')
                     ->paginate(20)
                     ->withQueryString();
             } elseif (in_array($resourceType, ['book', 'e_journal', 'thesis'], true)) {
@@ -858,8 +864,7 @@ class HomeController extends Controller
      */
     public function borrowBook(Request $request, $id)
     {
-        // Better authentication check
-        if (!Auth::check()) {
+        if (!Auth::guard('student')->check()) {
             return response()->json(['success' => false, 'message' => 'Please login to borrow books.'], 401);
         }
         
@@ -869,7 +874,7 @@ class HomeController extends Controller
         }
         
         Log::info('Borrow Book Attempt', [
-            'user_authenticated' => Auth::check(),
+            'user_authenticated' => Auth::guard('student')->check(),
             'user_id' => $user->id,
             'user_email' => $user->email ?? 'no email',
             'book_id' => $id
@@ -1083,11 +1088,52 @@ class HomeController extends Controller
         
         $page = $request->get('page', 1);
         $limit = $request->get('limit', 10);
-        
+        $search = trim((string) $request->get('search', ''));
+        $dateFrom = $request->get('date_from');
+        $dateTo = $request->get('date_to');
+        $status = $request->get('status');
+        $resourceType = $request->get('resource_type');
+
         $borrowRecords = BorrowRecord::with('book')
             ->where('user_id', $user->id)
+            ->when($search !== '', function ($query) use ($search) {
+                $searchTerm = '%' . $search . '%';
+                $query->whereHas('book', function ($bookQuery) use ($searchTerm) {
+                    $bookQuery->where('title', 'LIKE', $searchTerm)
+                        ->orWhere('author', 'LIKE', $searchTerm);
+                });
+            })
+            ->when($dateFrom, function ($query) use ($dateFrom) {
+                $query->whereDate('borrowed_date', '>=', $dateFrom);
+            })
+            ->when($dateTo, function ($query) use ($dateTo) {
+                $query->whereDate('borrowed_date', '<=', $dateTo);
+            })
+            ->when(in_array($status, ['borrowed', 'returned'], true), function ($query) use ($status) {
+                $query->where('status', $status);
+            })
+            ->when(in_array($resourceType, ['book', 'e_journal', 'thesis'], true), function ($query) use ($resourceType) {
+                $query->whereHas('book', function ($bookQuery) use ($resourceType) {
+                    if ($resourceType === 'book') {
+                        $bookQuery->where(function ($typeQuery) {
+                            $typeQuery->whereNull('resource_type')
+                                ->orWhere('resource_type', '')
+                                ->orWhere('resource_type', 'book');
+                        });
+                    } else {
+                        $bookQuery->where('resource_type', $resourceType);
+                    }
+                });
+            })
             ->orderBy('created_at', 'desc')
             ->paginate($limit, ['*'], 'page', $page);
+            
+        $borrowRecords->getCollection()->transform(function ($record) {
+            if ($record->book) {
+                $record->book->cover_url = $record->book->display_cover_url;
+            }
+            return $record;
+        });
             
         return response()->json([
             'records' => [

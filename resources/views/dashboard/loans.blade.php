@@ -20,26 +20,27 @@
                     <i class="fas fa-bars text-lg"></i>
                 </button>
                 
-                <div class="flex items-center">
-                    <i class="fas fa-book-open text-white text-2xl mr-3"></i>
+                <a href="{{ route('dashboard') }}" class="flex items-center">
+                    <img src="{{ asset('images/jhcsclibrary-logo.png') }}" alt="Knowly logo" class="w-8 h-8 rounded-full object-cover mr-3" />
                     <h1 class="text-white text-2xl font-bold">Knowly</h1>
-                </div>
+                </a>
             </div>
             
-            <div class="header-actions flex items-center flex-shrink-0">
+            <div class="header-actions flex items-center flex-shrink-0 gap-3">
                 <!-- Quick Search Bar -->
-                <form action="{{ route('student.books') }}" method="GET" id="header-search-form" class="quick-search-form">
-                    <input type="text"
-                           id="header-search"
-                           name="search"
-                           placeholder="Quick search books..."
-                           class="bg-white text-gray-800 placeholder-gray-600 border border-gray-300 rounded-full px-4 py-2 w-48 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm">
-                    <div id="header-search-results" class="quick-search-results hidden absolute right-0 mt-2 w-96 max-h-96 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-xl z-[60]"></div>
+                <form action="{{ route('student.books') }}" method="GET" id="header-search-form" class="quick-search-form relative w-full max-w-[14rem] sm:max-w-xs">
+                    <div class="relative w-full">
+                        <span class="absolute inset-y-0 left-0 z-10 flex items-center pl-4 text-gray-500 pointer-events-none">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text"
+                               id="header-search"
+                               name="search"
+                               placeholder="Quick search books..."
+                               class="block w-full min-w-0 rounded-full border border-gray-300 bg-white py-2 pl-11 pr-4 text-sm text-gray-800 placeholder-gray-600 shadow-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:text-base">
+                    </div>
+                    <div id="header-search-results" class="quick-search-results hidden absolute left-0 right-0 sm:right-0 sm:left-auto mt-2 w-full sm:w-96 max-w-[calc(100vw-2rem)] max-h-96 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-xl z-[60]"></div>
                 </form>
-
-                <button type="submit" form="header-search-form" id="header-search-btn" class="header-search-icon-btn text-green-700 hover:text-green-900 transition-colors" aria-label="Search">
-                    <i class="fas fa-search"></i>
-                </button>
                 
                 <!-- User Profile -->
                 <div class="flex items-center space-x-3">
@@ -73,7 +74,7 @@
         <div class="sidebar bg-gray-800 min-h-screen">
             <div class="p-4">
                 <div class="sidebar-welcome text-white mb-6">
-                    <h2 class="font-semibold text-lg">Knowly</h2>
+                    <a href="{{ route('dashboard') }}" class="font-semibold text-lg inline-block">Knowly</a>
                     <p class="text-gray-400 text-sm">Welcome, {{ $user->firstname }}</p>
                 </div>
                 
@@ -111,7 +112,7 @@
                 <h1 class="text-3xl font-bold text-gray-900">Borrowed E-Resources</h1>
             </div>
 
-            <!-- Quick Stats removed as loans auto-return after 5 days -->
+            <!-- Quick Stats removed as loans auto-return after 1 day -->
 
             <!-- Loans Header -->
             <div class="loans-toolbar flex items-center justify-between gap-3 mb-6">
@@ -119,18 +120,18 @@
                 <div class="loans-toolbar-actions flex w-auto flex-shrink-0 space-x-3">
                     <!-- Combined Filter & Sort Dropdown -->
                     <div class="loans-filter-wrap relative w-auto">
-                        <button id="filter-sort-btn" class="loans-filter-btn w-auto px-4 py-2 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center">
+                        <button id="filter-sort-btn" class="loans-filter-btn w-auto px-3 sm:px-4 py-2 text-sm sm:text-base text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center">
                             <i class="fas fa-sliders-h mr-2"></i>Filter
                             <i class="fas fa-chevron-down ml-2 text-xs"></i>
                         </button>
-                        <div id="filter-sort-dropdown" class="absolute right-0 mt-2 w-full sm:w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-[90] hidden">
+                        <div id="filter-sort-dropdown" class="absolute right-0 mt-2 w-64 sm:w-72 md:w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-[90] hidden">
                             <!-- Tab Navigation -->
                             <div class="border-b border-gray-200">
                                 <div class="flex">
-                                    <button class="filter-sort-tab active flex-1 py-3 px-4 text-sm font-medium text-blue-600 border-b-2 border-blue-500 bg-blue-50" data-tab="filter">
+                                    <button class="filter-sort-tab active flex-1 py-2.5 sm:py-3 px-3 sm:px-4 text-xs sm:text-sm font-medium text-blue-600 border-b-2 border-blue-500 bg-blue-50" data-tab="filter">
                                         <i class="fas fa-filter mr-2"></i>Filter
                                     </button>
-                                    <button class="filter-sort-tab flex-1 py-3 px-4 text-sm font-medium text-gray-500 hover:text-gray-700 border-b-2 border-transparent hover:border-gray-300" data-tab="sort">
+                                    <button class="filter-sort-tab flex-1 py-2.5 sm:py-3 px-3 sm:px-4 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-700 border-b-2 border-transparent hover:border-gray-300" data-tab="sort">
                                         <i class="fas fa-sort mr-2"></i>Sort
                                     </button>
                                 </div>
@@ -138,36 +139,36 @@
 
                             <!-- Filter Tab Content -->
                             <div id="filter-tab-content" class="filter-sort-content">
-                                <form id="filter-form" class="p-4">
+                                <form id="filter-form" class="p-3 sm:p-4">
                                     <div class="mb-4">
-                                        <label for="status-filter" class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                                        <select id="status-filter" name="status" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                                        <label for="status-filter" class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Status</label>
+                                        <select id="status-filter" name="status" class="w-full px-3 py-1.5 sm:py-2 border border-gray-300 rounded-md text-xs sm:text-sm">
                                             <option value="">All Status</option>
                                             <option value="active">Active</option>
                                             <option value="due-soon">Due Soon</option>
                                         </select>
                                     </div>
                                     <div class="mb-4">
-                                        <label for="type-filter" class="block text-sm font-medium text-gray-700 mb-2">Type</label>
-                                        <select id="type-filter" name="type" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                                        <label for="type-filter" class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Type</label>
+                                        <select id="type-filter" name="type" class="w-full px-3 py-1.5 sm:py-2 border border-gray-300 rounded-md text-xs sm:text-sm">
                                             <option value="">All Types</option>
                                             <option value="book">Books</option>
                                             <option value="e_journal">E-Journal</option>
                                             <option value="thesis">E-Thesis</option>
                                         </select>
                                     </div>
-                                    <div class="flex justify-between">
-                                        <button type="button" id="apply-filters" class="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">Apply</button>
-                                        <button type="button" id="clear-filters" class="px-4 py-2 bg-gray-300 text-gray-700 text-sm rounded hover:bg-gray-400">Clear</button>
+                                    <div class="flex justify-between gap-2">
+                                        <button type="button" id="apply-filters" class="px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 text-white text-xs sm:text-sm rounded hover:bg-blue-700">Apply</button>
+                                        <button type="button" id="clear-filters" class="px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-300 text-gray-700 text-xs sm:text-sm rounded hover:bg-gray-400">Clear</button>
                                     </div>
                                 </form>
                             </div>
 
                             <!-- Sort Tab Content -->
                             <div id="sort-tab-content" class="filter-sort-content hidden">
-                                <div class="p-4">
-                                    <label for="sort-select" class="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
-                                    <select id="sort-select" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                                <div class="p-3 sm:p-4">
+                                    <label for="sort-select" class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Sort By</label>
+                                    <select id="sort-select" class="w-full px-3 py-1.5 sm:py-2 border border-gray-300 rounded-md text-xs sm:text-sm">
                                         <option value="due-date-asc">Due Date (Earliest First)</option>
                                         <option value="due-date-desc">Due Date (Latest First)</option>
                                         <option value="borrowed-date-desc">Borrowed Date (Newest)</option>
