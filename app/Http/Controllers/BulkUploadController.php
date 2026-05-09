@@ -439,7 +439,7 @@ class BulkUploadController extends Controller
             return response()->json([
                 'success' => true,
                 'storage_status' => [
-                    'linked' => file_exists(public_path('storage')) && realpath(public_path('storage')) === realpath(storage_path('app/public')),
+                    'linked' => $this->isStorageLinked(),
                     'pdf_directory' => self::STORAGE_DIR,
                     'covers_directory' => 'covers',
                     'pdf_count' => $storageInfo['pdf']['count'],
@@ -458,5 +458,40 @@ class BulkUploadController extends Controller
             ], 500);
         }
     }
-}
 
+    /**
+     * Robust cross-platform check for whether the public/storage symlink is working.
+     * Works on Windows (junction), Linux (symlink), and Railway containers.
+     */
+    private function isStorageLinked(): bool
+    {
+        $publicStorage = public_path('storage');
+        $storageTarget = storage_path('app/public');
+
+        // The target must exist
+        if (!is_dir($storageTarget)) {
+            return false;
+        }
+
+        // The public/storage path must exist (as symlink, junction, or dir)
+        if (!file_exists($publicStorage) && !is_link($publicStorage)) {
+            return false;
+        }
+
+        // Verify it points to the right place using realpath (works on Linux symlinks)
+        $resolvedLink   = realpath($publicStorage);
+        $resolvedTarget = realpath($storageTarget);
+
+        if ($resolvedLink && $resolvedTarget && $resolvedLink === $resolvedTarget) {
+            return true;
+        }
+
+        // Fallback: check if we can actually read/write through the link
+        // (handles edge cases where realpath behaves differently per OS)
+        try {
+            return is_readable($publicStorage) && is_dir($publicStorage);
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+}
