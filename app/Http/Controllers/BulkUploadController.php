@@ -14,25 +14,12 @@ use Illuminate\Support\Facades\Storage;
 
 class BulkUploadController extends Controller
 {
-    /**
-     * PDF Cover Service instance
-     */
     protected PdfCoverService $pdfCoverService;
     protected LibrarianNotificationService $librarianNotificationService;
 
-    /**
-     * Storage directory for PDF e-books (in public disk)
-     */
     const STORAGE_DIR = 'ebooks';
-
-    /**
-     * Default cover image path
-     */
     const DEFAULT_COVER = 'covers/default-book.png';
 
-    /**
-     * Constructor - Ensure user is authenticated as librarian
-     */
     public function __construct(PdfCoverService $pdfCoverService, LibrarianNotificationService $librarianNotificationService)
     {
         $this->pdfCoverService = $pdfCoverService;
@@ -49,31 +36,17 @@ class BulkUploadController extends Controller
         });
     }
 
-    /**
-     * Display the bulk upload form
-     *
-     * @return \Illuminate\View\View
-     */
     public function index()
     {
         $user = Auth::user();
-        
         return view('librarian.books.bulk-upload', compact('user'));
     }
 
-    /**
-     * Process multiple PDF files for bulk upload
-     * Includes automatic cover image generation from first page
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function process(Request $request)
     {
-        // Validate request
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'pdfs' => 'required|array|min:1',
-            'pdfs.*' => 'required|file|mimes:pdf|max:51200', // 50MB max per file
+            'pdfs.*' => 'required|file|mimes:pdf|max:51200',
         ], [
             'pdfs.required' => 'Please select at least one PDF file.',
             'pdfs.array' => 'Invalid upload payload.',
@@ -91,7 +64,6 @@ class BulkUploadController extends Controller
             ], 422);
         }
 
-        // Check if files were uploaded
         if (!$request->hasFile('pdfs') || empty($request->file('pdfs'))) {
             return response()->json([
                 'success' => false,
@@ -110,7 +82,6 @@ class BulkUploadController extends Controller
         $coversGenerated = 0;
         $duplicatesSkipped = 0;
 
-        // Ensure storage directories exist
         $this->ensureStorageDirectoriesExist();
 
         DB::beginTransaction();
@@ -118,7 +89,6 @@ class BulkUploadController extends Controller
         try {
             foreach ($files as $file) {
                 try {
-                    // Validate file type again (security check)
                     if ($file->getMimeType() !== 'application/pdf') {
                         throw new \Exception('Invalid file type. Only PDF files are allowed.');
                     }
@@ -141,7 +111,6 @@ class BulkUploadController extends Controller
                     }
                     $seenFileHashes[$fileHash] = true;
 
-                    // Parse metadata from filename
                     $metadata = $this->parseFilename($originalName);
 
                     if (Schema::hasColumn('books', 'file_hash')) {
@@ -155,7 +124,6 @@ class BulkUploadController extends Controller
                         }
                     }
 
-                    // Prevent duplicate records based on key metadata
                     $existingBook = Book::query()
                         ->where('title', $metadata['title'])
                         ->where('author', $metadata['author'])
@@ -169,7 +137,6 @@ class BulkUploadController extends Controller
                         throw new \Exception("Duplicate record exists (Book ID: {$existingBook->id}).");
                     }
 
-                    // Store the PDF file
                     $filePath = $this->storeFile($file, $metadata['title']);
 
                     if (!$filePath) {
@@ -206,10 +173,7 @@ class BulkUploadController extends Controller
                     }
                     
                     if (!$hasFrontendThumb) {
-                        // Get full path for cover generation from the public disk
                         $fullPdfPath = Storage::disk('public')->path($filePath);
-
-                        // Generate cover image from PDF first page
                         $coverImagePath = $this->pdfCoverService->generateCover($fullPdfPath, $metadata['title']);
 
                         if ($coverImagePath) {
@@ -219,7 +183,6 @@ class BulkUploadController extends Controller
                         }
                     }
 
-                    // Create book record
                     $book = Book::create([
                         'title' => $metadata['title'],
                         'author' => $metadata['author'],
@@ -228,12 +191,11 @@ class BulkUploadController extends Controller
                         'course' => $metadata['program'],
                         'resource_type' => $metadata['resource_type'],
                         'file_type' => 'pdf',
-                        // Keep both for compatibility with existing readers/views
                         'pdf_file' => $filePath,
                         'file_path' => $filePath,
                         'file_hash' => $fileHash,
                         'cover_image' => $coverToSave,
-                        'cover_photo' => $coverToSave, // Also set for compatibility
+                        'cover_photo' => $coverToSave,
                         'availability_status' => 'available',
                         'language' => 'English',
                     ]);
@@ -264,7 +226,6 @@ class BulkUploadController extends Controller
                 }
             }
 
-            // Prepare response
             if ($uploadedCount > 0) {
                 $message = "Successfully uploaded {$uploadedCount} book(s).";
                 
@@ -325,17 +286,8 @@ class BulkUploadController extends Controller
         }
     }
 
-    /**
-     * Parse filename to extract metadata
-     * Format: Title - Author - Year - Program - Type.pdf
-     * Example: Beginning PHP and MySQL - Jason Gilmore - 2018 - BSIT - Book.pdf
-     *
-     * @param string $filename
-     * @return array
-     */
     private function parseFilename(string $filename): array
     {
-        // Remove file extension
         $filenameWithoutExt = pathinfo($filename, PATHINFO_FILENAME);
 
         if (preg_match('/^(.*?)\s+-\s*(.*?)\s+-\s*(\d{4})\s+-\s*([A-Za-z0-9][A-Za-z0-9 ]*)\s+-\s*([A-Za-z0-9_\/ -]+)$/', $filenameWithoutExt, $matches)) {
@@ -380,60 +332,34 @@ class BulkUploadController extends Controller
         };
     }
 
-    /**
-     * Store PDF file using Laravel Storage
-     *
-     * @param \Illuminate\Http\UploadedFile $file
-     * @param string $title
-     * @return string|false
-     */
     private function storeFile($file, string $title)
     {
         try {
-            // Create a unique filename to avoid conflicts
             $sanitizedTitle = preg_replace('/[^a-zA-Z0-9_-]/', '_', $title);
             $filename = time() . '_' . $sanitizedTitle . '_' . substr(md5(uniqid((string) mt_rand(), true)), 0, 8) . '.pdf';
-            
-            // Store in storage/app/public/ebooks
             $path = $file->storeAs(self::STORAGE_DIR, $filename, 'public');
             
-            if ($path) {
-                // Return the relative path for database storage
-                return $path;
-            }
-            
-            return false;
+            return $path ?: false;
         } catch (\Exception $e) {
             Log::error('Error storing file: ' . $e->getMessage());
             return false;
         }
     }
 
-    /**
-     * Ensure storage directories exist
-     */
     private function ensureStorageDirectoriesExist(): void
     {
-        // PDFs are stored on the public disk (storage/app/public/ebooks)
         if (!Storage::disk('public')->exists(self::STORAGE_DIR)) {
             Storage::disk('public')->makeDirectory(self::STORAGE_DIR);
         }
 
-        // Generated covers are written under storage/app/public/covers by PdfCoverService
         if (!Storage::disk('public')->exists('covers')) {
             Storage::disk('public')->makeDirectory('covers');
         }
     }
 
-    /**
-     * Get storage status information
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function checkStorage()
     {
         try {
-            // Use PdfCoverService for storage info
             $storageInfo = $this->pdfCoverService->getStorageInfo();
 
             return response()->json([
@@ -459,38 +385,18 @@ class BulkUploadController extends Controller
         }
     }
 
-    /**
-     * Robust cross-platform check for whether the public/storage symlink is working.
-     * Works on Windows (junction), Linux (symlink), and Railway containers.
-     */
     private function isStorageLinked(): bool
     {
-        $publicStorage = public_path('storage');
-        $storageTarget = storage_path('app/public');
-
-        // The target must exist
-        if (!is_dir($storageTarget)) {
-            return false;
-        }
-
-        // The public/storage path must exist (as symlink, junction, or dir)
-        if (!file_exists($publicStorage) && !is_link($publicStorage)) {
-            return false;
-        }
-
-        // Verify it points to the right place using realpath (works on Linux symlinks)
-        $resolvedLink   = realpath($publicStorage);
-        $resolvedTarget = realpath($storageTarget);
-
-        if ($resolvedLink && $resolvedTarget && $resolvedLink === $resolvedTarget) {
-            return true;
-        }
-
-        // Fallback: check if we can actually read/write through the link
-        // (handles edge cases where realpath behaves differently per OS)
         try {
-            return is_readable($publicStorage) && is_dir($publicStorage);
+            $testFile = 'storage_link_test_' . time() . '.txt';
+
+            Storage::disk('public')->put($testFile, 'test');
+            $exists = Storage::disk('public')->exists($testFile);
+            Storage::disk('public')->delete($testFile);
+
+            return $exists;
         } catch (\Throwable $e) {
+            Log::error('Storage link check failed: ' . $e->getMessage());
             return false;
         }
     }
