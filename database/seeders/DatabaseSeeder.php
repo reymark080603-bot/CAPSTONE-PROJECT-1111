@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -10,16 +9,13 @@ class DatabaseSeeder extends Seeder
 {
     /**
      * Seed the application's database.
+     * Only seeds the librarian/admin account.
+     * Sample books, students, and notifications are NOT seeded to keep the database clean.
      */
     public function run(): void
     {
         $this->call([
             LibrarianSeeder::class,
-            StudentSeeder::class,
-            OldUsersSeeder::class,
-            BookSeeder::class,
-            BorrowRecordSeeder::class,
-            NotificationSeeder::class,
         ]);
     }
 }
