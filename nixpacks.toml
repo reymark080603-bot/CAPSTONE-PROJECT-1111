@@ -1,9 +1,9 @@
 [phases.setup]
 nixPkgs = [
-  "php82", 
-  "php82Extensions.pdo", 
-  "php82Extensions.pdo_mysql", 
-  "php82Extensions.gd", 
+  "php82",
+  "php82Extensions.pdo",
+  "php82Extensions.pdo_mysql",
+  "php82Extensions.gd",
   "php82Extensions.imagick",
   "poppler_utils",
   "imagemagick",
