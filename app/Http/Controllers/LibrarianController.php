@@ -19,6 +19,7 @@ use Dompdf\Dompdf;
 use Dompdf\Options;
 use App\Services\PdfCoverService;
 use App\Services\LibrarianNotificationService;
+use Illuminate\Support\Facades\Storage;
 
 class LibrarianController extends Controller
 {
@@ -1548,13 +1549,9 @@ class LibrarianController extends Controller
      */
     private function storeCoverPhoto($file)
     {
-        $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-        $uploadPath = public_path('storage/uploads/book-covers');
-        
-        // Ensure directory exists
-        if (!file_exists($uploadPath)) {
-            mkdir($uploadPath, 0755, true);
-        }
+        $path = $file->store('uploads/book-covers', 'public');
+        return 'storage/' . $path;
+    }
         
         // Move file to destination
         $file->move($uploadPath, $filename);
@@ -1596,8 +1593,8 @@ class LibrarianController extends Controller
      */
     private function storeEbookFile($file, $type)
     {
-        // Store relative path on the public disk (e.g. books/pdfs/abc.pdf)
-        return $file->store('books/' . $type . 's', 'public');
+        $path = $file->store('books/' . $type . 's', 'public');
+        return 'storage/' . $path;
     }
     
     /**
