@@ -56,6 +56,15 @@ Route::get('/check-system', function(PdfCoverService $pdfService) {
     return $html;
 });
 
+// STORAGE PROXY - Bypasses broken symlinks on Railway
+Route::get('/storage/{path}', function($path) {
+    $fullPath = storage_path('app/public/' . $path);
+    if (!file_exists($fullPath)) {
+        abort(404);
+    }
+    return response()->file($fullPath);
+})->where('path', '.*');
+
 use App\Models\User;
 use App\Models\Role;
 use Illuminate\Support\Facades\Hash;
