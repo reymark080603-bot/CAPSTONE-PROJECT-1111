@@ -19,9 +19,22 @@ use App\Services\PdfCoverService;
 Route::get('/check-system', function(PdfCoverService $pdfService) {
     $info = $pdfService->getStorageInfo();
     
-    $html = "<h1>System Diagnostic</h1>";
+    // LIVE TEST
+    $testFile = 'debug_' . time() . '.txt';
+    $writeSuccess = \Illuminate\Support\Facades\Storage::disk('public')->put($testFile, 'Hello World');
+    $publicPath = public_path('storage/' . $testFile);
+    $fileExistsInPublic = file_exists($publicPath);
+    $publicUrl = asset('storage/' . $testFile);
+    
+    $html = "<h1>System Diagnostic (LIVE TEST)</h1>";
+    
+    $html .= "<h3>Storage Test:</h3>";
+    $html .= "1. Writing to Disk: " . ($writeSuccess ? "✅ Success" : "❌ FAILED") . "<br>";
+    $html .= "2. Visible in Public Folder: " . ($fileExistsInPublic ? "✅ Yes" : "❌ NO (Symlink is broken)") . "<br>";
+    $html .= "3. Public URL: <a href='$publicUrl' target='_blank'>$publicUrl</a> (Click to test 404)<br>";
     
     $html .= "<h3>Tools Status:</h3>";
+    // ... rest of the status
     $html .= "GD Extension: " . (extension_loaded('gd') ? "✅ Installed" : "❌ MISSING") . "<br>";
     $html .= "Imagick Extension: " . ($info['imagick_available'] ? "✅ Installed" : "❌ MISSING") . "<br>";
     $html .= "pdftoppm (Poppler): " . ($info['pdftoppm_available'] ? "✅ Installed" : "❌ MISSING") . "<br>";
