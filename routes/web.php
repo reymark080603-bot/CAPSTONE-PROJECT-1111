@@ -16,29 +16,37 @@ use App\Http\Controllers\RecentBooksController;
 use App\Services\PdfCoverService;
 
 // SYSTEM CHECK ROUTE - Visit this to diagnose cover generation issues
+// STORAGE PROXY - Bypasses broken symlinks on Railway
+Route::get('/storage/{path}', function($path) {
+    $fullPath = storage_path('app/public/' . $path);
+    if (!file_exists($fullPath)) {
+        return "DEBUG: File Not Found at: " . $fullPath;
+    }
+    return response()->file($fullPath);
+})->where('path', '.*');
+
 Route::get('/check-system', function(PdfCoverService $pdfService) {
     $info = $pdfService->getStorageInfo();
     
     // LIVE TEST
     $testFile = 'debug_' . time() . '.txt';
     $writeSuccess = \Illuminate\Support\Facades\Storage::disk('public')->put($testFile, 'Hello World');
-    $publicPath = public_path('storage/' . $testFile);
-    $fileExistsInPublic = file_exists($publicPath);
+    $fullPath = storage_path('app/public/' . $testFile);
+    $fileExistsAtLocation = file_exists($fullPath);
     $publicUrl = asset('storage/' . $testFile);
     
-    $html = "<h1>System Diagnostic (PATH FINDER)</h1>";
+    $html = "<h1>System Diagnostic (FILE HUNTER)</h1>";
     
-    $html .= "<h3>Path Debugging:</h3>";
-    $html .= "Current Working Dir: " . getcwd() . "<br>";
-    $html .= "Laravel Public Path: " . public_path() . "<br>";
+    $html .= "<h3>Live File Test:</h3>";
+    $html .= "1. Write Success: " . ($writeSuccess ? "✅" : "❌") . "<br>";
+    $html .= "2. Absolute Path: <code>$fullPath</code><br>";
+    $html .= "3. Exists at Path: " . ($fileExistsAtLocation ? "✅" : "❌") . "<br>";
+    $html .= "4. URL: <a href='$publicUrl' target='_blank'>$publicUrl</a><br>";
     
-    $html .= "<h3>Storage Test:</h3>";
-    $html .= "1. Writing to Disk: " . ($writeSuccess ? "✅ Success" : "❌ FAILED") . "<br>";
-    $html .= "2. Visible in Public Folder: " . ($fileExistsInPublic ? "✅ Yes" : "❌ NO (Symlink is broken)") . "<br>";
-    $html .= "3. Public URL: <a href='$publicUrl' target='_blank'>$publicUrl</a> (Click to test 404)<br>";
+    $html .= "<h3>Extensions:</h3>";
+    $html .= "Loaded: " . implode(', ', get_loaded_extensions()) . "<br>";
     
     $html .= "<h3>Tools Status:</h3>";
-    // ... rest of the status
     $html .= "GD Extension: " . (extension_loaded('gd') ? "✅ Installed" : "❌ MISSING") . "<br>";
     $html .= "Imagick Extension: " . ($info['imagick_available'] ? "✅ Installed" : "❌ MISSING") . "<br>";
     $html .= "pdftoppm (Poppler): " . ($info['pdftoppm_available'] ? "✅ Installed" : "❌ MISSING") . "<br>";
