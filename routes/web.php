@@ -13,6 +13,46 @@ use App\Http\Controllers\RecommendedController;
     
 use App\Http\Controllers\RecentBooksController;
     
+use App\Models\User;
+use App\Models\Role;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
+
+// TEMPORARY FIX ROUTE - Visit this once on Railway to fix admin access
+Route::get('/fix-admin-access', function() {
+    try {
+        $email = 'JHCSCLibrarian@gmail.com';
+        $password = 'JHCSCLib2026';
+        $name = 'Shienalie S. Lubon';
+
+        // 1. Ensure role exists
+        $role = Role::firstOrCreate(
+            ['name' => 'librarian'],
+            ['display_name' => 'Librarian', 'description' => 'Library staff with admin privileges']
+        );
+
+        // 2. Delete any conflicting user
+        User::where('email', $email)->delete();
+
+        // 3. Create fresh admin using direct DB to avoid model cast issues
+        DB::table('users')->insert([
+            'name' => $name,
+            'firstname' => 'Shienalie',
+            'lastname' => 'Lubon',
+            'email' => $email,
+            'password' => Hash::make($password),
+            'role_id' => $role->id,
+            'email_verified_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return "✅ ADMIN FIXED! You can now login with: <br>Email: $email <br>Password: $password <br><br><a href='/login'>Go to Login</a>";
+    } catch (\Exception $e) {
+        return "❌ FIX FAILED: " . $e->getMessage();
+    }
+});
+
 // Admin/librarian login routes redirect to the shared login page.
     Route::get('/librarian/login', function () {
         return redirect()->route('login');
