@@ -13,6 +13,32 @@ use App\Http\Controllers\RecommendedController;
     
 use App\Http\Controllers\RecentBooksController;
     
+use App\Services\PdfCoverService;
+
+// SYSTEM CHECK ROUTE - Visit this to diagnose cover generation issues
+Route::get('/check-system', function(PdfCoverService $pdfService) {
+    $info = $pdfService->getStorageInfo();
+    
+    $html = "<h1>System Diagnostic</h1>";
+    
+    $html .= "<h3>Tools Status:</h3>";
+    $html .= "GD Extension: " . (extension_loaded('gd') ? "✅ Installed" : "❌ MISSING") . "<br>";
+    $html .= "Imagick Extension: " . ($info['imagick_available'] ? "✅ Installed" : "❌ MISSING") . "<br>";
+    $html .= "pdftoppm (Poppler): " . ($info['pdftoppm_available'] ? "✅ Installed" : "❌ MISSING") . "<br>";
+    
+    $html .= "<h3>Storage Status:</h3>";
+    $html .= "Public Storage Link: " . (file_exists(public_path('storage')) ? "✅ Exists" : "❌ MISSING") . "<br>";
+    $html .= "Ebooks Directory: " . (is_dir(storage_path('app/public/ebooks')) ? "✅ Exists" : "❌ MISSING") . "<br>";
+    $html .= "Covers Directory: " . (is_dir(storage_path('app/public/covers')) ? "✅ Exists" : "❌ MISSING") . "<br>";
+    $html .= "Covers Writable: " . (is_writable(storage_path('app/public/covers')) ? "✅ Yes" : "❌ No") . "<br>";
+    
+    $html .= "<h3>File Counts:</h3>";
+    $html .= "PDFs found: " . $info['pdf']['count'] . "<br>";
+    $html .= "Covers found: " . $info['covers']['count'] . "<br>";
+    
+    return $html;
+});
+
 use App\Models\User;
 use App\Models\Role;
 use Illuminate\Support\Facades\Hash;
