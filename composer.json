@@ -13,7 +13,9 @@
         "dompdf/dompdf": "^3.1",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
-        "spatie/pdf-to-image": "*"
+        "spatie/pdf-to-image": "*",
+        "ext-gd": "*",
+        "ext-imagick": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
