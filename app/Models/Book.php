@@ -359,34 +359,17 @@ class Book extends Model
      */
     private function resolveCoverUrl(?string $path): ?string
     {
-        if (empty($path)) {
-            return null;
-        }
-
-        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
-            return $path;
-        }
+        if (empty($path)) return null;
+        if (str_starts_with($path, 'http')) return $path;
 
         $normalized = ltrim($path, '/');
-
-        // Legacy/public paths, e.g. "covers/..." or "storage/uploads/..."
-        if (file_exists(public_path($normalized))) {
+        
+        // If it starts with storage/, we treat it as a public asset link
+        if (str_starts_with($normalized, 'storage/')) {
             return asset($normalized);
         }
 
-        // Public disk paths, e.g. "covers/..." stored in storage/app/public/covers
-        if (Storage::disk('public')->exists($normalized)) {
-            return asset('storage/' . $normalized);
-        }
-
-        // Handle DB values already prefixed with "storage/"
-        if (str_starts_with($normalized, 'storage/')) {
-            $relative = substr($normalized, 8);
-            if (Storage::disk('public')->exists($relative)) {
-                return asset('storage/' . $relative);
-            }
-        }
-
-        return null;
+        // Otherwise, assume it's a relative path on the public disk
+        return asset('storage/' . $normalized);
     }
 }
