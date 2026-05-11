@@ -1,14 +1,8 @@
 [phases.setup]
-nixPkgs = [
-  "php82",
-  "php82Extensions.pdo",
-  "php82Extensions.pdo_mysql",
-  "php82Extensions.gd",
-  "php82Extensions.imagick",
-  "poppler_utils",
-  "imagemagick",
-  "ghostscript"
-]
+nixPkgs = ["php82", "poppler_utils", "imagemagick", "ghostscript"]
+
+[providers.php]
+extensions = ["gd", "imagick", "pdo_mysql", "pdo"]
 
 [start]
 cmd = "bash start.sh"
