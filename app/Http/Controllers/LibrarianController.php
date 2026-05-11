@@ -1552,12 +1552,6 @@ class LibrarianController extends Controller
         $path = $file->store('uploads/book-covers', 'public');
         return 'storage/' . $path;
     }
-        
-        // Move file to destination
-        $file->move($uploadPath, $filename);
-        
-        return 'storage/uploads/book-covers/' . $filename;
-    }
 
     /**
      * Delete cover photo file
@@ -1593,8 +1587,8 @@ class LibrarianController extends Controller
      */
     private function storeEbookFile($file, $type)
     {
-        $path = $file->store('books/' . $type . 's', 'public');
-        return 'storage/' . $path;
+        // Store relative path on the public disk (e.g. books/pdfs/abc.pdf)
+        return $file->store('books/' . $type . 's', 'public');
     }
     
     /**
