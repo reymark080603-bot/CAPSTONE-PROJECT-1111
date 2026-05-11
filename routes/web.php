@@ -26,7 +26,11 @@ Route::get('/check-system', function(PdfCoverService $pdfService) {
     $fileExistsInPublic = file_exists($publicPath);
     $publicUrl = asset('storage/' . $testFile);
     
-    $html = "<h1>System Diagnostic (LIVE TEST)</h1>";
+    $html = "<h1>System Diagnostic (PATH FINDER)</h1>";
+    
+    $html .= "<h3>Path Debugging:</h3>";
+    $html .= "Current Working Dir: " . getcwd() . "<br>";
+    $html .= "Laravel Public Path: " . public_path() . "<br>";
     
     $html .= "<h3>Storage Test:</h3>";
     $html .= "1. Writing to Disk: " . ($writeSuccess ? "✅ Success" : "❌ FAILED") . "<br>";
