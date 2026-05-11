@@ -13,15 +13,15 @@ php artisan migrate --force
 echo "→ Setting up admin/librarian account..."
 php setup_admin.php
 
-echo "→ Preparing storage..."
-mkdir -p storage/app/public/ebooks
-mkdir -p storage/app/public/covers
-mkdir -p storage/app/public/uploads/book-covers
-chmod -R 777 storage/app/public
+echo "→ Preparing storage (ABSOLUTE)..."
+mkdir -p /app/storage/app/public/ebooks
+mkdir -p /app/storage/app/public/covers
+mkdir -p /app/storage/app/public/uploads/book-covers
+chmod -R 777 /app/storage/app/public
 
-echo "→ Fixing storage symlink..."
-rm -rf public/storage
-php artisan storage:link --force
+echo "→ Fixing storage symlink (ABSOLUTE)..."
+rm -rf /app/public/storage
+ln -sf /app/storage/app/public /app/public/storage
 
 echo "=== Starting PHP server on port ${PORT:-8000} ==="
 php artisan serve --host=0.0.0.0 --port="${PORT:-8000}"

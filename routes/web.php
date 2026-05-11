@@ -18,11 +18,19 @@ use App\Services\PdfCoverService;
 // SYSTEM CHECK ROUTE - Visit this to diagnose cover generation issues
 // STORAGE PROXY - Bypasses broken symlinks on Railway
 Route::get('/storage/{path}', function($path) {
-    $fullPath = storage_path('app/public/' . $path);
-    if (!file_exists($fullPath)) {
-        return "DEBUG: File Not Found at: " . $fullPath;
+    // Try absolute app path first, then relative storage path
+    $paths = [
+        '/app/storage/app/public/' . $path,
+        storage_path('app/public/' . $path),
+    ];
+    
+    foreach ($paths as $fullPath) {
+        if (file_exists($fullPath) && !is_dir($fullPath)) {
+            return response()->file($fullPath);
+        }
     }
-    return response()->file($fullPath);
+    
+    return "DEBUG: File Not Found. Checked: " . implode(', ', $paths);
 })->where('path', '.*');
 
 Route::get('/check-system', function(PdfCoverService $pdfService) {
