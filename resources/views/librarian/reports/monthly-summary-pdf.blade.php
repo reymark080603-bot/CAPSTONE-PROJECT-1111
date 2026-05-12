@@ -407,6 +407,54 @@
             </table>
         </div>
 
+        <table class="two-col" style="margin-top:12px;">
+            <tr>
+                <td width="50%" valign="top">
+                    <div class="panel">
+                        <div class="section-title">Resource Types</div>
+                        @forelse($data['resource_types'] ?? [] as $resource)
+                            <div class="bar-row">
+                                <div class="bar-meta">
+                                    <span class="left">{{ $resource['type'] }}</span>
+                                    <span class="right">{{ $resource['count'] }}</span>
+                                </div>
+                                <div class="bar-track">
+                                    <div class="bar-fill-green" style="width: {{ $data['monthly_stats']['books_borrowed'] > 0 ? ($resource['count'] / max(1, array_sum(array_column($data['resource_types'], 'count')))) * 100 : 5 }}%"></div>
+                                </div>
+                            </div>
+                        @empty
+                            <div>No resource type data available.</div>
+                        @endforelse
+                    </div>
+                </td>
+                <td width="50%" valign="top">
+                    <div class="panel">
+                        <div class="section-title">Most Borrowed Books</div>
+                        <table class="data-table" style="font-size: 10px;">
+                            <thead>
+                                <tr>
+                                    <th>Book Title</th>
+                                    <th width="40">Borrows</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($data['popular_books'] ?? [] as $book)
+                                    <tr>
+                                        <td><strong>{{ $book['title'] }}</strong><br><small style="color:#666;">{{ $book['author'] }}</small></td>
+                                        <td style="text-align:center;">{{ $book['borrow_count'] }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="2">No borrowing activity this month.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
         <div class="panel" style="margin-top:12px;">
             <div class="section-title">Daily Library Activity</div>
             <table class="data-table">
