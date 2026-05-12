@@ -288,7 +288,7 @@ class Book extends Model
         }
         
         // Return default cover
-        return asset('storage/covers/default-book.png');
+        return asset('library-assets/covers/default-book.png');
     }
 
     /**
@@ -324,7 +324,7 @@ class Book extends Model
         }
 
         // Fallback: Default cover image
-        return asset('storage/covers/default-book.png');
+        return asset('library-assets/covers/default-book.png');
     }
 
     /**
