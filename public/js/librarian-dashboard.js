@@ -880,6 +880,8 @@ class LibrarianDashboard {
     }
 
     printReport() {
+        window.open('/librarian/reports/print/monthly-summary', '_blank');
+        return;
         // Get current date and time
         const now = new Date();
         const dateStr = now.toLocaleDateString('en-US', {

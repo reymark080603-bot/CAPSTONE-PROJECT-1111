@@ -170,7 +170,7 @@ class BulkUploadController extends Controller
                                                 $coverToSave = $coverPath;
                                                 $coversGenerated++;
                                                 $hasFrontendThumb = true;
-                                            }");
+                                            }
                                         }
                                     }
                                 }

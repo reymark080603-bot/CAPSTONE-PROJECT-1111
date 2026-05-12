@@ -2,7 +2,7 @@
 nixPkgs = ["php82", "poppler_utils", "imagemagick", "ghostscript"]
 
 [providers.php]
-extensions = ["gd", "imagick", "pdo_mysql", "pdo"]
+extensions = ["gd", "imagick", "pdo_mysql", "pdo", "bcmath", "mbstring"]
 
 [start]
 cmd = "bash start.sh"
