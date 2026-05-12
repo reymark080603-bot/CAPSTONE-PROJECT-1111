@@ -162,13 +162,13 @@ class Book extends Model
             }
 
             if (Storage::disk('public')->exists($normalized)) {
-                return asset('storage/' . $normalized);
+                return asset('library-assets/' . $normalized);
             }
 
             if (str_starts_with($normalized, 'storage/')) {
                 $relative = substr($normalized, 8);
                 if (Storage::disk('public')->exists($relative)) {
-                    return asset('storage/' . $relative);
+                    return asset('library-assets/' . $relative);
                 }
             }
         }
@@ -199,8 +199,8 @@ class Book extends Model
     public function getPrimaryFileUrl()
     {
         if ($this->hasPdfFile()) return $this->getPdfUrl();
-        if ($this->hasEpubFile()) return asset($this->epub_file);
-        if ($this->hasDocFile()) return asset($this->doc_file);
+        if ($this->hasEpubFile()) return asset('library-assets/' . ltrim($this->epub_file, '/'));
+        if ($this->hasDocFile()) return asset('library-assets/' . ltrim($this->doc_file, '/'));
         return null;
     }
 
@@ -216,8 +216,8 @@ class Book extends Model
     {
         $formats = [];
         if ($this->hasPdfFile()) $formats['pdf'] = $this->getPdfUrl();
-        if ($this->hasEpubFile()) $formats['epub'] = asset($this->epub_file);
-        if ($this->hasDocFile()) $formats['doc'] = asset($this->doc_file);
+        if ($this->hasEpubFile()) $formats['epub'] = asset('library-assets/' . ltrim($this->epub_file, '/'));
+        if ($this->hasDocFile()) $formats['doc'] = asset('library-assets/' . ltrim($this->doc_file, '/'));
         if (!empty($this->content)) $formats['html'] = 'html';
         return $formats;
     }
