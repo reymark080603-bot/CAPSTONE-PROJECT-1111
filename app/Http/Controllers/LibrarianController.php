@@ -20,6 +20,7 @@ use Dompdf\Options;
 use App\Services\PdfCoverService;
 use App\Services\LibrarianNotificationService;
 use Illuminate\Support\Facades\Storage;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class LibrarianController extends Controller
 {
@@ -1549,6 +1550,19 @@ class LibrarianController extends Controller
      */
     private function storeCoverPhoto($file)
     {
+        try {
+            // If Cloudinary is configured, use it
+            if (env('CLOUDINARY_URL')) {
+                $result = Cloudinary::upload($file->getRealPath(), [
+                    'folder' => 'knowly/covers'
+                ]);
+                return $result->getSecurePath();
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Cloudinary Upload Failed: ' . $e->getMessage());
+        }
+
+        // Fallback to local storage
         $path = $file->store('uploads/book-covers', 'public');
         return 'storage/' . $path;
     }

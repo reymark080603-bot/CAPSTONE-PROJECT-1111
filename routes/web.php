@@ -53,6 +53,11 @@ Route::get('/check-system', function(PdfCoverService $pdfService) {
     $html .= "<h3>Extensions:</h3>";
     $html .= "Loaded: " . implode(', ', get_loaded_extensions()) . "<br>";
     
+    $html .= "<h3>Cloudinary Status:</h3>";
+    $cloudinaryUrl = env('CLOUDINARY_URL');
+    $html .= "CLOUDINARY_URL: " . ($cloudinaryUrl ? "✅ Configured (" . substr($cloudinaryUrl, 0, 15) . "...)" : "❌ NOT FOUND") . "<br>";
+    $html .= "<p style='font-size: 0.9em; color: #666;'>To fix this, go to Cloudinary Dashboard, copy the 'API Environment variable' and paste it into your Railway Variables as CLOUDINARY_URL.</p>";
+    
     $html .= "<h3>Tools Status:</h3>";
     $html .= "GD Extension: " . (extension_loaded('gd') ? "✅ Installed" : "❌ MISSING") . "<br>";
     $html .= "Imagick Extension: " . ($info['imagick_available'] ? "✅ Installed" : "❌ MISSING") . "<br>";

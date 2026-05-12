@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 /**
  * Controller for handling recently added books display and uploads.
@@ -193,7 +194,14 @@ class RecentBooksController extends Controller
             if ($coverImage) {
                 // Use uploaded cover image
                 $coverFilename = time() . '_cover_' . preg_replace('/[^a-zA-Z0-9_-]/', '_', $request->title) . '.' . $coverImage->getClientOriginalExtension();
-                $coverPath = $coverImage->storeAs('covers', $coverFilename, 'public');
+                if (env('CLOUDINARY_URL')) {
+                    $result = Cloudinary::upload($coverImage->getRealPath(), [
+                        'folder' => 'knowly/covers'
+                    ]);
+                    $coverPath = $result->getSecurePath();
+                } else {
+                    $coverPath = $coverImage->storeAs('covers', $coverFilename, 'public');
+                }
             } else {
                 // Try to generate cover from PDF first page
                 $fullPdfPath = Storage::disk('public')->path($pdfPath);
