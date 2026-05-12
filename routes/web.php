@@ -16,9 +16,8 @@ use App\Http\Controllers\RecentBooksController;
 use App\Services\PdfCoverService;
 
 // SYSTEM CHECK ROUTE - Visit this to diagnose cover generation issues
-// STORAGE PROXY - Bypasses broken symlinks on Railway
-Route::get('/storage/{path}', function($path) {
-    // Try absolute app path first, then relative storage path
+// GHOST ROUTE - Bypasses Nginx static interceptor on Railway
+Route::get('/library-assets/{path}', function($path) {
     $paths = [
         '/app/storage/app/public/' . $path,
         storage_path('app/public/' . $path),
@@ -41,15 +40,15 @@ Route::get('/check-system', function(PdfCoverService $pdfService) {
     $writeSuccess = \Illuminate\Support\Facades\Storage::disk('public')->put($testFile, 'Hello World');
     $fullPath = storage_path('app/public/' . $testFile);
     $fileExistsAtLocation = file_exists($fullPath);
-    $publicUrl = asset('storage/' . $testFile);
+    $publicUrl = asset('library-assets/' . $testFile);
     
-    $html = "<h1>System Diagnostic (FILE HUNTER)</h1>";
+    $html = "<h1>System Diagnostic (GHOST TEST)</h1>";
     
     $html .= "<h3>Live File Test:</h3>";
     $html .= "1. Write Success: " . ($writeSuccess ? "✅" : "❌") . "<br>";
     $html .= "2. Absolute Path: <code>$fullPath</code><br>";
     $html .= "3. Exists at Path: " . ($fileExistsAtLocation ? "✅" : "❌") . "<br>";
-    $html .= "4. URL: <a href='$publicUrl' target='_blank'>$publicUrl</a><br>";
+    $html .= "4. Ghost URL: <a href='$publicUrl' target='_blank'>$publicUrl</a><br>";
     
     $html .= "<h3>Extensions:</h3>";
     $html .= "Loaded: " . implode(', ', get_loaded_extensions()) . "<br>";

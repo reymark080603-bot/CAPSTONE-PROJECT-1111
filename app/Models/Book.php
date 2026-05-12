@@ -364,12 +364,13 @@ class Book extends Model
 
         $normalized = ltrim($path, '/');
         
-        // If it starts with storage/, we treat it as a public asset link
+        // If it starts with storage/, we redirect it through our ghost route
         if (str_starts_with($normalized, 'storage/')) {
-            return asset($normalized);
+            $pathWithoutStorage = substr($normalized, 8);
+            return asset('library-assets/' . $pathWithoutStorage);
         }
 
-        // Otherwise, assume it's a relative path on the public disk
-        return asset('storage/' . $normalized);
+        // Otherwise, assume it's a relative path and route it through library-assets
+        return asset('library-assets/' . $normalized);
     }
 }
