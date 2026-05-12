@@ -160,17 +160,16 @@ class BulkUploadController extends Controller
                                         $coverFilename = \Illuminate\Support\Str::random(12) . '_' . time() . '.' . $ext;
                                         $coverPath = 'covers/' . $coverFilename;
                                         if (env('CLOUDINARY_URL')) {
-                                                $result = Cloudinary::upload("data:image/$ext;base64,$base64Data", [
-                                                    'folder' => 'knowly/covers'
-                                                ]);
-                                                $coverToSave = $result->getSecurePath();
-                                                $coversGenerated++;
-                                                $hasFrontendThumb = true;
-                                            } else if (Storage::disk('public')->put($coverPath, $decoded)) {
-                                                $coverToSave = $coverPath;
-                                                $coversGenerated++;
-                                                $hasFrontendThumb = true;
-                                            }
+                                            $result = Cloudinary::upload("data:image/$ext;base64,$base64Data", [
+                                                'folder' => 'knowly/covers'
+                                            ]);
+                                            $coverToSave = $result->getSecurePath();
+                                            $coversGenerated++;
+                                            $hasFrontendThumb = true;
+                                        } else if (Storage::disk('public')->put($coverPath, $decoded)) {
+                                            $coverToSave = $coverPath;
+                                            $coversGenerated++;
+                                            $hasFrontendThumb = true;
                                         }
                                     }
                                 }
