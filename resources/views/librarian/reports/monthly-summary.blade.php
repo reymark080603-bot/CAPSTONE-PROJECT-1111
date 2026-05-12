@@ -249,7 +249,7 @@
             <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
                 <div>
                     <p class="text-sm font-bold uppercase tracking-[0.2em] text-[#21584a] mb-1">Monthly Library Report</p>
-                    <h1 class="monthly-title text-3xl md:text-4xl font-extrabold uppercase">JHSCS KNOWLY</h1>
+                    <h1 class="monthly-title text-3xl md:text-4xl font-extrabold uppercase">JHCSC KNOWLY</h1>
                     <h2 class="text-xl md:text-2xl font-extrabold uppercase text-[var(--report-teal)] mt-1">College Library</h2>
                     <p class="text-sm md:text-base text-[var(--report-subtitle)] mt-2">
                         {{ $data['period']['month_name'] }} | {{ $data['period']['start_date'] }} to {{ $data['period']['end_date'] }}

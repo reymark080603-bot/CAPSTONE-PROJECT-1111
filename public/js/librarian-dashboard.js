@@ -1313,7 +1313,7 @@ class LibrarianDashboard {
             <div class="report-shell">
                 <div class="header">
                     <div class="eyebrow">Monthly Library Report</div>
-                    <h1>JHSCS KNOWLY</h1>
+                    <h1>JHCSC KNOWLY</h1>
                     <h2>College Library</h2>
                     <p>Generated on ${dateStr}</p>
                 </div>
@@ -1384,7 +1384,7 @@ class LibrarianDashboard {
                 </div>
 
                 <div class="footer">
-                    <p>This report was generated automatically by the JHSCS KNOWLY Library Management System.</p>
+                    <p>This report was generated automatically by the JHCSC KNOWLY Library Management System.</p>
                     <p>Report Date: ${dateStr}</p>
                 </div>
             </div>

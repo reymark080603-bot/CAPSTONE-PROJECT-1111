@@ -232,7 +232,7 @@
     <div class="shell">
         <div class="header">
             <div class="eyebrow">Monthly Library Report</div>
-            <h1>JHSCS KNOWLY</h1>
+            <h1>JHCSC KNOWLY</h1>
             <h2>College Library</h2>
             <p>{{ $data['period']['month_name'] }} | {{ $data['period']['start_date'] }} to {{ $data['period']['end_date'] }}</p>
         </div>
@@ -440,7 +440,7 @@
         </div>
 
         <div class="footer">
-            Generated on {{ now()->format('Y-m-d H:i:s') }} | JHSCS KNOWLY Library Management System
+            Generated on {{ now()->format('Y-m-d H:i:s') }} | JHCSC KNOWLY Library Management System
         </div>
     </div>
 
