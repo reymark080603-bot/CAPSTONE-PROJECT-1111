@@ -152,11 +152,33 @@ class PdfCoverService
 
     public function getStorageInfo(): array
     {
+        $pdfInfo = $this->getDirectoryInfo(self::PDF_DIR);
+        $coversInfo = $this->getDirectoryInfo(self::COVER_DIR);
+
         return [
-            'pdf' => ['count' => 0, 'size_mb' => 0],
-            'covers' => ['count' => 0, 'size_mb' => 0],
+            'pdf' => $pdfInfo,
+            'covers' => $coversInfo,
             'pdftoppm_available' => $this->isPdftoppmAvailable(),
             'imagick_available' => extension_loaded('imagick'),
+        ];
+    }
+
+    private function getDirectoryInfo(string $directory): array
+    {
+        $count = 0;
+        $sizeBytes = 0;
+
+        if (Storage::disk('public')->exists($directory)) {
+            $files = Storage::disk('public')->files($directory);
+            $count = count($files);
+            foreach ($files as $file) {
+                $sizeBytes += Storage::disk('public')->size($file);
+            }
+        }
+
+        return [
+            'count' => $count,
+            'size_mb' => round($sizeBytes / 1048576, 2)
         ];
     }
 }
