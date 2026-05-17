@@ -158,14 +158,14 @@ class RecentBooksController extends Controller
             'published_year' => 'nullable|integer|min:1900|max:' . date('Y'),
             'program' => 'nullable|string|max:100',
             'description' => 'nullable|string',
-            'pdf_file' => 'required|file|mimes:pdf|max:51200', // 50MB max
+            'pdf_file' => 'required|file|mimes:pdf|max:102400', // 100MB max
             'cover_image' => 'nullable|image|mimes:jpeg,png,gif,webp|max:2048', // 2MB max
         ], [
             'title.required' => 'Book title is required.',
             'author.required' => 'Author name is required.',
             'pdf_file.required' => 'PDF file is required.',
             'pdf_file.mimes' => 'Only PDF files are allowed.',
-            'pdf_file.max' => 'PDF file must not exceed 50MB.',
+            'pdf_file.max' => 'PDF file must not exceed 100MB.',
             'cover_image.image' => 'Cover image must be a valid image file.',
             'cover_image.max' => 'Cover image must not exceed 2MB.',
         ]);

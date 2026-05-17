@@ -183,7 +183,7 @@
         <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors" id="bulkUploadArea">
             <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
             <h4 class="text-lg font-medium text-gray-900 mb-2">Drop files here or click to browse</h4>
-            <p class="text-sm text-gray-600 mb-4">Support: PDF, EPUB, DOC (Max 50MB per file)</p>
+            <p class="text-sm text-gray-600 mb-4">Support: PDF, EPUB, DOC (Max 100MB per file)</p>
             <input type="file" id="bulkFileInput" multiple accept=".pdf,.epub,.doc,.docx,.jpg,.jpeg,.png" class="hidden">
             <button onclick="document.getElementById('bulkFileInput').click()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors">
                 <i class="fas fa-folder-open mr-2"></i>Select Files
@@ -1533,7 +1533,7 @@ function handleBulkFileSelection(event) {
         const validTypes = ['application/pdf', 'application/epub+zip', 'application/msword', 
                           'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                           'image/jpeg', 'image/png'];
-        const maxSize = 50 * 1024 * 1024; // 50MB
+        const maxSize = 100 * 1024 * 1024; // 100MB
         
         return validTypes.includes(file.type) && file.size <= maxSize;
     });
@@ -1661,7 +1661,7 @@ async function startBulkUpload() {
         
     } catch (error) {
         console.error('Bulk upload error:', error);
-        showToast('Upload failed. Please try again. Make sure files are under 50MB each.', 'error');
+        showToast('Upload failed. Please try again. Make sure files are under 100MB each.', 'error');
     } finally {
         // Hide loading state
         btn.disabled = false;

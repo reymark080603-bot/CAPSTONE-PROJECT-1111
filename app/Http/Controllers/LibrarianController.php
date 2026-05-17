@@ -926,7 +926,7 @@ class LibrarianController extends Controller
         try {
             $request->validate([
                 'files' => 'required|array|min:1',
-                'files.*' => 'required|file|max:51200|mimes:pdf,epub,doc,docx,jpg,jpeg,png',
+                'files.*' => 'required|file|max:102400|mimes:pdf,epub,doc,docx,jpg,jpeg,png',
                 'covers.*' => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
                 'cover_map' => 'nullable|string',
                 'resource_type' => 'required|in:book,e_journal,thesis',
@@ -1089,7 +1089,7 @@ class LibrarianController extends Controller
             'publisher' => 'nullable|string|max:255',
             'language' => 'nullable|string|max:50',
             'cover_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'ebook_file' => 'nullable|file|mimes:pdf,epub,doc,docx|max:51200', // 50MB
+            'ebook_file' => 'nullable|file|mimes:pdf,epub,doc,docx|max:102400', // 100MB
             // E-Journal specific fields
             'volume' => 'nullable|string|max:50|required_if:resource_type,e_journal',
             'issue' => 'nullable|string|max:50|required_if:resource_type,e_journal',

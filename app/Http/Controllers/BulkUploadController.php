@@ -47,14 +47,14 @@ class BulkUploadController extends Controller
     {
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'pdfs' => 'required|array|min:1',
-            'pdfs.*' => 'required|file|mimes:pdf|max:51200',
+            'pdfs.*' => 'required|file|mimes:pdf|max:102400',
         ], [
             'pdfs.required' => 'Please select at least one PDF file.',
             'pdfs.array' => 'Invalid upload payload.',
             'pdfs.*.required' => 'Please select at least one PDF file.',
             'pdfs.*.file' => 'Each file must be a valid file.',
             'pdfs.*.mimes' => 'All files must be PDF format.',
-            'pdfs.*.max' => 'Each file must not exceed 50MB.',
+            'pdfs.*.max' => 'Each file must not exceed 100MB.',
         ]);
 
         if ($validator->fails()) {

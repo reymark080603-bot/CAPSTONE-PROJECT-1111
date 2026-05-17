@@ -335,7 +335,7 @@
                     <div class="space-y-4">
                         <p class="text-sm text-gray-600 mb-4">
                             <i class="fas fa-info-circle mr-1"></i>
-                            Upload the book content file. Supports PDF, EPUB, and DOC/DOCX formats (up to 50MB).
+                            Upload the book content file. Supports PDF, EPUB, and DOC/DOCX formats (up to 100MB).
                         </p>
                         
                         <!-- Single File Upload Area -->
@@ -351,7 +351,7 @@
                                     </div>
                                     <div>
                                         <p class="text-gray-600 font-medium">Click to upload or drag and drop</p>
-                                        <p class="text-sm text-gray-500">PDF, EPUB, DOC, DOCX up to 50MB</p>
+                                        <p class="text-sm text-gray-500">PDF, EPUB, DOC, DOCX up to 100MB</p>
                                         <p class="text-xs text-gray-400 mt-2">
                                             <i class="fas fa-file-pdf text-red-500"></i> PDF • 
                                             <i class="fas fa-book text-purple-500"></i> EPUB • 
@@ -797,7 +797,7 @@ function initializeEbookFileUploads() {
     
     if (!uploadArea || !fileInput || !preview) return;
     
-    const maxSize = 50 * 1024 * 1024; // 50MB
+    const maxSize = 100 * 1024 * 1024; // 100MB
     const allowedTypes = {
         'pdf': {
             icon: 'fas fa-file-pdf',
@@ -846,7 +846,7 @@ function initializeEbookFileUploads() {
         
         // Validate file size
         if (file.size > maxSize) {
-            alert('File size must be less than 50MB.');
+            alert('File size must be less than 100MB.');
             fileInput.value = '';
             return;
         }
