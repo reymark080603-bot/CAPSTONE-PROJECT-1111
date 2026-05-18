@@ -117,7 +117,7 @@
         <table id="booksTable" class="w-full table-fixed">
             <colgroup>
                 <col class="w-[96px]">
-                <col>
+                <col style="width: 260px; max-width: 260px;">
                 <col class="w-[120px]">
                 <col class="w-[120px]">
                 <col class="w-[140px]">
@@ -311,6 +311,13 @@
 
 #booksTable tbody td:nth-child(2) {
     min-width: 0;
+    max-width: 260px;
+    width: 260px;
+}
+
+#booksTable tbody td:nth-child(2) .min-w-0 {
+    overflow: hidden;
+    max-width: 100%;
 }
 
 #booksTable tbody td:nth-child(2) h4,
@@ -318,6 +325,8 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    max-width: 100%;
+    display: block;
 }
 
 #booksTable tbody td:nth-child(3),
