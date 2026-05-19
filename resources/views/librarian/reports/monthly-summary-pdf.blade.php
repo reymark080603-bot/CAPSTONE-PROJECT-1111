@@ -95,7 +95,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JHCSC College Library - {{ $data['period']['month_name'] }} Statistics</title>
+    <title>JHCSC Knowly College Library - {{ $data['period']['month_name'] }} Statistics</title>
     <style>
         @page {
             size: A4 portrait;
@@ -357,7 +357,7 @@
         <!-- Main Library Header Badge -->
         <div class="header">
             <h1>J.H. CERILLES STATE COLLEGE</h1>
-            <h2>COLLEGE LIBRARY</h2>
+            <h2>KNOWLY COLLEGE LIBRARY</h2>
             <div class="period">{{ $data['period']['month_name'] }} Statistics</div>
             <div class="intro-copy">
                 This monthly analytics dashboard presents active registered student demographics, book distribution by course, learning resource borrowings, and daily transaction activities for the {{ $data['period']['month_name'] }} reporting period.

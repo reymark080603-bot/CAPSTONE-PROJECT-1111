@@ -61,9 +61,9 @@
                     </button>
                     <div id="export-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border z-50">
                         <div class="py-2">
-                            <button onclick="printDashboard()" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            <a href="{{ route('librarian.reports.print', 'monthly-summary') }}?year={{ now()->year }}&month={{ now()->month }}" target="_blank" class="w-full block text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                 <i class="fas fa-print mr-2"></i>Print Monthly Report
-                            </button>
+                            </a>
                         </div>
                     </div>
                 </div>

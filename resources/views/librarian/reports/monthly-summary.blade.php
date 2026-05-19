@@ -237,7 +237,7 @@
             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                 <div>
                     <p class="text-xs font-bold uppercase tracking-[0.25em] text-[#8cd19e] mb-1">J.H. CERILLES STATE COLLEGE</p>
-                    <h1 class="text-3xl md:text-4xl font-extrabold uppercase tracking-wide">COLLEGE LIBRARY</h1>
+                    <h1 class="text-3xl md:text-4xl font-extrabold uppercase tracking-wide">KNOWLY COLLEGE LIBRARY</h1>
                     <div class="inline-block bg-[#8c2626] text-white font-bold text-xs px-3 py-1 rounded-full uppercase tracking-wider mt-3 shadow">
                         {{ $data['period']['month_name'] }} Statistics
                     </div>
