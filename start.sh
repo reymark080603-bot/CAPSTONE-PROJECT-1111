@@ -24,4 +24,9 @@ rm -rf /app/public/storage
 ln -sf /app/storage/app/public /app/public/storage
 
 echo "=== Starting PHP server on port ${PORT:-8000} ==="
-php artisan serve --host=0.0.0.0 --port="${PORT:-8000}"
+php -d upload_max_filesize=150M \
+    -d post_max_size=200M \
+    -d memory_limit=512M \
+    -d max_execution_time=300 \
+    -d max_input_time=300 \
+    artisan serve --host=0.0.0.0 --port="${PORT:-8000}"
