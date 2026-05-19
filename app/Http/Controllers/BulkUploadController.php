@@ -83,6 +83,10 @@ class BulkUploadController extends Controller
         $coversGenerated = 0;
         $duplicatesSkipped = 0;
 
+        // Cache this once — calling Schema::hasColumn() inside a loop is a DB call per file
+        $hasFileHashColumn = Schema::hasColumn('books', 'file_hash');
+        $useCloudinary = (bool) env('CLOUDINARY_URL');
+
         $this->ensureStorageDirectoriesExist();
 
         DB::beginTransaction();
@@ -114,7 +118,7 @@ class BulkUploadController extends Controller
 
                     $metadata = $this->parseFilename($originalName);
 
-                    if (Schema::hasColumn('books', 'file_hash')) {
+                    if ($hasFileHashColumn) {
                         $existingHashMatch = Book::query()
                             ->where('file_hash', $fileHash)
                             ->first();
@@ -179,7 +183,10 @@ class BulkUploadController extends Controller
                         }
                     }
                     
-                    if (!$hasFrontendThumb) {
+                    // When Cloudinary is enabled, skip slow server-side cover generation.
+                    // Cloudinary stores the PDF and can serve thumbnails natively.
+                    // Only attempt local Imagick/pdftoppm if NOT using Cloudinary.
+                    if (!$hasFrontendThumb && !$useCloudinary) {
                         $fullPdfPath = Storage::disk('public')->path($filePath);
                         $coverImagePath = $this->pdfCoverService->generateCover($fullPdfPath, $metadata['title']);
 
