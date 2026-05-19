@@ -1421,7 +1421,7 @@ class LibrarianDashboard {
         fetch('/librarian/dashboard/activities')
             .then(response => response.json())
             .then(data => {
-                if (data.success && data.activities && data.activities.length > 0) {
+                if ((data.success || data.activities) && data.activities && data.activities.length > 0) {
                     this.renderRecentActivities(data.activities);
                 } else {
                     container.innerHTML = `

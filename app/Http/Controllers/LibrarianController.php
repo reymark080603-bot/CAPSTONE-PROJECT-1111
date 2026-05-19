@@ -343,6 +343,7 @@ class LibrarianController extends Controller
             ->values();
 
         return response()->json([
+            'success' => true,
             'activities' => $allActivities
         ]);
     }
