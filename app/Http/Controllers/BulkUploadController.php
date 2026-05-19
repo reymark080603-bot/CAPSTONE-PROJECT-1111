@@ -335,36 +335,24 @@ class BulkUploadController extends Controller
     private function storeFile($file, string $title)
     {
         try {
-            // If Cloudinary is configured, upload there for persistence on Railway.
-            // Use upload() with resource_type 'raw' — uploadFile() forces 'auto' and ignores our setting.
-            if (env('CLOUDINARY_URL')) {
-                // Truncate to 80 chars to stay within Cloudinary's public_id limits
-                $safeTitle = substr(preg_replace('/[^a-zA-Z0-9_-]/', '_', $title), 0, 80);
-                $publicId  = time() . '_' . $safeTitle;
-
-                $result = Cloudinary::upload($file->getRealPath(), [
-                    'folder'        => 'knowly/ebooks',
-                    'resource_type' => 'raw',
-                    'public_id'     => $publicId,
-                ]);
-                return $result->getSecurePath();
-            }
-
-            // Fallback: local storage (only reliable in local dev)
-            $sanitizedTitle = preg_replace('/[^a-zA-Z0-9_-]/', '_', $title);
+            // PDFs are always stored on local disk.
+            // Cloudinary free plan has a 10MB limit for raw files — not suitable for PDFs.
+            // On Railway, mount a Volume at /app/storage to make files persist across deploys.
+            $sanitizedTitle = substr(preg_replace('/[^a-zA-Z0-9_-]/', '_', $title), 0, 80);
             $filename = time() . '_' . $sanitizedTitle . '_' . substr(md5(uniqid((string) mt_rand(), true)), 0, 8) . '.pdf';
             $path = $file->storeAs(self::STORAGE_DIR, $filename, 'public');
 
-            return $path ?: false;
+            if (!$path) {
+                throw new \Exception('Failed to write file to storage disk.');
+            }
+
+            return $path;
         } catch (\Exception $e) {
-            // Log with context so Railway logs show the real Cloudinary error
             Log::error('Error storing PDF file', [
                 'title'   => $title,
                 'message' => $e->getMessage(),
-                'trace'   => $e->getTraceAsString(),
             ]);
-            // Re-throw so the per-file catch block captures the real error message
-            throw new \Exception('Cloudinary upload failed: ' . $e->getMessage());
+            throw new \Exception('Storage failed: ' . $e->getMessage());
         }
     }
 
