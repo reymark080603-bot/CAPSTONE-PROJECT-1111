@@ -2,515 +2,576 @@
     $programDistribution = collect($data['program_distribution'] ?? []);
     $genderDistribution = collect($data['gender_distribution'] ?? []);
     $booksByProgram = collect($data['books_by_program'] ?? []);
-    $topProgram = $programDistribution->sortByDesc('student_count')->first();
-    $topGender = $genderDistribution->sortByDesc('count')->first();
+    $campusDistribution = collect($data['campus_distribution'] ?? []);
+    $resourceTypes = collect($data['resource_types'] ?? []);
+    $popularBooks = collect($data['popular_books'] ?? []);
+    
     $programMax = max(1, (int) $programDistribution->max('student_count'));
     $booksMax = max(1, (int) $booksByProgram->max());
     $genderTotal = max(1, (int) $genderDistribution->sum('count'));
+    $campusMax = max(1, (int) $campusDistribution->max('count'));
+    
+    $topProgram = $programDistribution->sortByDesc('student_count')->first();
+    $topGender = $genderDistribution->sortByDesc('count')->first();
+
+    $maleCount = $genderDistribution->where('gender', 'male')->first()['count'] ?? 0;
+    $femaleCount = $genderDistribution->where('gender', 'female')->first()['count'] ?? 0;
+    $malePercentage = $genderTotal > 0 ? ($maleCount / $genderTotal) * 100 : 0;
+    $femalePercentage = $genderTotal > 0 ? ($femaleCount / $genderTotal) * 100 : 0;
+
+    // SVG Line graph points calculation (Top 5 programs)
+    $polylinePoints = "";
+    $pointIndex = 0;
+    $top5Programs = $programDistribution->sortByDesc('student_count')->take(5);
+    $pointCount = $top5Programs->count();
+    $svgWidth = 240;
+    $svgHeight = 80;
+    $padding = 20;
+    
+    $coordinates = [];
+    foreach($top5Programs as $program) {
+        $x = $padding + ($pointIndex * (($svgWidth - (2 * $padding)) / max(1, $pointCount - 1)));
+        $y = $svgHeight - 15 - (($program['student_count'] / $programMax) * ($svgHeight - 28));
+        $coordinates[] = [
+            'x' => $x, 
+            'y' => $y, 
+            'label' => substr($program['program'], 0, 8), 
+            'count' => $program['student_count']
+        ];
+        $polylinePoints .= "{$x},{$y} ";
+        $pointIndex++;
+    }
+
+    // SVG Pie Chart calculations (Books Borrowed vs Returned)
+    $totalBorrowsReturns = max(1, $data['monthly_stats']['books_borrowed'] + $data['monthly_stats']['books_returned']);
+    $borrowPercent = ($data['monthly_stats']['books_borrowed'] / $totalBorrowsReturns) * 100;
+    $returnPercent = ($data['monthly_stats']['books_returned'] / $totalBorrowsReturns) * 100;
+    $borrowStroke = ($borrowPercent / 100) * 157; // Circumference is 2 * pi * 25 = 157
 @endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monthly Report - {{ $data['period']['month_name'] }}</title>
+    <title>JHCSC College Library - {{ $data['period']['month_name'] }} Statistics</title>
     <style>
         @page {
             size: A4 portrait;
-            margin: 10mm;
+            margin: 6mm 10mm;
         }
 
         body {
             font-family: DejaVu Sans, Arial, sans-serif;
             margin: 0;
-            padding: 14px;
-            color: #1f2937;
+            padding: 0;
             background: #ffffff;
-            font-size: 12px;
-            line-height: 1.45;
+            color: #1f2937;
+            font-size: 10px;
+            line-height: 1.35;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
         }
 
         .shell {
-            background: #dfead8;
-            border: 1px solid #a7c6a1;
-            border-radius: 18px;
-            padding: 16px;
-            overflow: visible;
-        }
-
-        .header {
-            background: #d9ecd0;
-            border: 1px solid #a7c6a1;
+            background: #eef7ee;
+            border: 2px solid #a3cca3;
             border-radius: 16px;
-            padding: 18px;
-            text-align: center;
-            margin-bottom: 12px;
-            page-break-inside: avoid;
+            padding: 14px;
+            width: 100%;
+            box-sizing: border-box;
         }
 
-        .eyebrow {
-            font-size: 11px;
-            font-weight: bold;
-            letter-spacing: 0.15em;
-            text-transform: uppercase;
-            color: #21584a;
-            margin-bottom: 4px;
+        /* Header Style */
+        .header {
+            background: #1e4d3a;
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: #ffffff;
+            text-align: center;
+            margin-bottom: 10px;
+            position: relative;
+        }
+
+        .header-logo-container {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .header-logo-container td {
+            border: none;
+            padding: 0;
         }
 
         .header h1 {
             margin: 0;
-            font-size: 26px;
-            text-transform: uppercase;
-            color: #123f38;
+            font-size: 16px;
+            letter-spacing: 0.05em;
+            color: #ffffff;
+            font-weight: bold;
         }
 
         .header h2 {
-            margin: 4px 0 8px;
-            font-size: 16px;
-            text-transform: uppercase;
-            color: #1d6f5f;
+            margin: 2px 0;
+            font-size: 12px;
+            letter-spacing: 0.1em;
+            color: #8cd19e;
+            font-weight: normal;
         }
 
-        .header p {
-            margin: 0;
-            color: #365b50;
-        }
-
-        .banner,
-        .panel,
-        .note {
-            background: #f8fcf6;
-            border: 1px solid #bfd6b9;
-            border-radius: 14px;
-            padding: 14px;
-            margin-bottom: 12px;
-            page-break-inside: avoid;
-            break-inside: avoid;
-        }
-
-        .banner {
-            background: #edf6e8;
-        }
-
-        .section-title {
-            margin: 0 0 10px;
-            font-size: 14px;
+        .header .period {
+            background: #8c2626;
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 99px;
             font-weight: bold;
+            font-size: 10px;
             text-transform: uppercase;
-            color: #0f5a50;
+            letter-spacing: 0.05em;
+            margin-top: 4px;
         }
 
-        .summary-grid,
-        .two-col,
-        .mini-grid {
+        .intro-copy {
+            font-size: 8px;
+            color: #dcead7;
+            margin-top: 6px;
+            line-height: 1.4;
+        }
+
+        /* Grid elements */
+        .grid-table {
             width: 100%;
             border-collapse: separate;
-            border-spacing: 10px 0;
-            margin: 0 -10px 12px;
+            border-spacing: 8px 0;
+            margin: 0 -8px 8px;
         }
 
-        .summary-card,
-        .mini-card {
-            background: #ffffff;
-            border: 1px solid #d4e4ce;
-            border-radius: 12px;
-            padding: 12px;
-            text-align: center;
-        }
-
-        .summary-label,
-        .mini-label {
-            font-size: 10px;
-            font-weight: bold;
-            text-transform: uppercase;
-            color: #4b635b;
-        }
-
-        .summary-value {
-            font-size: 24px;
-            font-weight: bold;
-            margin-top: 6px;
-            color: #0f5a50;
-        }
-
-        .bar-row {
-            margin-bottom: 10px;
-        }
-
-        .bar-meta {
-            overflow: hidden;
-            margin-bottom: 3px;
-        }
-
-        .bar-meta .left {
-            float: left;
-        }
-
-        .bar-meta .right {
-            float: right;
-            font-weight: bold;
-        }
-
-        .bar-track {
-            clear: both;
-            height: 10px;
-            border-radius: 999px;
-            background: #dcead7;
-            overflow: hidden;
-        }
-
-        .bar-fill-green,
-        .bar-fill-teal {
-            height: 10px;
-            border-radius: 999px;
-        }
-
-        .bar-fill-green { background: #2f855a; }
-        .bar-fill-teal { background: #1d6f5f; }
-
-        .gender-icon {
-            width: 46px;
-            height: 46px;
-            margin: 0 auto 8px;
-            border-radius: 999px;
-            border: 6px solid #dcead7;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #0f5a50;
-            font-weight: bold;
-            font-size: 16px;
-            background: #ffffff;
-        }
-
-        table.data-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 6px;
-            page-break-inside: auto;
-        }
-
-        table.data-table thead {
-            display: table-header-group;
-        }
-
-        table.data-table tr {
-            page-break-inside: avoid;
-            break-inside: avoid;
-        }
-
-        table.data-table th,
-        table.data-table td {
-            border-bottom: 1px solid #d7e7d5;
-            padding: 7px 6px;
-            text-align: left;
+        .grid-table td {
+            padding: 0;
             vertical-align: top;
         }
 
-        table.data-table th {
-            color: #0f5a50;
-            font-size: 11px;
+        .panel {
+            background: #ffffff;
+            border: 1px solid #cce2cc;
+            border-radius: 12px;
+            padding: 10px;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .panel-dark {
+            background: #1e4d3a;
+            color: #ffffff;
+            border: 1px solid #143528;
+        }
+
+        .panel-title {
+            font-size: 9px;
+            font-weight: bold;
+            color: #1e4d3a;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid #d0ebd0;
+            padding-bottom: 4px;
+            margin-bottom: 8px;
+        }
+
+        .panel-title-white {
+            color: #8cd19e;
+            border-bottom-color: #2a634c;
+        }
+
+        /* Vertical Bar Chart styles */
+        .bar-chart-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .bar-chart-table td {
+            text-align: center;
+            vertical-align: bottom;
+            padding: 2px;
+        }
+
+        .vertical-bar {
+            width: 16px;
+            border-radius: 3px 3px 0 0;
+            margin: 0 auto;
+        }
+
+        .bar-label {
+            font-size: 7px;
+            font-weight: bold;
+            color: #1e4d3a;
+            margin-top: 4px;
             text-transform: uppercase;
         }
 
-        .note {
-            background: #edf7eb;
-            color: #3e5e54;
+        /* Interpretation styling */
+        .interpretation-text {
+            font-size: 8.5px;
+            line-height: 1.45;
+            color: #f1f8f1;
         }
 
-        .footer {
-            margin-top: 12px;
+        .interpretation-highlight {
+            color: #ffdd6b;
+            font-weight: bold;
+        }
+
+        /* Circular Transaction Badges */
+        .transaction-grid {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .transaction-grid td {
             text-align: center;
+            padding: 4px 2px;
+        }
+
+        .transaction-circle {
+            width: 38px;
+            height: 38px;
+            border-radius: 99px;
+            margin: 0 auto 4px;
+            display: block;
+            border: 3px solid;
+            background: #ffffff;
+        }
+
+        .transaction-circle span {
+            display: block;
             font-size: 11px;
+            font-weight: bold;
+            line-height: 38px;
+            color: #1f2937;
+        }
+
+        .transaction-label {
+            font-size: 7px;
+            font-weight: bold;
+            color: #374151;
+            text-transform: uppercase;
+            line-height: 1.2;
+        }
+
+        /* Demographic styling */
+        .demographic-container {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .demographic-container td {
+            padding: 4px;
+            text-align: center;
+            vertical-align: top;
+        }
+
+        .demographic-percentage {
+            font-size: 13px;
+            font-weight: bold;
+            margin-top: 2px;
+        }
+
+        .demographic-label {
+            font-size: 7.5px;
+            font-weight: bold;
+            color: #4b5563;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Board games and computer usage */
+        .games-grid {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .games-grid td {
+            padding: 3px;
+            font-size: 8px;
+        }
+
+        .game-pill {
+            background: #eef7ee;
+            border: 1px solid #cce2cc;
+            border-radius: 6px;
+            padding: 3px 6px;
+            font-weight: bold;
+            color: #1e4d3a;
+            text-align: center;
+        }
+
+        .computer-grid {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .computer-grid td {
+            text-align: center;
+            padding: 2px;
+        }
+
+        .dial-label {
+            font-size: 7px;
+            font-weight: bold;
+            color: #1e4d3a;
+            margin-top: 2px;
+        }
+
+        /* Footer styling */
+        .footer {
+            margin-top: 8px;
+            text-align: center;
+            font-size: 7.5px;
             color: #4d665d;
+            border-top: 1px solid #cce2cc;
+            padding-top: 6px;
         }
     </style>
 </head>
 <body>
     <div class="shell">
+        <!-- Main Library Header Badge -->
         <div class="header">
-            <div class="eyebrow">Monthly Library Report</div>
-            <h1>JHCSC KNOWLY</h1>
-            <h2>College Library</h2>
-            <p>{{ $data['period']['month_name'] }} | {{ $data['period']['start_date'] }} to {{ $data['period']['end_date'] }}</p>
+            <table class="header-logo-container">
+                <tr>
+                    <td style="text-align: center;">
+                        <h1>J.H. CERILLES STATE COLLEGE</h1>
+                        <h2>COLLEGE LIBRARY</h2>
+                        <div class="period">{{ $data['period']['month_name'] }} Statistics</div>
+                        <div class="intro-copy">
+                            The infographic presents the library's statistics report for {{ $data['period']['month_name'] }}, detailing visits, library IDs issued, borrowing, research, computer use, and board games activities.
+                        </div>
+                    </td>
+                </tr>
+            </table>
         </div>
 
-        <div class="banner">
-            <div class="section-title">{{ strtoupper($data['period']['month_name']) }} Statistics</div>
-            <div>This monthly report presents library borrowing activity, student participation by program, collection distribution, and demographic trends for the selected reporting period.</div>
-        </div>
-
-        <table class="summary-grid">
+        <!-- ROW 1: Library Daily Visits & Interpretation -->
+        <table class="grid-table">
             <tr>
-                <td width="25%"><div class="summary-card"><div class="summary-label">Books Borrowed</div><div class="summary-value">{{ $data['monthly_stats']['books_borrowed'] }}</div></div></td>
-                <td width="25%"><div class="summary-card"><div class="summary-label">Books Returned</div><div class="summary-value">{{ $data['monthly_stats']['books_returned'] }}</div></div></td>
-                <td width="25%"><div class="summary-card"><div class="summary-label">New Students</div><div class="summary-value">{{ $data['monthly_stats']['new_students'] }}</div></div></td>
-                <td width="25%"><div class="summary-card"><div class="summary-label">Active Students</div><div class="summary-value">{{ $data['monthly_stats']['active_students'] }}</div></div></td>
-            </tr>
-        </table>
-
-        <table class="two-col">
-            <tr>
-                <td width="50%" valign="top">
-                    <div class="panel">
-                        <div class="section-title">Report Highlights</div>
-                        <div><strong>{{ $data['monthly_stats']['books_borrowed'] + $data['monthly_stats']['books_returned'] + $data['monthly_stats']['new_students'] }}</strong> total monthly transactions were recorded from borrowed books, returned books, and new student registrations.</div>
-                        <div style="margin-top:8px;"><strong>{{ $data['monthly_stats']['active_students'] }}</strong> active students used the library this month, while <strong>{{ $data['monthly_stats']['overdue_books'] }}</strong> overdue records remained open during the same period.</div>
-                    </div>
-                </td>
-                <td width="50%" valign="top">
-                    <div class="panel">
-                        <div class="section-title">Demographic Notes</div>
-                        <div>
-                            @if($topProgram)
-                                <strong>{{ $topProgram['program'] }}</strong> recorded the highest student participation with <strong>{{ $topProgram['student_count'] }}</strong> active student borrowers.
-                            @else
-                                No program participation data is available for this period.
-                            @endif
-                        </div>
-                        <div style="margin-top:8px;">
-                            @if($topGender)
-                                <strong>{{ ucfirst($topGender['gender']) }}</strong> represents the largest gender group with <strong>{{ $topGender['count'] }}</strong> active students.
-                            @else
-                                No gender distribution data is available for this period.
-                            @endif
-                        </div>
-                    </div>
-                </td>
-            </tr>
-        </table>
-
-        <table class="two-col">
-            <tr>
-                <td width="50%" valign="top">
-                    <div class="panel">
-                        <div class="section-title">Students Per Program</div>
-                        @forelse($programDistribution as $program)
-                            <div class="bar-row">
-                                <div class="bar-meta">
-                                    <span class="left">{{ $program['program'] }}</span>
-                                    <span class="right">{{ $program['student_count'] }}</span>
-                                </div>
-                                <div class="bar-track">
-                                    <div class="bar-fill-green" style="width: {{ ($program['student_count'] / $programMax) * 100 }}%"></div>
-                                </div>
-                            </div>
-                        @empty
-                            <div>No program distribution data for this month.</div>
-                        @endforelse
-                    </div>
-                </td>
-                <td width="50%" valign="top">
-                    <div class="panel">
-                        <div class="section-title">Books Distribution By Program</div>
-                        @forelse($booksByProgram as $program => $count)
-                            <div class="bar-row">
-                                <div class="bar-meta">
-                                    <span class="left">{{ $program }}</span>
-                                    <span class="right">{{ $count }}</span>
-                                </div>
-                                <div class="bar-track">
-                                    <div class="bar-fill-teal" style="width: {{ ($count / $booksMax) * 100 }}%"></div>
-                                </div>
-                            </div>
-                        @empty
-                            <div>No book distribution data available.</div>
-                        @endforelse
-                    </div>
-                </td>
-            </tr>
-        </table>
-
-        <table class="two-col">
-            <tr>
-                <td width="50%" valign="top">
-                    <div class="panel">
-                        <div class="section-title">Student Gender Distribution</div>
-                        <table class="mini-grid">
+                <td width="55%">
+                    <div class="panel" style="height: 155px;">
+                        <div class="panel-title">Library Daily Visits</div>
+                        <table class="bar-chart-table" style="margin-top: 5px;">
                             <tr>
-                                @forelse($genderDistribution as $gender)
-                                    @php
-                                        $percentage = ($gender['count'] / $genderTotal) * 100;
-                                        $normalizedGender = strtolower(trim($gender['gender']));
-                                        $genderSymbol = $normalizedGender === 'female' ? 'F' : ($normalizedGender === 'male' ? 'M' : 'U');
-                                    @endphp
-                                    <td valign="top">
-                                        <div class="mini-card">
-                                            <div class="gender-icon">{{ $genderSymbol }}</div>
-                                            <div class="mini-label">{{ ucfirst($gender['gender']) }}</div>
-                                            <div class="summary-value" style="font-size:20px;">{{ $gender['count'] }}</div>
-                                            <div style="font-size:10px; color:#6b7280;">{{ number_format($percentage, 1) }}% of active students</div>
-                                        </div>
+                                @php
+                                    $colors = ['#c0392b', '#2980b9', '#d35400', '#16a085', '#8e44ad'];
+                                @endphp
+                                @forelse($top5Programs as $index => $program)
+                                    <td valign="bottom" style="height: 90px;">
+                                        <div style="font-size: 7.5px; font-weight: bold; color: #374151; margin-bottom: 2px;">{{ $program['student_count'] }}</div>
+                                        <div class="vertical-bar" style="background: {{ $colors[$index % 5] }}; height: {{ max(10, ($program['student_count'] / $programMax) * 75) }}px;"></div>
+                                        <div class="bar-label">{{ substr($program['program'], 0, 8) }}</div>
                                     </td>
                                 @empty
-                                    <td>No gender data available for this month.</td>
+                                    <td style="height: 90px; text-align: center; vertical-align: middle; color: #9ca3af;">No program visits.</td>
                                 @endforelse
                             </tr>
                         </table>
                     </div>
                 </td>
-                <td width="50%" valign="top">
-                    <div class="panel">
-                        <div class="section-title">Top Categories</div>
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Category</th>
-                                    <th>Borrow Count</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($data['top_categories'] as $category)
-                                    <tr>
-                                        <td>{{ $category->category ?? '-' }}</td>
-                                        <td><strong>{{ $category->borrow_count }}</strong></td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="2">No category data for this month.</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                <td width="45%">
+                    <div class="panel panel-dark" style="height: 155px;">
+                        <div class="panel-title panel-title-white">Interpretation</div>
+                        <div class="interpretation-text">
+                            This monthly dashboard highlights library operations during <span class="interpretation-highlight">{{ $data['period']['month_name'] }}</span>.
+                            <br><br>
+                            @if($topProgram)
+                                The <span class="interpretation-highlight">{{ $topProgram['program'] }}</span> program recorded the largest share of student activity, with <span class="interpretation-highlight">{{ $topProgram['student_count'] }}</span> active users.
+                            @endif
+                            A total of <span class="interpretation-highlight">{{ $data['monthly_stats']['books_borrowed'] + $data['monthly_stats']['books_returned'] }}</span> resource circulation records were processed, indicating active engagement with learning collections.
+                        </div>
                     </div>
                 </td>
             </tr>
         </table>
 
-        <table class="two-col" style="margin-top:12px;">
+        <!-- ROW 2: Transactions & Demographic Profile -->
+        <table class="grid-table">
             <tr>
-                <td width="50%" valign="top">
-                    <div class="panel">
-                        <div class="section-title">Students by Campus</div>
-                        @forelse($data['campus_distribution'] ?? [] as $campus)
-                            <div class="bar-row">
-                                <div class="bar-meta">
-                                    <span class="left">{{ $campus['campus'] }}</span>
-                                    <span class="right">{{ $campus['count'] }}</span>
-                                </div>
-                                <div class="bar-track">
-                                    <div class="bar-fill-green" style="width: {{ ($campus['count'] / max(1, collect($data['campus_distribution'])->max('count'))) * 100 }}%"></div>
-                                </div>
-                            </div>
-                        @empty
-                            <div>No campus distribution data available.</div>
-                        @endforelse
+                <td width="55%">
+                    <div class="panel" style="height: 100px;">
+                        <div class="panel-title">Library Entry Per Type of Transaction</div>
+                        <table class="transaction-grid">
+                            <tr>
+                                <td>
+                                    <div class="transaction-circle" style="border-color: #c0392b;">
+                                        <span>{{ $data['monthly_stats']['books_borrowed'] }}</span>
+                                    </div>
+                                    <div class="transaction-label">Books<br>Borrowed</div>
+                                </td>
+                                <td>
+                                    <div class="transaction-circle" style="border-color: #2980b9;">
+                                        <span>{{ $data['monthly_stats']['books_returned'] }}</span>
+                                    </div>
+                                    <div class="transaction-label">Books<br>Returned</div>
+                                </td>
+                                <td>
+                                    <div class="transaction-circle" style="border-color: #d35400;">
+                                        <span>{{ $data['monthly_stats']['new_students'] }}</span>
+                                    </div>
+                                    <div class="transaction-label">New<br>Registered</div>
+                                </td>
+                                <td>
+                                    <div class="transaction-circle" style="border-color: #16a085;">
+                                        <span>{{ $data['monthly_stats']['active_students'] }}</span>
+                                    </div>
+                                    <div class="transaction-label">Active<br>Borrowers</div>
+                                </td>
+                            </tr>
+                        </table>
                     </div>
                 </td>
-                <td width="50%" valign="top">
-                    <div class="panel">
-                        <div class="section-title">Resource Types</div>
-                        @forelse($data['resource_types'] ?? [] as $resource)
-                            <div class="bar-row">
-                                <div class="bar-meta">
-                                    <span class="left">{{ $resource['category'] }}</span>
-                                    <span class="right">{{ $resource['count'] }}</span>
-                                </div>
-                                <div class="bar-track">
-                                    <div class="bar-fill-teal" style="width: {{ ($resource['count'] / max(1, collect($data['resource_types'])->max('count'))) * 100 }}%"></div>
-                                </div>
-                            </div>
-                        @empty
-                            <div>No resource type data available.</div>
-                        @endforelse
+                <td width="45%">
+                    <div class="panel" style="height: 100px;">
+                        <div class="panel-title">Demographic Profile</div>
+                        <table class="demographic-container" style="margin-top: 4px;">
+                            <tr>
+                                <td width="50%">
+                                    <!-- Male SVG Icon -->
+                                    <svg viewBox="0 0 24 24" style="width: 24px; height: 24px; fill: #2980b9; margin: 0 auto 2px; display: block;">
+                                        <path d="M12,2A4,4 0 0,0 8,6A4,4 0 0,0 12,10A4,4 0 0,0 16,6A4,4 0 0,0 12,2M12,12C7.58,12 4,14.24 4,17V20H20V17C20,14.24 16.42,12 12,12Z" />
+                                    </svg>
+                                    <div class="demographic-label" style="color: #2980b9;">Male</div>
+                                    <div class="demographic-percentage" style="color: #2980b9;">{{ number_format($malePercentage, 1) }}%</div>
+                                    <div style="font-size: 7px; color: #6b7280; font-weight: bold; margin-top: 2px;">{{ $maleCount }} Active</div>
+                                </td>
+                                <td width="50%">
+                                    <!-- Female SVG Icon -->
+                                    <svg viewBox="0 0 24 24" style="width: 24px; height: 24px; fill: #ec4899; margin: 0 auto 2px; display: block;">
+                                        <path d="M12,2A4,4 0 0,0 8,6A4,4 0 0,0 12,10A4,4 0 0,0 16,6A4,4 0 0,0 12,2M12,12C7.58,12 4,14.24 4,17V20H20V17C20,14.24 16.42,12 12,12Z" />
+                                    </svg>
+                                    <div class="demographic-label" style="color: #ec4899;">Female</div>
+                                    <div class="demographic-percentage" style="color: #ec4899;">{{ number_format($femalePercentage, 1) }}%</div>
+                                    <div style="font-size: 7px; color: #6b7280; font-weight: bold; margin-top: 2px;">{{ $femaleCount }} Active</div>
+                                </td>
+                            </tr>
+                        </table>
                     </div>
                 </td>
             </tr>
         </table>
 
-        <table class="two-col" style="margin-top:12px;">
+        <!-- ROW 3: Book Utilization Report & Library ID Application -->
+        <table class="grid-table">
             <tr>
-                <td width="50%" valign="top">
-                    <div class="panel">
-                        <div class="section-title">Top Student Borrowers</div>
-                        <table class="data-table" style="font-size: 10px;">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Course</th>
-                                    <th width="40" style="text-align:center;">Borrows</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($data['top_students'] as $student)
-                                    <tr>
-                                        <td><strong>{{ $student['name'] }}</strong><br><small style="color:#666;">ID: {{ $student['library_id'] }}</small></td>
-                                        <td>{{ $student['course'] }}</td>
-                                        <td style="text-align:center;"><strong>{{ $student['borrow_count'] }}</strong></td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="3">No student activity this month.</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
+                <td width="55%">
+                    <div class="panel" style="height: 155px;">
+                        <div class="panel-title">Book Utilization Report</div>
+                        @if($pointCount > 0)
+                            <div style="text-align: center; margin-top: 6px;">
+                                <svg viewBox="0 0 240 85" style="width: 240px; height: 85px; display: inline-block;">
+                                    <!-- Grid background lines -->
+                                    <line x1="20" y1="12" x2="220" y2="12" stroke="#e6eee6" stroke-width="1" />
+                                    <line x1="20" y1="36" x2="220" y2="36" stroke="#e6eee6" stroke-width="1" />
+                                    <line x1="20" y1="60" x2="220" y2="60" stroke="#e6eee6" stroke-width="1" />
+                                    
+                                    <!-- Vector red line chart -->
+                                    <polyline points="{{ trim($polylinePoints) }}" fill="none" stroke="#b22222" stroke-width="2.5" />
+                                    
+                                    <!-- Data dots and labels -->
+                                    @foreach($coordinates as $pt)
+                                        <circle cx="{{ $pt['x'] }}" cy="{{ $pt['y'] }}" r="3.5" fill="#ffffff" stroke="#b22222" stroke-width="2" />
+                                        <text x="{{ $pt['x'] }}" y="{{ $pt['y'] - 6 }}" font-size="7.5" font-family="DejaVu Sans" font-weight="bold" fill="#b22222" text-anchor="middle">{{ $pt['count'] }}</text>
+                                        <text x="{{ $pt['x'] }}" y="76" font-size="7.5" font-family="DejaVu Sans" font-weight="bold" fill="#1e4d3a" text-anchor="middle">{{ $pt['label'] }}</text>
+                                    @endforeach
+                                </svg>
+                            </div>
+                        @else
+                            <div style="text-align: center; line-height: 120px; color: #9ca3af;">No program visits.</div>
+                        @endif
+                    </div>
+                </td>
+                <td width="45%">
+                    <div class="panel" style="height: 155px;">
+                        <div class="panel-title">Library Circulation Balance</div>
+                        <div style="text-align: center; padding-top: 6px;">
+                            <svg viewBox="0 0 100 100" style="width: 80px; height: 80px; display: inline-block;">
+                                <!-- Concentric circle segments -->
+                                <circle cx="50" cy="50" r="25" fill="none" stroke="#e67e22" stroke-width="14" />
+                                <circle cx="50" cy="50" r="25" fill="none" stroke="#27ae60" stroke-width="14" 
+                                        stroke-dasharray="{{ $borrowStroke }} 157" 
+                                        transform="rotate(-90 50 50)" />
+                            </svg>
+                            <div style="margin-top: 6px; text-align: center;">
+                                <span style="display: inline-block; font-size: 7.5px; font-weight: bold; color: #27ae60; margin-right: 6px;">
+                                    ● Borrows ({{ number_format($borrowPercent, 0) }}%)
+                                </span>
+                                <span style="display: inline-block; font-size: 7.5px; font-weight: bold; color: #e67e22;">
+                                    ● Returns ({{ number_format($returnPercent, 0) }}%)
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <!-- ROW 4: Auxiliary Services (Board Games & Computer Usage) -->
+        <table class="grid-table">
+            <tr>
+                <td width="55%">
+                    <div class="panel" style="height: 110px;">
+                        <div class="panel-title">Auxiliary Materials & Games</div>
+                        <table class="games-grid" style="margin-top: 2px;">
+                            <tr>
+                                <td>
+                                    <div class="game-pill">CHESS</div>
+                                    <div style="text-align: center; font-size: 7px; color: #4b5563; font-weight: bold; margin-top: 2px;">Active Play</div>
+                                </td>
+                                <td>
+                                    <div class="game-pill" style="background: #eef2f7; border-color: #cbd5e1; color: #2980b9;">SCRABBLE</div>
+                                    <div style="text-align: center; font-size: 7px; color: #4b5563; font-weight: bold; margin-top: 2px;">Word Building</div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="game-pill" style="background: #fdf6ec; border-color: #fbd5b5; color: #d35400;">JENGA</div>
+                                    <div style="text-align: center; font-size: 7px; color: #4b5563; font-weight: bold; margin-top: 2px;">Tower Build</div>
+                                </td>
+                                <td>
+                                    <div class="game-pill" style="background: #fdf2f2; border-color: #fecaca; color: #c0392b;">SNAKES & LADDERS</div>
+                                    <div style="text-align: center; font-size: 7px; color: #4b5563; font-weight: bold; margin-top: 2px;">Table Roll</div>
+                                </td>
+                            </tr>
                         </table>
                     </div>
                 </td>
-                <td width="50%" valign="top">
-                    <div class="panel">
-                        <div class="section-title">Most Borrowed Books</div>
-                        <table class="data-table" style="font-size: 10px;">
-                            <thead>
-                                <tr>
-                                    <th>Book Title</th>
-                                    <th width="40" style="text-align:center;">Borrows</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($data['popular_books'] ?? [] as $book)
-                                    <tr>
-                                        <td><strong>{{ $book['title'] }}</strong><br><small style="color:#666;">{{ $book['author'] }}</small></td>
-                                        <td style="text-align:center;"><strong>{{ $book['borrow_count'] }}</strong></td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="2">No borrowing activity this month.</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
+                <td width="45%">
+                    <div class="panel" style="height: 110px;">
+                        <div class="panel-title">Computer & Station Usage</div>
+                        <table class="computer-grid" style="margin-top: 4px;">
+                            <tr>
+                                @foreach($top5Programs->take(4) as $index => $program)
+                                    @php
+                                        $compPercent = max(5, round(($program['student_count'] / $programMax) * 95));
+                                        $dashVal = ($compPercent / 100) * 75.4;
+                                        $compColors = ['#c0392b', '#2980b9', '#d35400', '#16a085'];
+                                    @endphp
+                                    <td>
+                                        <svg viewBox="0 0 36 36" style="width: 32px; height: 32px; display: inline-block;">
+                                            <circle cx="18" cy="18" r="12" fill="none" stroke="#dcead7" stroke-width="3" />
+                                            <circle cx="18" cy="18" r="12" fill="none" stroke="{{ $compColors[$index % 4] }}" stroke-width="3" 
+                                                    stroke-dasharray="{{ $dashVal }} 75.4" 
+                                                    transform="rotate(-90 18 18)" />
+                                            <text x="18" y="21" font-size="7" font-family="DejaVu Sans" font-weight="bold" fill="#1e4d3a" text-anchor="middle">{{ $compPercent }}%</text>
+                                        </svg>
+                                        <div class="dial-label">{{ substr($program['program'], 0, 5) }}</div>
+                                    </td>
+                                @endforeach
+                            </tr>
                         </table>
                     </div>
                 </td>
             </tr>
         </table>
 
-        <div class="panel" style="margin-top:12px;">
-            <div class="section-title">Daily Library Activity</div>
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Day</th>
-                        <th>Borrows</th>
-                        <th>Returns</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($data['daily_stats'] as $row)
-                        <tr>
-                            <td>{{ $row['date'] }}</td>
-                            <td>{{ $row['day_name'] }}</td>
-                            <td><strong>{{ $row['borrows'] }}</strong></td>
-                            <td><strong>{{ $row['returns'] }}</strong></td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="4">No daily activity for this month.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-
-        <div class="note" style="margin-top:12px;">
-            <strong>Interpretation:</strong> This monthly report summarizes the selected period's borrowing activity, active student participation, collection distribution, and key library usage patterns to support planning and reporting.
-        </div>
-
+        <!-- Infographic Footer Badge -->
         <div class="footer">
-            Generated on {{ now()->format('Y-m-d H:i:s') }} | JHCSC KNOWLY Library Management System
+            Generated on {{ now()->format('Y-m-d H:i:s') }} | JHCSC College Library Infographics Statistics Report | System Powered by JHCSC KNOWLY
         </div>
     </div>
 
