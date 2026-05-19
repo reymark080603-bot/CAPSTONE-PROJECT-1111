@@ -25,7 +25,7 @@ class BulkUploadController extends Controller
     {
         $this->pdfCoverService = $pdfCoverService;
         $this->librarianNotificationService = $librarianNotificationService;
-        
+
         $this->middleware(function ($request, $next) {
             if (!Auth::guard('librarian')->check()) {
                 if ($request->expectsJson()) {
@@ -46,258 +46,244 @@ class BulkUploadController extends Controller
     public function process(Request $request)
     {
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
-            'pdfs' => 'required|array|min:1',
+            'pdfs'   => 'required|array|min:1',
             'pdfs.*' => 'required|file|mimes:pdf|max:102400',
         ], [
-            'pdfs.required' => 'Please select at least one PDF file.',
-            'pdfs.array' => 'Invalid upload payload.',
+            'pdfs.required'   => 'Please select at least one PDF file.',
+            'pdfs.array'      => 'Invalid upload payload.',
             'pdfs.*.required' => 'Please select at least one PDF file.',
-            'pdfs.*.file' => 'Each file must be a valid file.',
-            'pdfs.*.mimes' => 'All files must be PDF format.',
-            'pdfs.*.max' => 'Each file must not exceed 100MB.',
+            'pdfs.*.file'     => 'Each file must be a valid file.',
+            'pdfs.*.mimes'    => 'All files must be PDF format.',
+            'pdfs.*.max'      => 'Each file must not exceed 100MB.',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors'  => $validator->errors(),
             ], 422);
         }
 
         if (!$request->hasFile('pdfs') || empty($request->file('pdfs'))) {
             return response()->json([
                 'success' => false,
-                'message' => 'Please select at least one PDF file to upload.'
+                'message' => 'Please select at least one PDF file to upload.',
             ], 422);
         }
 
-        $files = $request->file('pdfs');
+        $files             = $request->file('pdfs');
         $seenOriginalNames = [];
-        $seenFileHashes = [];
-        $uploadedCount = 0;
-        $failedCount = 0;
-        $errors = [];
-        $createdBooks = [];
+        $seenFileHashes    = [];
+        $uploadedCount     = 0;
+        $failedCount       = 0;
+        $errors            = [];
+        $createdBooks      = [];
         $createdBookModels = [];
-        $coversGenerated = 0;
+        $coversGenerated   = 0;
         $duplicatesSkipped = 0;
 
-        // Cache this once — calling Schema::hasColumn() inside a loop is a DB call per file
+        // Cache once — Schema::hasColumn() is a DB call; avoid calling it per file
         $hasFileHashColumn = Schema::hasColumn('books', 'file_hash');
-        $useCloudinary = (bool) env('CLOUDINARY_URL');
+        $useCloudinary     = (bool) env('CLOUDINARY_URL');
 
         $this->ensureStorageDirectoriesExist();
 
-        DB::beginTransaction();
+        // Each file gets its own transaction so one failure doesn't roll back all others
+        foreach ($files as $file) {
+            DB::beginTransaction();
+            try {
+                if ($file->getMimeType() !== 'application/pdf') {
+                    throw new \Exception('Invalid file type. Only PDF files are allowed.');
+                }
 
-        try {
-            foreach ($files as $file) {
-                try {
-                    if ($file->getMimeType() !== 'application/pdf') {
-                        throw new \Exception('Invalid file type. Only PDF files are allowed.');
-                    }
+                $originalName = trim((string) $file->getClientOriginalName());
+                if (isset($seenOriginalNames[$originalName])) {
+                    $duplicatesSkipped++;
+                    DB::rollBack();
+                    continue;
+                }
+                $seenOriginalNames[$originalName] = true;
 
-                    $originalName = trim((string) $file->getClientOriginalName());
-                    if (isset($seenOriginalNames[$originalName])) {
+                $fileHash = hash_file('sha256', $file->getRealPath());
+                if (!$fileHash) {
+                    throw new \Exception('Failed to calculate file hash.');
+                }
+
+                if (isset($seenFileHashes[$fileHash])) {
+                    $duplicatesSkipped++;
+                    DB::rollBack();
+                    continue;
+                }
+                $seenFileHashes[$fileHash] = true;
+
+                $metadata = $this->parseFilename($originalName);
+
+                if ($hasFileHashColumn) {
+                    $existingHashMatch = Book::where('file_hash', $fileHash)->first();
+                    if ($existingHashMatch) {
                         $duplicatesSkipped++;
-                        throw new \Exception('Duplicate file in current upload batch.');
+                        DB::rollBack();
+                        continue;
                     }
-                    $seenOriginalNames[$originalName] = true;
+                }
 
-                    $fileHash = hash_file('sha256', $file->getRealPath());
-                    if (!$fileHash) {
-                        throw new \Exception('Failed to calculate uploaded file hash.');
-                    }
+                $existingBook = Book::where('title', $metadata['title'])
+                    ->where('author', $metadata['author'])
+                    ->where('published_year', $metadata['year'])
+                    ->where('program', $metadata['program'])
+                    ->where('resource_type', $metadata['resource_type'])
+                    ->first();
 
-                    if (isset($seenFileHashes[$fileHash])) {
-                        $duplicatesSkipped++;
-                        throw new \Exception('Duplicate PDF content detected in current upload batch.');
-                    }
-                    $seenFileHashes[$fileHash] = true;
+                if ($existingBook) {
+                    $duplicatesSkipped++;
+                    DB::rollBack();
+                    continue;
+                }
 
-                    $metadata = $this->parseFilename($originalName);
+                $filePath = $this->storeFile($file, $metadata['title']);
+                if (!$filePath) {
+                    throw new \Exception('Failed to store PDF file.');
+                }
 
-                    if ($hasFileHashColumn) {
-                        $existingHashMatch = Book::query()
-                            ->where('file_hash', $fileHash)
-                            ->first();
+                $coverToSave      = self::DEFAULT_COVER;
+                $thumbnails       = $request->input('thumbnails', []);
+                $hasFrontendThumb = false;
 
-                        if ($existingHashMatch) {
-                            $duplicatesSkipped++;
-                            throw new \Exception("Exact duplicate PDF already exists (Book ID: {$existingHashMatch->id}).");
-                        }
-                    }
-
-                    $existingBook = Book::query()
-                        ->where('title', $metadata['title'])
-                        ->where('author', $metadata['author'])
-                        ->where('published_year', $metadata['year'])
-                        ->where('program', $metadata['program'])
-                        ->where('resource_type', $metadata['resource_type'])
-                        ->first();
-
-                    if ($existingBook) {
-                        $duplicatesSkipped++;
-                        throw new \Exception("Duplicate record exists (Book ID: {$existingBook->id}).");
-                    }
-
-                    $filePath = $this->storeFile($file, $metadata['title']);
-
-                    if (!$filePath) {
-                        throw new \Exception('Failed to store PDF file');
-                    }
-
-                    $coverToSave = self::DEFAULT_COVER;
-                    $thumbnails = $request->input('thumbnails', []);
-                    $hasFrontendThumb = false;
-                    
-                    if (isset($thumbnails[$originalName]) && !empty($thumbnails[$originalName])) {
-                        try {
-                            $base64Data = $thumbnails[$originalName];
-                            if (preg_match('/^data:image\/(\w+);base64,/', $base64Data, $type)) {
-                                $base64Data = substr($base64Data, strpos($base64Data, ',') + 1);
-                                $ext = strtolower($type[1]);
-                                if (in_array($ext, ['jpg', 'jpeg', 'png'])) {
-                                    $decoded = base64_decode($base64Data);
+                if (!empty($thumbnails[$originalName])) {
+                    try {
+                        $base64Data = $thumbnails[$originalName];
+                        if (preg_match('/^data:image\/(\w+);base64,/', $base64Data, $type)) {
+                            $ext = strtolower($type[1]);
+                            if (in_array($ext, ['jpg', 'jpeg', 'png'])) {
+                                if ($useCloudinary) {
+                                    $result           = Cloudinary::upload($base64Data, ['folder' => 'knowly/covers']);
+                                    $coverToSave      = $result->getSecurePath();
+                                    $coversGenerated++;
+                                    $hasFrontendThumb = true;
+                                } else {
+                                    $rawBase64 = substr($base64Data, strpos($base64Data, ',') + 1);
+                                    $decoded   = base64_decode($rawBase64);
                                     if ($decoded !== false) {
-                                        $coverFilename = \Illuminate\Support\Str::random(12) . '_' . time() . '.' . $ext;
-                                        $coverPath = 'covers/' . $coverFilename;
-                                        if (env('CLOUDINARY_URL')) {
-                                            $result = Cloudinary::upload("data:image/$ext;base64,$base64Data", [
-                                                'folder' => 'knowly/covers'
-                                            ]);
-                                            $coverToSave = $result->getSecurePath();
-                                            $coversGenerated++;
-                                            $hasFrontendThumb = true;
-                                        } else if (Storage::disk('public')->put($coverPath, $decoded)) {
-                                            $coverToSave = $coverPath;
+                                        $coverPath = 'covers/' . \Illuminate\Support\Str::random(12) . '_' . time() . '.' . $ext;
+                                        if (Storage::disk('public')->put($coverPath, $decoded)) {
+                                            $coverToSave      = $coverPath;
                                             $coversGenerated++;
                                             $hasFrontendThumb = true;
                                         }
                                     }
                                 }
                             }
-                        } catch (\Exception $e) {
-                            Log::error("Failed to decode frontend thumbnail: " . $e->getMessage());
                         }
+                    } catch (\Exception $e) {
+                        Log::warning("Thumbnail save failed for {$originalName}: " . $e->getMessage());
                     }
-                    
-                    // When Cloudinary is enabled, skip slow server-side cover generation.
-                    // Cloudinary stores the PDF and can serve thumbnails natively.
-                    // Only attempt local Imagick/pdftoppm if NOT using Cloudinary.
-                    if (!$hasFrontendThumb && !$useCloudinary) {
-                        $fullPdfPath = Storage::disk('public')->path($filePath);
-                        $coverImagePath = $this->pdfCoverService->generateCover($fullPdfPath, $metadata['title']);
+                }
 
-                        if ($coverImagePath) {
-                            $coverToSave = $coverImagePath;
-                            $coversGenerated++;
-                            Log::info("Cover generated for: {$metadata['title']}");
-                        }
+                // Only attempt server-side cover generation when NOT using Cloudinary
+                // (when Cloudinary is active, $filePath is an HTTPS URL — no local file to read)
+                if (!$hasFrontendThumb && !$useCloudinary) {
+                    $fullPdfPath    = Storage::disk('public')->path($filePath);
+                    $coverImagePath = $this->pdfCoverService->generateCover($fullPdfPath, $metadata['title']);
+                    if ($coverImagePath) {
+                        $coverToSave = $coverImagePath;
+                        $coversGenerated++;
                     }
-
-                    $book = Book::create([
-                        'title' => $metadata['title'],
-                        'author' => $metadata['author'],
-                        'published_year' => $metadata['year'],
-                        'program' => $metadata['program'],
-                        'course' => $metadata['program'],
-                        'resource_type' => $metadata['resource_type'],
-                        'file_type' => 'pdf',
-                        'pdf_file' => $filePath,
-                        'file_path' => $filePath,
-                        'file_hash' => $fileHash,
-                        'cover_image' => $coverToSave,
-                        'cover_photo' => $coverToSave,
-                        'availability_status' => 'available',
-                        'language' => 'English',
-                    ]);
-
-                    $uploadedCount++;
-                    $createdBookModels[] = $book;
-                    $createdBooks[] = [
-                        'id' => $book->id,
-                        'title' => $book->title,
-                        'author' => $book->author,
-                        'cover_image' => $coverToSave,
-                        'cover_url' => asset('storage/' . ltrim($coverToSave, '/'))
-                    ];
-
-                } catch (\Exception $e) {
-                    $failedCount++;
-                    $errors[] = "Failed to upload {$file->getClientOriginalName()}: " . $e->getMessage();
-                    Log::error("Bulk upload error for file {$file->getClientOriginalName()}: " . $e->getMessage());
                 }
+
+                $bookData = [
+                    'title'               => $metadata['title'],
+                    'author'              => $metadata['author'],
+                    'published_year'      => $metadata['year'],
+                    'program'             => $metadata['program'],
+                    'course'              => $metadata['program'],
+                    'resource_type'       => $metadata['resource_type'],
+                    'file_type'           => 'pdf',
+                    'pdf_file'            => $filePath,
+                    'file_path'           => $filePath,
+                    'cover_image'         => $coverToSave,
+                    'cover_photo'         => $coverToSave,
+                    'availability_status' => 'available',
+                    'language'            => 'English',
+                ];
+
+                if ($hasFileHashColumn) {
+                    $bookData['file_hash'] = $fileHash;
+                }
+
+                $book = Book::create($bookData);
+                DB::commit();
+
+                $uploadedCount++;
+                $createdBookModels[] = $book;
+
+                $responseCoverUrl = str_starts_with($coverToSave, 'http')
+                    ? $coverToSave
+                    : asset('storage/' . ltrim($coverToSave, '/'));
+
+                $createdBooks[] = [
+                    'id'          => $book->id,
+                    'title'       => $book->title,
+                    'author'      => $book->author,
+                    'cover_image' => $coverToSave,
+                    'cover_url'   => $responseCoverUrl,
+                ];
+
+            } catch (\Exception $e) {
+                DB::rollBack();
+                $failedCount++;
+                $errors[] = "Failed to upload {$file->getClientOriginalName()}: " . $e->getMessage();
+                Log::error("Bulk upload error for {$file->getClientOriginalName()}: " . $e->getMessage());
+            }
+        }
+
+        if ($uploadedCount > 0) {
+            $librarian = Auth::guard('librarian')->user() ?: Auth::user();
+            if ($librarian) {
+                $this->librarianNotificationService->notifyBulkResourcesUploaded($librarian, $createdBookModels, 'bulk_upload');
+            }
+        }
+
+        if ($uploadedCount > 0) {
+            $message = "Successfully uploaded {$uploadedCount} book(s).";
+
+            if ($coversGenerated > 0) {
+                $message .= " {$coversGenerated} cover image(s) auto-generated.";
+            }
+            if ($duplicatesSkipped > 0) {
+                $message .= " {$duplicatesSkipped} duplicate file(s) skipped.";
+            }
+            if ($failedCount > 0) {
+                $message .= " {$failedCount} file(s) failed.";
             }
 
-            DB::commit();
-
-            if ($uploadedCount > 0) {
-                $librarian = Auth::guard('librarian')->user() ?: Auth::user();
-                if ($librarian) {
-                    $this->librarianNotificationService->notifyBulkResourcesUploaded($librarian, $createdBookModels, 'bulk_upload');
-                }
-            }
-
-            if ($uploadedCount > 0) {
-                $message = "Successfully uploaded {$uploadedCount} book(s).";
-                
-                if ($coversGenerated > 0) {
-                    $message .= " {$coversGenerated} cover image(s) auto-generated.";
-                }
-
-                if ($duplicatesSkipped > 0) {
-                    $message .= " {$duplicatesSkipped} duplicate file(s) skipped.";
-                }
-                
-                if ($failedCount > 0) {
-                    $message .= " {$failedCount} file(s) failed.";
-                }
-
-                Log::info('Bulk PDF upload completed', [
-                    'user_id' => Auth::id(),
-                    'uploaded' => $uploadedCount,
-                    'failed' => $failedCount,
-                    'duplicates_skipped' => $duplicatesSkipped,
-                    'covers_generated' => $coversGenerated
-                ]);
-
-                return response()->json([
-                    'success' => true,
-                    'message' => $message,
-                    'data' => [
-                        'uploaded' => $uploadedCount,
-                        'failed' => $failedCount,
-                        'duplicates_skipped' => $duplicatesSkipped,
-                        'covers_generated' => $coversGenerated,
-                        'created_books' => $createdBooks,
-                        'errors' => $errors
-                    ]
-                ]);
-            } else {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No files were uploaded successfully.',
-                    'errors' => $errors
-                ], 422);
-            }
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            Log::error('Bulk upload failed', [
-                'user_id' => Auth::id(),
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+            Log::info('Bulk PDF upload completed', [
+                'user_id'            => Auth::id(),
+                'uploaded'           => $uploadedCount,
+                'failed'             => $failedCount,
+                'duplicates_skipped' => $duplicatesSkipped,
+                'covers_generated'   => $coversGenerated,
             ]);
 
             return response()->json([
-                'success' => false,
-                'message' => 'An error occurred during upload. Please try again.',
-                'error' => config('app.debug') ? $e->getMessage() : null
-            ], 500);
+                'success' => true,
+                'message' => $message,
+                'data'    => [
+                    'uploaded'           => $uploadedCount,
+                    'failed'             => $failedCount,
+                    'duplicates_skipped' => $duplicatesSkipped,
+                    'covers_generated'   => $coversGenerated,
+                    'created_books'      => $createdBooks,
+                    'errors'             => $errors,
+                ],
+            ]);
         }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'No files were uploaded successfully.',
+            'errors'  => $errors,
+        ], 422);
     }
 
     private function parseFilename(string $filename): array
@@ -306,29 +292,29 @@ class BulkUploadController extends Controller
 
         if (preg_match('/^(.*?)\s+-\s*(.*?)\s+-\s*(\d{4})\s+-\s*([A-Za-z0-9][A-Za-z0-9 ]*)\s+-\s*([A-Za-z0-9_\/ -]+)$/', $filenameWithoutExt, $matches)) {
             return [
-                'title' => trim($matches[1]) !== '' ? trim($matches[1]) : 'Unknown Title',
-                'author' => trim($matches[2]) !== '' ? trim($matches[2]) : 'Unknown Author',
-                'year' => (int) $matches[3],
-                'program' => trim($matches[4]) !== '' ? trim($matches[4]) : 'General',
+                'title'         => trim($matches[1]) !== '' ? trim($matches[1]) : 'Unknown Title',
+                'author'        => trim($matches[2]) !== '' ? trim($matches[2]) : 'Unknown Author',
+                'year'          => (int) $matches[3],
+                'program'       => trim($matches[4]) !== '' ? trim($matches[4]) : 'General',
                 'resource_type' => $this->normalizeResourceType($matches[5]),
             ];
         }
 
         if (preg_match('/^(.*?)\s+-\s*(.*?)\s+-\s*(\d{4})\s+-\s*([A-Za-z0-9][A-Za-z0-9 ]*)$/', $filenameWithoutExt, $matches)) {
             return [
-                'title' => trim($matches[1]) !== '' ? trim($matches[1]) : 'Unknown Title',
-                'author' => trim($matches[2]) !== '' ? trim($matches[2]) : 'Unknown Author',
-                'year' => (int) $matches[3],
-                'program' => trim($matches[4]) !== '' ? trim($matches[4]) : 'General',
+                'title'         => trim($matches[1]) !== '' ? trim($matches[1]) : 'Unknown Title',
+                'author'        => trim($matches[2]) !== '' ? trim($matches[2]) : 'Unknown Author',
+                'year'          => (int) $matches[3],
+                'program'       => trim($matches[4]) !== '' ? trim($matches[4]) : 'General',
                 'resource_type' => 'book',
             ];
         }
 
         return [
-            'title' => trim($filenameWithoutExt) !== '' ? trim($filenameWithoutExt) : 'Unknown Title',
-            'author' => 'Unknown Author',
-            'year' => date('Y'),
-            'program' => 'General',
+            'title'         => trim($filenameWithoutExt) !== '' ? trim($filenameWithoutExt) : 'Unknown Title',
+            'author'        => 'Unknown Author',
+            'year'          => date('Y'),
+            'program'       => 'General',
             'resource_type' => 'book',
         ];
     }
@@ -340,9 +326,9 @@ class BulkUploadController extends Controller
 
         return match ($normalized) {
             'e_journal', 'ejournal', 'journal' => 'e_journal',
-            'e_thesis', 'thesis' => 'thesis',
+            'e_thesis', 'thesis'               => 'thesis',
             'ebook', 'ebooks', 'book', 'books' => 'book',
-            default => 'book',
+            default                            => 'book',
         };
     }
 
@@ -389,24 +375,24 @@ class BulkUploadController extends Controller
             $storageInfo = $this->pdfCoverService->getStorageInfo();
 
             return response()->json([
-                'success' => true,
+                'success'        => true,
                 'storage_status' => [
-                    'linked' => $this->isStorageLinked(),
-                    'pdf_directory' => self::STORAGE_DIR,
-                    'covers_directory' => 'covers',
-                    'pdf_count' => $storageInfo['pdf']['count'],
-                    'pdf_size_mb' => $storageInfo['pdf']['size_mb'],
-                    'cover_count' => $storageInfo['covers']['count'],
-                    'cover_size_mb' => $storageInfo['covers']['size_mb'],
-                    'pdftoppm_available' => $storageInfo['pdftoppm_available'],
-                    'imagick_available' => $storageInfo['imagick_available'],
+                    'linked'                        => $this->isStorageLinked(),
+                    'pdf_directory'                 => self::STORAGE_DIR,
+                    'covers_directory'              => 'covers',
+                    'pdf_count'                     => $storageInfo['pdf']['count'],
+                    'pdf_size_mb'                   => $storageInfo['pdf']['size_mb'],
+                    'cover_count'                   => $storageInfo['covers']['count'],
+                    'cover_size_mb'                 => $storageInfo['covers']['size_mb'],
+                    'pdftoppm_available'            => $storageInfo['pdftoppm_available'],
+                    'imagick_available'             => $storageInfo['imagick_available'],
                     'spatie_pdf_to_image_available' => $storageInfo['spatie_pdf_to_image_available'] ?? false,
-                ]
+                ],
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to check storage: ' . $e->getMessage()
+                'message' => 'Failed to check storage: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -415,11 +401,9 @@ class BulkUploadController extends Controller
     {
         try {
             $testFile = 'storage_link_test_' . time() . '.txt';
-
             Storage::disk('public')->put($testFile, 'test');
             $exists = Storage::disk('public')->exists($testFile);
             Storage::disk('public')->delete($testFile);
-
             return $exists;
         } catch (\Throwable $e) {
             Log::error('Storage link check failed: ' . $e->getMessage());
