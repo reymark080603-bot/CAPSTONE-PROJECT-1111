@@ -180,9 +180,9 @@ class BulkUploadController extends Controller
                     }
                 }
 
-                // Only attempt server-side cover generation when NOT using Cloudinary
-                // (when Cloudinary is active, $filePath is an HTTPS URL — no local file to read)
-                if (!$hasFrontendThumb && !$useCloudinary) {
+                // Attempt server-side cover generation whenever no frontend thumbnail was provided.
+                // PDFs are now stored on local disk so Imagick/pdftoppm can always read them.
+                if (!$hasFrontendThumb) {
                     $fullPdfPath    = Storage::disk('public')->path($filePath);
                     $coverImagePath = $this->pdfCoverService->generateCover($fullPdfPath, $metadata['title']);
                     if ($coverImagePath) {

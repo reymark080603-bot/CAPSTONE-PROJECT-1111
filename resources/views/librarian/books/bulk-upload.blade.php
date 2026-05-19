@@ -320,12 +320,9 @@ $(document).ready(function() {
             }
         }
 
-        // Only append thumbnails when total file size is small enough to avoid POST limit issues
-        const totalFileSize = Array.from(fileInput.files).reduce((sum, f) => sum + f.size, 0);
-        if (Object.keys(generatedThumbnails).length > 0 && totalFileSize < 50 * 1024 * 1024) {
-            for (const [filename, base64] of Object.entries(generatedThumbnails)) {
-                formData.append('thumbnails[' + filename + ']', base64);
-            }
+        // Always append thumbnails - small JPEGs, not the cause of POST size issues
+        for (const [filename, base64] of Object.entries(generatedThumbnails)) {
+            formData.append('thumbnails[' + filename + ']', base64);
         }
 
         // Disable button
