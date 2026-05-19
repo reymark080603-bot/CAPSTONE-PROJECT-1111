@@ -349,9 +349,10 @@ class BulkUploadController extends Controller
     private function storeFile($file, string $title)
     {
         try {
-            // If Cloudinary is configured, upload there for persistence on Railway
+            // If Cloudinary is configured, upload there for persistence on Railway.
+            // Use upload() with resource_type 'raw' — uploadFile() forces 'auto' and ignores our setting.
             if (env('CLOUDINARY_URL')) {
-                $result = Cloudinary::uploadFile($file->getRealPath(), [
+                $result = Cloudinary::upload($file->getRealPath(), [
                     'folder'        => 'knowly/ebooks',
                     'resource_type' => 'raw',
                     'public_id'     => time() . '_' . preg_replace('/[^a-zA-Z0-9_-]/', '_', $title),
