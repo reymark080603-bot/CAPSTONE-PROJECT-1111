@@ -303,25 +303,28 @@ $(document).ready(function() {
 
         const formData = new FormData(this);
         const uploadBtn = $('#upload-btn');
-        
-        // Append generated thumbnails to formData
-        for (const [filename, base64] of Object.entries(generatedThumbnails)) {
-            formData.append('thumbnails[' + filename + ']', base64);
-        }
-        
-        // Check if files are selected
+
+        // Check files first
         const fileInput = document.getElementById('pdfs');
         if (!fileInput.files || fileInput.files.length === 0) {
             showAlert('error', '<i class="fas fa-exclamation-circle mr-2"></i>Please select at least one PDF file.');
             return;
         }
-        
+
         // Validate all files are PDFs
         for (let i = 0; i < fileInput.files.length; i++) {
             const file = fileInput.files[i];
             if (file.type !== 'application/pdf') {
                 showAlert('error', '<i class="fas fa-exclamation-circle mr-2"></i>All files must be PDF format. Found: ' + file.name);
                 return;
+            }
+        }
+
+        // Only append thumbnails when total file size is small enough to avoid POST limit issues
+        const totalFileSize = Array.from(fileInput.files).reduce((sum, f) => sum + f.size, 0);
+        if (Object.keys(generatedThumbnails).length > 0 && totalFileSize < 50 * 1024 * 1024) {
+            for (const [filename, base64] of Object.entries(generatedThumbnails)) {
+                formData.append('thumbnails[' + filename + ']', base64);
             }
         }
 
@@ -370,15 +373,25 @@ $(document).ready(function() {
                 }
             },
             error: function(xhr) {
-                let errorMessage = 'An error occurred during upload.';
-                
-                if (xhr.responseJSON && xhr.responseJSON.message) {
-                    errorMessage = xhr.responseJSON.message;
-                } else if (xhr.responseJSON && xhr.responseJSON.errors) {
-                    errorMessage = Object.values(xhr.responseJSON.errors).flat().join('<br>');
+                let errorMessage = 'Upload failed (HTTP ' + xhr.status + ').';
+
+                // Log full response for debugging
+                console.error('Upload error response:', xhr.responseText);
+
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    }
+                    if (xhr.responseJSON.errors) {
+                        errorMessage += '<br>' + Object.values(xhr.responseJSON.errors).flat().join('<br>');
+                    }
+                    if (xhr.responseJSON.error) {
+                        errorMessage += '<br><small>' + xhr.responseJSON.error + '</small>';
+                    }
                 }
-                
+
                 showAlert('error', '<i class="fas fa-exclamation-circle mr-2"></i>' + errorMessage);
+                $('#progress-section').addClass('hidden');
             },
             complete: function() {
                 uploadBtn.prop('disabled', false).html('<i class="fas fa-upload mr-2"></i><span>Upload PDFs</span>');
