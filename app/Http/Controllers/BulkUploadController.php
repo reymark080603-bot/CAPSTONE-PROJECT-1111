@@ -338,10 +338,14 @@ class BulkUploadController extends Controller
             // If Cloudinary is configured, upload there for persistence on Railway.
             // Use upload() with resource_type 'raw' — uploadFile() forces 'auto' and ignores our setting.
             if (env('CLOUDINARY_URL')) {
+                // Truncate to 80 chars to stay within Cloudinary's public_id limits
+                $safeTitle = substr(preg_replace('/[^a-zA-Z0-9_-]/', '_', $title), 0, 80);
+                $publicId  = time() . '_' . $safeTitle;
+
                 $result = Cloudinary::upload($file->getRealPath(), [
                     'folder'        => 'knowly/ebooks',
                     'resource_type' => 'raw',
-                    'public_id'     => time() . '_' . preg_replace('/[^a-zA-Z0-9_-]/', '_', $title),
+                    'public_id'     => $publicId,
                 ]);
                 return $result->getSecurePath();
             }
@@ -353,8 +357,14 @@ class BulkUploadController extends Controller
 
             return $path ?: false;
         } catch (\Exception $e) {
-            Log::error('Error storing file: ' . $e->getMessage());
-            return false;
+            // Log with context so Railway logs show the real Cloudinary error
+            Log::error('Error storing PDF file', [
+                'title'   => $title,
+                'message' => $e->getMessage(),
+                'trace'   => $e->getTraceAsString(),
+            ]);
+            // Re-throw so the per-file catch block captures the real error message
+            throw new \Exception('Cloudinary upload failed: ' . $e->getMessage());
         }
     }
 
