@@ -125,6 +125,11 @@ class Book extends Model
         ]);
 
         foreach ($paths as $path) {
+            // Cloudinary or any external HTTPS URL — always treat as available
+            if (str_starts_with($path, 'https://') || str_starts_with($path, 'http://')) {
+                return true;
+            }
+
             $normalized = ltrim($path, '/');
 
             if (file_exists(public_path($normalized))) {
@@ -155,6 +160,11 @@ class Book extends Model
         ]);
 
         foreach ($paths as $path) {
+            // Cloudinary or any external HTTPS URL — return directly
+            if (str_starts_with($path, 'https://') || str_starts_with($path, 'http://')) {
+                return $path;
+            }
+
             $normalized = ltrim($path, '/');
 
             if (file_exists(public_path($normalized))) {

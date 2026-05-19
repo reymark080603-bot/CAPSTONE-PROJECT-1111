@@ -342,10 +342,21 @@ class BulkUploadController extends Controller
     private function storeFile($file, string $title)
     {
         try {
+            // If Cloudinary is configured, upload there for persistence on Railway
+            if (env('CLOUDINARY_URL')) {
+                $result = Cloudinary::uploadFile($file->getRealPath(), [
+                    'folder'        => 'knowly/ebooks',
+                    'resource_type' => 'raw',
+                    'public_id'     => time() . '_' . preg_replace('/[^a-zA-Z0-9_-]/', '_', $title),
+                ]);
+                return $result->getSecurePath();
+            }
+
+            // Fallback: local storage (only reliable in local dev)
             $sanitizedTitle = preg_replace('/[^a-zA-Z0-9_-]/', '_', $title);
             $filename = time() . '_' . $sanitizedTitle . '_' . substr(md5(uniqid((string) mt_rand(), true)), 0, 8) . '.pdf';
             $path = $file->storeAs(self::STORAGE_DIR, $filename, 'public');
-            
+
             return $path ?: false;
         } catch (\Exception $e) {
             Log::error('Error storing file: ' . $e->getMessage());
