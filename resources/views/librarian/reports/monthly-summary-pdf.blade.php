@@ -379,52 +379,74 @@
             </tr>
         </table>
 
-        <div class="panel">
-            <div class="section-title">Top Student Borrowers</div>
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Library ID</th>
-                        <th>Course</th>
-                        <th>Borrow Count</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($data['top_students'] as $student)
-                        <tr>
-                            <td>{{ $student['name'] }}</td>
-                            <td>{{ $student['library_id'] }}</td>
-                            <td>{{ $student['course'] }}</td>
-                            <td><strong>{{ $student['borrow_count'] }}</strong></td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="4">No student activity this month.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-
         <table class="two-col" style="margin-top:12px;">
             <tr>
+                <td width="50%" valign="top">
+                    <div class="panel">
+                        <div class="section-title">Students by Campus</div>
+                        @forelse($data['campus_distribution'] ?? [] as $campus)
+                            <div class="bar-row">
+                                <div class="bar-meta">
+                                    <span class="left">{{ $campus['campus'] }}</span>
+                                    <span class="right">{{ $campus['count'] }}</span>
+                                </div>
+                                <div class="bar-track">
+                                    <div class="bar-fill-green" style="width: {{ ($campus['count'] / max(1, collect($data['campus_distribution'])->max('count'))) * 100 }}%"></div>
+                                </div>
+                            </div>
+                        @empty
+                            <div>No campus distribution data available.</div>
+                        @endforelse
+                    </div>
+                </td>
                 <td width="50%" valign="top">
                     <div class="panel">
                         <div class="section-title">Resource Types</div>
                         @forelse($data['resource_types'] ?? [] as $resource)
                             <div class="bar-row">
                                 <div class="bar-meta">
-                                    <span class="left">{{ $resource['type'] }}</span>
+                                    <span class="left">{{ $resource['category'] }}</span>
                                     <span class="right">{{ $resource['count'] }}</span>
                                 </div>
                                 <div class="bar-track">
-                                    <div class="bar-fill-green" style="width: {{ $data['monthly_stats']['books_borrowed'] > 0 ? ($resource['count'] / max(1, array_sum(array_column($data['resource_types'], 'count')))) * 100 : 5 }}%"></div>
+                                    <div class="bar-fill-teal" style="width: {{ ($resource['count'] / max(1, collect($data['resource_types'])->max('count'))) * 100 }}%"></div>
                                 </div>
                             </div>
                         @empty
                             <div>No resource type data available.</div>
                         @endforelse
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table class="two-col" style="margin-top:12px;">
+            <tr>
+                <td width="50%" valign="top">
+                    <div class="panel">
+                        <div class="section-title">Top Student Borrowers</div>
+                        <table class="data-table" style="font-size: 10px;">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Course</th>
+                                    <th width="40" style="text-align:center;">Borrows</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($data['top_students'] as $student)
+                                    <tr>
+                                        <td><strong>{{ $student['name'] }}</strong><br><small style="color:#666;">ID: {{ $student['library_id'] }}</small></td>
+                                        <td>{{ $student['course'] }}</td>
+                                        <td style="text-align:center;"><strong>{{ $student['borrow_count'] }}</strong></td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="3">No student activity this month.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
                 </td>
                 <td width="50%" valign="top">
@@ -434,14 +456,14 @@
                             <thead>
                                 <tr>
                                     <th>Book Title</th>
-                                    <th width="40">Borrows</th>
+                                    <th width="40" style="text-align:center;">Borrows</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse($data['popular_books'] ?? [] as $book)
                                     <tr>
                                         <td><strong>{{ $book['title'] }}</strong><br><small style="color:#666;">{{ $book['author'] }}</small></td>
-                                        <td style="text-align:center;">{{ $book['borrow_count'] }}</td>
+                                        <td style="text-align:center;"><strong>{{ $book['borrow_count'] }}</strong></td>
                                     </tr>
                                 @empty
                                     <tr>

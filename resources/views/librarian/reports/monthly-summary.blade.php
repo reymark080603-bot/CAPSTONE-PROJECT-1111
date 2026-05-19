@@ -463,6 +463,54 @@
 
         <div class="monthly-grid-pair mb-6">
             <div class="monthly-section p-5">
+                <h3 class="monthly-section-title text-lg mb-4">Registered Students by Campus</h3>
+                <p class="monthly-section-copy">Total active student borrower counts across each campus.</p>
+                <div class="space-y-4">
+                    @php
+                        $campusMax = max(1, collect($data['campus_distribution'] ?? [])->max('count'));
+                    @endphp
+                    @forelse($data['campus_distribution'] ?? [] as $campus)
+                        <div>
+                            <div class="flex items-center justify-between text-sm font-medium text-gray-700 mb-1">
+                                <span>{{ $campus['campus'] }}</span>
+                                <span>{{ $campus['count'] }}</span>
+                            </div>
+                            <div class="monthly-bar-track h-3">
+                                <div class="monthly-bar-fill bg-[var(--report-green)]" style="width: {{ ($campus['count'] / $campusMax) * 100 }}%"></div>
+                            </div>
+                        </div>
+                    @empty
+                        <p class="text-sm text-gray-500">No campus distribution data available.</p>
+                    @endforelse
+                </div>
+            </div>
+
+            <div class="monthly-section p-5">
+                <h3 class="monthly-section-title text-lg mb-4">Resource Type by Borrowing Activity</h3>
+                <p class="monthly-section-copy">Borrowing activity metrics grouped by digital and print resource types.</p>
+                <div class="space-y-4">
+                    @php
+                        $resourceMax = max(1, collect($data['resource_types'] ?? [])->max('count'));
+                    @endphp
+                    @forelse($data['resource_types'] ?? [] as $resource)
+                        <div>
+                            <div class="flex items-center justify-between text-sm font-medium text-gray-700 mb-1">
+                                <span>{{ $resource['category'] }}</span>
+                                <span>{{ $resource['count'] }}</span>
+                            </div>
+                            <div class="monthly-bar-track h-3">
+                                <div class="monthly-bar-fill bg-[var(--report-teal)]" style="width: {{ ($resource['count'] / $resourceMax) * 100 }}%"></div>
+                            </div>
+                        </div>
+                    @empty
+                        <p class="text-sm text-gray-500">No resource type data available.</p>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+
+        <div class="monthly-grid-pair mb-6">
+            <div class="monthly-section p-5">
                 <h3 class="monthly-section-title text-lg mb-4">Top Student Borrowers</h3>
                 <p class="monthly-section-copy">Students with the highest borrowing activity during the month.</p>
                 <div class="overflow-x-auto">
@@ -494,34 +542,63 @@
             </div>
 
             <div class="monthly-section p-5">
-                <h3 class="monthly-section-title text-lg mb-4">Daily Library Activity</h3>
-                <p class="monthly-section-copy">Daily borrowing and return counts across the reporting period.</p>
+                <h3 class="monthly-section-title text-lg mb-4">Most Borrowed Books (Top 10)</h3>
+                <p class="monthly-section-copy">Top borrowed literary titles and materials for the selected month.</p>
                 <div class="overflow-x-auto">
                     <table class="monthly-data-table text-sm">
                         <thead>
                             <tr>
-                                <th>Date</th>
-                                <th>Day</th>
-                                <th>Borrows</th>
-                                <th>Returns</th>
+                                <th>Title</th>
+                                <th>Author</th>
+                                <th width="100">Borrow Count</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($data['daily_stats'] as $row)
+                            @forelse($data['popular_books'] ?? [] as $book)
                                 <tr>
-                                    <td>{{ $row['date'] }}</td>
-                                    <td>{{ $row['day_name'] }}</td>
-                                    <td class="font-semibold text-[var(--report-teal)]">{{ $row['borrows'] }}</td>
-                                    <td class="font-semibold text-[var(--report-green)]">{{ $row['returns'] }}</td>
+                                    <td><strong>{{ $book['title'] }}</strong></td>
+                                    <td>{{ $book['author'] }}</td>
+                                    <td class="font-semibold text-[var(--report-teal)] text-center">{{ $book['borrow_count'] }}</td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4" class="text-center text-gray-500">No daily activity for this month.</td>
+                                    <td colspan="3" class="text-center text-gray-500">No borrowing activity this month.</td>
                                 </tr>
                             @endforelse
                         </tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+
+        <div class="monthly-section p-5 mb-6">
+            <h3 class="monthly-section-title text-lg mb-4">Daily Library Activity</h3>
+            <p class="monthly-section-copy">Daily borrowing and return counts across the reporting period.</p>
+            <div class="overflow-x-auto">
+                <table class="monthly-data-table text-sm">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Day</th>
+                            <th>Borrows</th>
+                            <th>Returns</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($data['daily_stats'] as $row)
+                            <tr>
+                                <td>{{ $row['date'] }}</td>
+                                <td>{{ $row['day_name'] }}</td>
+                                <td class="font-semibold text-[var(--report-teal)]">{{ $row['borrows'] }}</td>
+                                <td class="font-semibold text-[var(--report-green)]">{{ $row['returns'] }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4" class="text-center text-gray-500">No daily activity for this month.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
         </div>
 

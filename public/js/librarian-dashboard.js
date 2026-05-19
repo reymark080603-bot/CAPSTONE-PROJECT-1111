@@ -1418,6 +1418,43 @@ class LibrarianDashboard {
             </div>
         `;
 
+        fetch('/librarian/dashboard/activities')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.activities && data.activities.length > 0) {
+                    this.renderRecentActivities(data.activities);
+                } else {
+                    container.innerHTML = `
+                        <div class="flex justify-center items-center py-12">
+                            <i class="fas fa-info-circle text-2xl text-gray-400 mr-3"></i>
+                            <span class="text-gray-600">No recent activities available</span>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching activities:', error);
+                container.innerHTML = `
+                    <div class="flex justify-center items-center py-12">
+                        <i class="fas fa-exclamation-triangle text-2xl text-red-400 mr-3"></i>
+                        <span class="text-gray-600">Error loading recent activities</span>
+                    </div>
+                `;
+            });
+    }
+
+    _old_loadRecentActivities() {
+        const container = document.getElementById('recent-activities');
+        if (!container) return;
+
+        // Show loading state
+        container.innerHTML = `
+            <div class="flex justify-center items-center py-12">
+                <i class="fas fa-spinner fa-spin text-2xl text-gray-400 mr-3"></i>
+                <span class="text-gray-600">Loading activities...</span>
+            </div>
+        `;
+
         // Use dashboard data if available
         if (this.dashboardData.most_borrowed_books && this.dashboardData.most_borrowed_books.length > 0) {
             this.renderRecentActivities(this.dashboardData.most_borrowed_books.slice(0, 10));
@@ -1432,6 +1469,78 @@ class LibrarianDashboard {
     }
 
     renderRecentActivities(activities) {
+        const container = document.getElementById('recent-activities');
+        if (!container) return;
+
+        if (!activities || activities.length === 0) {
+            container.innerHTML = `
+                <div class="flex justify-center items-center py-12">
+                    <i class="fas fa-info-circle text-2xl text-gray-400 mr-3"></i>
+                    <span class="text-gray-600">No recent activities available</span>
+                </div>
+            `;
+            return;
+        }
+
+        const html = activities.map((activity, index) => {
+            let iconClass = 'fa-info-circle text-blue-600';
+            let bgClass = 'bg-blue-100';
+            let title = '';
+            let subtitle = '';
+
+            if (activity.type === 'borrow') {
+                if (activity.status === 'returned') {
+                    iconClass = 'fa-undo text-green-600';
+                    bgClass = 'bg-green-100';
+                    title = `${activity.user} returned a book`;
+                    subtitle = activity.book || 'Unknown Book';
+                } else {
+                    iconClass = 'fa-book text-indigo-600';
+                    bgClass = 'bg-indigo-100';
+                    title = `${activity.user} borrowed a book`;
+                    subtitle = activity.book || 'Unknown Book';
+                }
+            } else if (activity.type === 'registration') {
+                iconClass = 'fa-user-plus text-amber-600';
+                bgClass = 'bg-amber-100';
+                title = `${activity.user} registered`;
+                subtitle = 'New student account created';
+            } else {
+                title = activity.details || 'System activity';
+                subtitle = activity.date;
+            }
+
+            // Format date if possible
+            let timeAgo = '';
+            if (activity.date) {
+                const dateObj = new Date(activity.date);
+                if (!isNaN(dateObj.getTime())) {
+                    timeAgo = dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                } else {
+                    timeAgo = activity.date;
+                }
+            }
+
+            return `
+                <div class="flex items-start p-4 hover:bg-gray-50 transition-colors ${index !== activities.length - 1 ? 'border-b border-gray-100' : ''}">
+                    <div class="w-10 h-10 ${bgClass} rounded-full flex items-center justify-center mr-4 mt-0.5 flex-shrink-0">
+                        <i class="fas ${iconClass} text-sm"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-gray-900 truncate">${title}</p>
+                        <p class="text-xs text-gray-500 truncate">${subtitle}</p>
+                    </div>
+                    <div class="text-right ml-2 flex-shrink-0">
+                        <span class="text-xs text-gray-400">${timeAgo}</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = html;
+    }
+
+    _old_renderRecentActivities(activities) {
         const container = document.getElementById('recent-activities');
         if (!container) return;
 

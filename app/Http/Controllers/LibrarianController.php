@@ -2568,6 +2568,58 @@ class LibrarianController extends Controller
                               ];
                           });
         
+        // 1. Campus distribution (registered students by campus)
+        $campusDistribution = User::query()
+            ->whereNotNull('campus')
+            ->where('campus', '<>', '')
+            ->selectRaw('campus, COUNT(*) as count')
+            ->groupBy('campus')
+            ->orderByDesc('count')
+            ->get()
+            ->map(function($item) {
+                return [
+                    'campus' => $item->campus,
+                    'count' => (int) $item->count,
+                ];
+            });
+
+        // 2. Resource types stats by borrowing activity for the selected month
+        $resourceTypes = BorrowRecord::query()
+            ->join('books', 'borrow_records.book_id', '=', 'books.id')
+            ->whereBetween('borrow_records.borrowed_date', [$startDate, $endDate])
+            ->selectRaw("COALESCE(NULLIF(books.resource_type, ''), 'book') as resource_type")
+            ->selectRaw('COUNT(*) as count')
+            ->groupBy('resource_type')
+            ->orderByDesc('count')
+            ->get()
+            ->map(function($item) {
+                return [
+                    'category' => match ($item->resource_type) {
+                        'e_journal' => 'E-Journal',
+                        'thesis' => 'E-Thesis',
+                        default => 'Book',
+                    },
+                    'count' => (int) $item->count,
+                ];
+            });
+
+        // 3. Most borrowed books (Top 10) for the selected month
+        $popularBooks = Book::query()
+            ->join('borrow_records', 'books.id', '=', 'borrow_records.book_id')
+            ->whereBetween('borrow_records.borrowed_date', [$startDate, $endDate])
+            ->select('books.id', 'books.title', 'books.author', DB::raw('COUNT(borrow_records.id) as borrow_count'))
+            ->groupBy('books.id', 'books.title', 'books.author')
+            ->orderByDesc('borrow_count')
+            ->limit(10)
+            ->get()
+            ->map(function($item) {
+                return [
+                    'title' => $item->title,
+                    'author' => $item->author ?? 'Unknown Author',
+                    'borrow_count' => (int) $item->borrow_count,
+                ];
+            });
+
         $data = [
             'period' => [
                 'year' => $year,
@@ -2583,6 +2635,9 @@ class LibrarianController extends Controller
             'program_distribution' => $programDistribution,
             'gender_distribution' => $genderDistribution,
             'books_by_program' => $booksByProgram,
+            'campus_distribution' => $campusDistribution,
+            'resource_types' => $resourceTypes,
+            'popular_books' => $popularBooks,
         ];
         
         if ($request && $request->expectsJson()) {

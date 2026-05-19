@@ -321,7 +321,7 @@
                 </div>
             </div>
 
-            <div class="mb-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                 <div class="bg-white p-8 rounded-lg shadow-sm">
                     <div class="flex items-center justify-between mb-6">
                         <div>
@@ -333,10 +333,21 @@
                         <canvas id="campus-chart"></canvas>
                     </div>
                 </div>
+                <div class="bg-white p-8 rounded-lg shadow-sm">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900">Resource Type by Borrowing Activity</h3>
+                            <p class="text-sm text-gray-500 mt-1">Borrowing counts grouped by resource types</p>
+                        </div>
+                    </div>
+                    <div class="h-80">
+                        <canvas id="categories-chart"></canvas>
+                    </div>
+                </div>
             </div>
 
             <!-- Recent Activities Section -->
-            <div class="mb-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                 <div class="bg-white rounded-lg shadow-sm">
                     <div class="flex items-center justify-between p-6 border-b border-gray-200">
                         <h3 class="text-xl font-semibold text-gray-900">Recent Activities</h3>
@@ -348,6 +359,18 @@
                         <div class="flex justify-center items-center py-12">
                             <i class="fas fa-spinner fa-spin text-2xl text-gray-400 mr-3"></i>
                             <span class="text-gray-600">Loading activities...</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Most Borrowed Books (Top 10) -->
+                <div class="bg-white rounded-lg shadow-sm">
+                    <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                        <h3 class="text-xl font-semibold text-gray-900">Most Borrowed Books (Top 10)</h3>
+                    </div>
+                    <div id="most-borrowed-books" class="max-h-96 overflow-y-auto">
+                        <div class="flex justify-center items-center py-12">
+                            <i class="fas fa-spinner fa-spin text-2xl text-gray-400 mr-3"></i>
+                            <span class="text-gray-600">Loading books...</span>
                         </div>
                     </div>
                 </div>
