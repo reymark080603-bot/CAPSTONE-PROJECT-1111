@@ -19,34 +19,76 @@
     $malePercentage = $genderTotal > 0 ? ($maleCount / $genderTotal) * 100 : 0;
     $femalePercentage = $genderTotal > 0 ? ($femaleCount / $genderTotal) * 100 : 0;
 
-    // SVG Line graph points calculation (Top 5 programs)
-    $polylinePoints = "";
-    $pointIndex = 0;
-    $top5Programs = $programDistribution->sortByDesc('student_count')->take(5);
-    $pointCount = $top5Programs->count();
-    $svgWidth = 240;
-    $svgHeight = 80;
-    $padding = 20;
-    
-    $coordinates = [];
-    foreach($top5Programs as $program) {
-        $x = $padding + ($pointIndex * (($svgWidth - (2 * $padding)) / max(1, $pointCount - 1)));
-        $y = $svgHeight - 15 - (($program['student_count'] / $programMax) * ($svgHeight - 28));
-        $coordinates[] = [
+    // Campus vertical bar chart data (Top 5 campuses)
+    $top5Campuses = $campusDistribution->sortByDesc('count')->take(5);
+
+    // Book Distribution by Course line graph points calculation (Top 5 programs)
+    $booksPolylinePoints = "";
+    $booksPointIndex = 0;
+    $top5BooksProg = collect($data['books_by_program'])->sortByDesc(fn($v) => $v)->take(5);
+    $booksProgCount = $top5BooksProg->count();
+    $booksCoordinates = [];
+    foreach($top5BooksProg as $program => $count) {
+        $x = 20 + ($booksPointIndex * ((240 - 40) / max(1, $booksProgCount - 1)));
+        $y = 80 - 15 - (($count / $booksMax) * (80 - 28));
+        $booksCoordinates[] = [
             'x' => $x, 
             'y' => $y, 
-            'label' => substr($program['program'], 0, 8), 
-            'count' => $program['student_count']
+            'label' => substr($program, 0, 8), 
+            'count' => $count
         ];
-        $polylinePoints .= "{$x},{$y} ";
-        $pointIndex++;
+        $booksPolylinePoints .= "{$x},{$y} ";
+        $booksPointIndex++;
     }
 
-    // SVG Pie Chart calculations (Books Borrowed vs Returned)
-    $totalBorrowsReturns = max(1, $data['monthly_stats']['books_borrowed'] + $data['monthly_stats']['books_returned']);
-    $borrowPercent = ($data['monthly_stats']['books_borrowed'] / $totalBorrowsReturns) * 100;
-    $returnPercent = ($data['monthly_stats']['books_returned'] / $totalBorrowsReturns) * 100;
-    $borrowStroke = ($borrowPercent / 100) * 157; // Circumference is 2 * pi * 25 = 157
+    // Resource Type borrowing donut chart calculations (SVG circumference = 157)
+    $resStats = [];
+    $accumulatedPercentage = 0;
+    $resourceTotalSum = max(1, $resourceTypes->sum('count'));
+    $resourceColors = ['#16a085', '#2980b9', '#8e44ad'];
+    $resourceIndex = 0;
+    foreach($resourceTypes as $resource) {
+        $percent = ($resource['count'] / $resourceTotalSum) * 100;
+        $strokeLength = ($percent / 100) * 157;
+        $strokeOffset = 157 - ($accumulatedPercentage / 100) * 157;
+        $resStats[] = [
+            'category' => $resource['category'],
+            'count' => $resource['count'],
+            'percent' => $percent,
+            'strokeLength' => $strokeLength,
+            'strokeOffset' => $strokeOffset,
+            'color' => $resourceColors[$resourceIndex % 3]
+        ];
+        $accumulatedPercentage += $percent;
+        $resourceIndex++;
+    }
+
+    // Daily library activity timeline graph points calculation (Sampled 7 points)
+    $dailyStatsColl = collect($data['daily_stats']);
+    $dailyMaxCount = max(1, (int) $dailyStatsColl->max(fn($row) => max($row['borrows'], $row['returns'])));
+    $dailyPointsBorrows = "";
+    $dailyPointsReturns = "";
+    $dailyCoordinates = [];
+    $dailyIndex = 0;
+    $sampledDailyStats = $dailyStatsColl->nth(max(1, round($dailyStatsColl->count() / 7)))->take(7);
+    $sampledCount = $sampledDailyStats->count();
+    foreach($sampledDailyStats as $row) {
+        $x = 20 + ($dailyIndex * ((240 - 40) / max(1, $sampledCount - 1)));
+        $yB = 80 - 15 - (($row['borrows'] / $dailyMaxCount) * (80 - 28));
+        $yR = 80 - 15 - (($row['returns'] / $dailyMaxCount) * (80 - 28));
+        
+        $dailyCoordinates[] = [
+            'x' => $x,
+            'yB' => $yB,
+            'yR' => $yR,
+            'label' => substr($row['date'], 8, 2),
+            'borrows' => $row['borrows'],
+            'returns' => $row['returns']
+        ];
+        $dailyPointsBorrows .= "{$x},{$yB} ";
+        $dailyPointsReturns .= "{$x},{$yR} ";
+        $dailyIndex++;
+    }
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -89,17 +131,6 @@
             color: #ffffff;
             text-align: center;
             margin-bottom: 10px;
-            position: relative;
-        }
-
-        .header-logo-container {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .header-logo-container td {
-            border: none;
-            padding: 0;
         }
 
         .header h1 {
@@ -156,7 +187,6 @@
             border-radius: 12px;
             padding: 10px;
             box-sizing: border-box;
-            position: relative;
         }
 
         .panel-dark {
@@ -282,42 +312,33 @@
             letter-spacing: 0.05em;
         }
 
-        /* Board games and computer usage */
-        .games-grid {
+        /* Table Infographic designs */
+        .infographic-table {
             width: 100%;
             border-collapse: collapse;
+            margin-top: 4px;
         }
 
-        .games-grid td {
-            padding: 3px;
+        .infographic-table th {
             font-size: 8px;
-        }
-
-        .game-pill {
-            background: #eef7ee;
-            border: 1px solid #cce2cc;
-            border-radius: 6px;
-            padding: 3px 6px;
             font-weight: bold;
             color: #1e4d3a;
-            text-align: center;
+            text-transform: uppercase;
+            border-bottom: 2px solid #d0ebd0;
+            padding: 4px 6px;
+            text-align: left;
         }
 
-        .computer-grid {
-            width: 100%;
-            border-collapse: collapse;
+        .infographic-table td {
+            font-size: 8px;
+            padding: 5px 6px;
+            border-bottom: 1px solid #e2efe2;
+            color: #374151;
+            vertical-align: middle;
         }
 
-        .computer-grid td {
-            text-align: center;
-            padding: 2px;
-        }
-
-        .dial-label {
-            font-size: 7px;
-            font-weight: bold;
-            color: #1e4d3a;
-            margin-top: 2px;
+        .infographic-table tr:last-child td {
+            border-bottom: none;
         }
 
         /* Footer styling */
@@ -335,39 +356,33 @@
     <div class="shell">
         <!-- Main Library Header Badge -->
         <div class="header">
-            <table class="header-logo-container">
-                <tr>
-                    <td style="text-align: center;">
-                        <h1>J.H. CERILLES STATE COLLEGE</h1>
-                        <h2>COLLEGE LIBRARY</h2>
-                        <div class="period">{{ $data['period']['month_name'] }} Statistics</div>
-                        <div class="intro-copy">
-                            The infographic presents the library's statistics report for {{ $data['period']['month_name'] }}, detailing visits, library IDs issued, borrowing, research, computer use, and board games activities.
-                        </div>
-                    </td>
-                </tr>
-            </table>
+            <h1>J.H. CERILLES STATE COLLEGE</h1>
+            <h2>COLLEGE LIBRARY</h2>
+            <div class="period">{{ $data['period']['month_name'] }} Statistics</div>
+            <div class="intro-copy">
+                This monthly analytics dashboard presents active registered student demographics, book distribution by course, learning resource borrowings, and daily transaction activities for the {{ $data['period']['month_name'] }} reporting period.
+            </div>
         </div>
 
-        <!-- ROW 1: Library Daily Visits & Interpretation -->
+        <!-- ROW 1: Registered Students by Campus & Interpretation -->
         <table class="grid-table">
             <tr>
                 <td width="55%">
                     <div class="panel" style="height: 155px;">
-                        <div class="panel-title">Library Daily Visits</div>
+                        <div class="panel-title">Registered Students by Campus</div>
                         <table class="bar-chart-table" style="margin-top: 5px;">
                             <tr>
                                 @php
-                                    $colors = ['#c0392b', '#2980b9', '#d35400', '#16a085', '#8e44ad'];
+                                    $campusColors = ['#c0392b', '#2980b9', '#d35400', '#16a085', '#8e44ad'];
                                 @endphp
-                                @forelse($top5Programs as $index => $program)
+                                @forelse($top5Campuses as $index => $campus)
                                     <td valign="bottom" style="height: 90px;">
-                                        <div style="font-size: 7.5px; font-weight: bold; color: #374151; margin-bottom: 2px;">{{ $program['student_count'] }}</div>
-                                        <div class="vertical-bar" style="background: {{ $colors[$index % 5] }}; height: {{ max(10, ($program['student_count'] / $programMax) * 75) }}px;"></div>
-                                        <div class="bar-label">{{ substr($program['program'], 0, 8) }}</div>
+                                        <div style="font-size: 7.5px; font-weight: bold; color: #374151; margin-bottom: 2px;">{{ $campus['count'] }}</div>
+                                        <div class="vertical-bar" style="background: {{ $campusColors[$index % 5] }}; height: {{ max(10, ($campus['count'] / $campusMax) * 75) }}px;"></div>
+                                        <div class="bar-label">{{ substr($campus['campus'], 0, 8) }}</div>
                                     </td>
                                 @empty
-                                    <td style="height: 90px; text-align: center; vertical-align: middle; color: #9ca3af;">No program visits.</td>
+                                    <td style="height: 90px; text-align: center; vertical-align: middle; color: #9ca3af;">No campus distribution data.</td>
                                 @endforelse
                             </tr>
                         </table>
@@ -377,24 +392,24 @@
                     <div class="panel panel-dark" style="height: 155px;">
                         <div class="panel-title panel-title-white">Interpretation</div>
                         <div class="interpretation-text">
-                            This monthly dashboard highlights library operations during <span class="interpretation-highlight">{{ $data['period']['month_name'] }}</span>.
+                            This monthly statistics report summarizes active engagement for <span class="interpretation-highlight">{{ $data['period']['month_name'] }}</span>.
                             <br><br>
                             @if($topProgram)
-                                The <span class="interpretation-highlight">{{ $topProgram['program'] }}</span> program recorded the largest share of student activity, with <span class="interpretation-highlight">{{ $topProgram['student_count'] }}</span> active users.
+                                The <span class="interpretation-highlight">{{ $topProgram['program'] }}</span> program recorded the highest overall borrowing count, with <span class="interpretation-highlight">{{ $topProgram['student_count'] }}</span> active student transactions.
                             @endif
-                            A total of <span class="interpretation-highlight">{{ $data['monthly_stats']['books_borrowed'] + $data['monthly_stats']['books_returned'] }}</span> resource circulation records were processed, indicating active engagement with learning collections.
+                            Circulation activities show strong participation from the <span class="interpretation-highlight">{{ $topGender ? ucfirst($topGender['gender']) : 'N/A' }}</span> borrower demographic, accounting for <span class="interpretation-highlight">{{ $topGender ? $topGender['count'] : '0' }}</span> active users.
                         </div>
                     </div>
                 </td>
             </tr>
         </table>
 
-        <!-- ROW 2: Transactions & Demographic Profile -->
+        <!-- ROW 2: Stats Cards (Type of Transaction) & Demographic Profile -->
         <table class="grid-table">
             <tr>
                 <td width="55%">
                     <div class="panel" style="height: 100px;">
-                        <div class="panel-title">Library Entry Per Type of Transaction</div>
+                        <div class="panel-title">Circulation Stats (Type of Transaction)</div>
                         <table class="transaction-grid">
                             <tr>
                                 <td>
@@ -431,7 +446,6 @@
                         <table class="demographic-container" style="margin-top: 4px;">
                             <tr>
                                 <td width="50%">
-                                    <!-- Male SVG Icon -->
                                     <svg viewBox="0 0 24 24" style="width: 24px; height: 24px; fill: #2980b9; margin: 0 auto 2px; display: block;">
                                         <path d="M12,2A4,4 0 0,0 8,6A4,4 0 0,0 12,10A4,4 0 0,0 16,6A4,4 0 0,0 12,2M12,12C7.58,12 4,14.24 4,17V20H20V17C20,14.24 16.42,12 12,12Z" />
                                     </svg>
@@ -440,7 +454,6 @@
                                     <div style="font-size: 7px; color: #6b7280; font-weight: bold; margin-top: 2px;">{{ $maleCount }} Active</div>
                                 </td>
                                 <td width="50%">
-                                    <!-- Female SVG Icon -->
                                     <svg viewBox="0 0 24 24" style="width: 24px; height: 24px; fill: #ec4899; margin: 0 auto 2px; display: block;">
                                         <path d="M12,2A4,4 0 0,0 8,6A4,4 0 0,0 12,10A4,4 0 0,0 16,6A4,4 0 0,0 12,2M12,12C7.58,12 4,14.24 4,17V20H20V17C20,14.24 16.42,12 12,12Z" />
                                     </svg>
@@ -455,25 +468,22 @@
             </tr>
         </table>
 
-        <!-- ROW 3: Book Utilization Report & Library ID Application -->
+        <!-- ROW 3: Book Distribution by Course & Resource Type Donut Chart -->
         <table class="grid-table">
             <tr>
                 <td width="55%">
                     <div class="panel" style="height: 155px;">
-                        <div class="panel-title">Book Utilization Report</div>
-                        @if($pointCount > 0)
+                        <div class="panel-title">Book Distribution by Course</div>
+                        @if($booksProgCount > 0)
                             <div style="text-align: center; margin-top: 6px;">
                                 <svg viewBox="0 0 240 85" style="width: 240px; height: 85px; display: inline-block;">
-                                    <!-- Grid background lines -->
                                     <line x1="20" y1="12" x2="220" y2="12" stroke="#e6eee6" stroke-width="1" />
                                     <line x1="20" y1="36" x2="220" y2="36" stroke="#e6eee6" stroke-width="1" />
                                     <line x1="20" y1="60" x2="220" y2="60" stroke="#e6eee6" stroke-width="1" />
                                     
-                                    <!-- Vector red line chart -->
-                                    <polyline points="{{ trim($polylinePoints) }}" fill="none" stroke="#b22222" stroke-width="2.5" />
+                                    <polyline points="{{ trim($booksPolylinePoints) }}" fill="none" stroke="#b22222" stroke-width="2.5" />
                                     
-                                    <!-- Data dots and labels -->
-                                    @foreach($coordinates as $pt)
+                                    @foreach($booksCoordinates as $pt)
                                         <circle cx="{{ $pt['x'] }}" cy="{{ $pt['y'] }}" r="3.5" fill="#ffffff" stroke="#b22222" stroke-width="2" />
                                         <text x="{{ $pt['x'] }}" y="{{ $pt['y'] - 6 }}" font-size="7.5" font-family="DejaVu Sans" font-weight="bold" fill="#b22222" text-anchor="middle">{{ $pt['count'] }}</text>
                                         <text x="{{ $pt['x'] }}" y="76" font-size="7.5" font-family="DejaVu Sans" font-weight="bold" fill="#1e4d3a" text-anchor="middle">{{ $pt['label'] }}</text>
@@ -481,27 +491,93 @@
                                 </svg>
                             </div>
                         @else
-                            <div style="text-align: center; line-height: 120px; color: #9ca3af;">No program visits.</div>
+                            <div style="text-align: center; line-height: 120px; color: #9ca3af;">No course distribution data available.</div>
                         @endif
                     </div>
                 </td>
                 <td width="45%">
                     <div class="panel" style="height: 155px;">
-                        <div class="panel-title">Library Circulation Balance</div>
+                        <div class="panel-title">Resource Type by Borrowing Activity</div>
                         <div style="text-align: center; padding-top: 6px;">
-                            <svg viewBox="0 0 100 100" style="width: 80px; height: 80px; display: inline-block;">
-                                <!-- Concentric circle segments -->
-                                <circle cx="50" cy="50" r="25" fill="none" stroke="#e67e22" stroke-width="14" />
-                                <circle cx="50" cy="50" r="25" fill="none" stroke="#27ae60" stroke-width="14" 
-                                        stroke-dasharray="{{ $borrowStroke }} 157" 
-                                        transform="rotate(-90 50 50)" />
+                            <svg viewBox="0 0 100 100" style="width: 76px; height: 76px; display: inline-block;">
+                                <!-- Overlapping circle segments representing exact resource ratios -->
+                                <circle cx="50" cy="50" r="25" fill="none" stroke="#e2eee2" stroke-width="14" />
+                                @foreach($resStats as $stat)
+                                    <circle cx="50" cy="50" r="25" fill="none" stroke="{{ $stat['color'] }}" stroke-width="14" 
+                                            stroke-dasharray="{{ $stat['strokeLength'] }} 157" 
+                                            stroke-dashoffset="{{ $stat['strokeOffset'] }}"
+                                            transform="rotate(-90 50 50)" />
+                                @endforeach
                             </svg>
-                            <div style="margin-top: 6px; text-align: center;">
-                                <span style="display: inline-block; font-size: 7.5px; font-weight: bold; color: #27ae60; margin-right: 6px;">
-                                    ● Borrows ({{ number_format($borrowPercent, 0) }}%)
+                            <div style="margin-top: 6px; text-align: center; line-height: 1.35;">
+                                @foreach($resStats as $stat)
+                                    <span style="display: inline-block; font-size: 7.5px; font-weight: bold; color: {{ $stat['color'] }}; margin-right: 4px;">
+                                        ● {{ $stat['category'] }} ({{ number_format($stat['percent'], 0) }}%)
+                                    </span>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <!-- ROW 4: Top Student Borrowers & Daily Library Activity Graph -->
+        <table class="grid-table">
+            <tr>
+                <td width="55%">
+                    <div class="panel" style="height: 155px;">
+                        <div class="panel-title">Top Student Borrowers</div>
+                        <table class="infographic-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Course</th>
+                                    <th style="text-align: center;">Borrows</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($data['top_students']->take(4) as $student)
+                                    <tr>
+                                        <td><strong>{{ $student['name'] }}</strong><br><small style="color: #6b7280;">ID: {{ $student['library_id'] }}</small></td>
+                                        <td>{{ $student['course'] }}</td>
+                                        <td style="text-align: center; font-weight: bold; color: #16a085;">{{ $student['borrow_count'] }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="3" style="text-align: center; color: #9ca3af; padding: 12px;">No active borrowers this month.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
+                <td width="45%">
+                    <div class="panel" style="height: 155px;">
+                        <div class="panel-title">Daily Library Activity Timeline</div>
+                        <div style="text-align: center; margin-top: 6px;">
+                            <svg viewBox="0 0 240 85" style="width: 240px; height: 85px; display: inline-block;">
+                                <line x1="20" y1="12" x2="220" y2="12" stroke="#e6eee6" stroke-width="1" />
+                                <line x1="20" y1="36" x2="220" y2="36" stroke="#e6eee6" stroke-width="1" />
+                                <line x1="20" y1="60" x2="220" y2="60" stroke="#e6eee6" stroke-width="1" />
+                                
+                                <!-- Timeline polyline for borrows (teal) -->
+                                <polyline points="{{ trim($dailyPointsBorrows) }}" fill="none" stroke="#16a085" stroke-width="2" />
+                                <!-- Timeline polyline for returns (orange) -->
+                                <polyline points="{{ trim($dailyPointsReturns) }}" fill="none" stroke="#e67e22" stroke-width="2" />
+                                
+                                @foreach($dailyCoordinates as $pt)
+                                    <circle cx="{{ $pt['x'] }}" cy="{{ $pt['yB'] }}" r="2.5" fill="#ffffff" stroke="#16a085" stroke-width="1.5" />
+                                    <circle cx="{{ $pt['x'] }}" cy="{{ $pt['yR'] }}" r="2.5" fill="#ffffff" stroke="#e67e22" stroke-width="1.5" />
+                                    <text x="{{ $pt['x'] }}" y="76" font-size="7.5" font-family="DejaVu Sans" font-weight="bold" fill="#1e4d3a" text-anchor="middle">Day {{ $pt['label'] }}</text>
+                                @endforeach
+                            </svg>
+                            <div style="margin-top: 2px; text-align: center;">
+                                <span style="display: inline-block; font-size: 7px; font-weight: bold; color: #16a085; margin-right: 8px;">
+                                    — Borrows
                                 </span>
-                                <span style="display: inline-block; font-size: 7.5px; font-weight: bold; color: #e67e22;">
-                                    ● Returns ({{ number_format($returnPercent, 0) }}%)
+                                <span style="display: inline-block; font-size: 7px; font-weight: bold; color: #e67e22;">
+                                    — Returns
                                 </span>
                             </div>
                         </div>
@@ -510,68 +586,38 @@
             </tr>
         </table>
 
-        <!-- ROW 4: Auxiliary Services (Board Games & Computer Usage) -->
-        <table class="grid-table">
-            <tr>
-                <td width="55%">
-                    <div class="panel" style="height: 110px;">
-                        <div class="panel-title">Auxiliary Materials & Games</div>
-                        <table class="games-grid" style="margin-top: 2px;">
-                            <tr>
-                                <td>
-                                    <div class="game-pill">CHESS</div>
-                                    <div style="text-align: center; font-size: 7px; color: #4b5563; font-weight: bold; margin-top: 2px;">Active Play</div>
-                                </td>
-                                <td>
-                                    <div class="game-pill" style="background: #eef2f7; border-color: #cbd5e1; color: #2980b9;">SCRABBLE</div>
-                                    <div style="text-align: center; font-size: 7px; color: #4b5563; font-weight: bold; margin-top: 2px;">Word Building</div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <div class="game-pill" style="background: #fdf6ec; border-color: #fbd5b5; color: #d35400;">JENGA</div>
-                                    <div style="text-align: center; font-size: 7px; color: #4b5563; font-weight: bold; margin-top: 2px;">Tower Build</div>
-                                </td>
-                                <td>
-                                    <div class="game-pill" style="background: #fdf2f2; border-color: #fecaca; color: #c0392b;">SNAKES & LADDERS</div>
-                                    <div style="text-align: center; font-size: 7px; color: #4b5563; font-weight: bold; margin-top: 2px;">Table Roll</div>
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
-                </td>
-                <td width="45%">
-                    <div class="panel" style="height: 110px;">
-                        <div class="panel-title">Computer & Station Usage</div>
-                        <table class="computer-grid" style="margin-top: 4px;">
-                            <tr>
-                                @foreach($top5Programs->take(4) as $index => $program)
-                                    @php
-                                        $compPercent = max(5, round(($program['student_count'] / $programMax) * 95));
-                                        $dashVal = ($compPercent / 100) * 75.4;
-                                        $compColors = ['#c0392b', '#2980b9', '#d35400', '#16a085'];
-                                    @endphp
-                                    <td>
-                                        <svg viewBox="0 0 36 36" style="width: 32px; height: 32px; display: inline-block;">
-                                            <circle cx="18" cy="18" r="12" fill="none" stroke="#dcead7" stroke-width="3" />
-                                            <circle cx="18" cy="18" r="12" fill="none" stroke="{{ $compColors[$index % 4] }}" stroke-width="3" 
-                                                    stroke-dasharray="{{ $dashVal }} 75.4" 
-                                                    transform="rotate(-90 18 18)" />
-                                            <text x="18" y="21" font-size="7" font-family="DejaVu Sans" font-weight="bold" fill="#1e4d3a" text-anchor="middle">{{ $compPercent }}%</text>
-                                        </svg>
-                                        <div class="dial-label">{{ substr($program['program'], 0, 5) }}</div>
-                                    </td>
-                                @endforeach
-                            </tr>
-                        </table>
-                    </div>
-                </td>
-            </tr>
-        </table>
+        <!-- ROW 5: Most Borrowed Books (Top 10) -->
+        <div class="panel" style="margin-bottom: 8px;">
+            <div class="panel-title">Most Borrowed Books (Top 10)</div>
+            <table class="infographic-table">
+                <thead>
+                    <tr>
+                        <th width="30">Rank</th>
+                        <th>Book Title</th>
+                        <th>Author</th>
+                        <th width="100" style="text-align: center;">Borrow Tally</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($popularBooks->take(6) as $index => $book)
+                        <tr>
+                            <td><strong>#{{ $index + 1 }}</strong></td>
+                            <td><strong>{{ $book['title'] }}</strong></td>
+                            <td>{{ $book['author'] }}</td>
+                            <td style="text-align: center; font-weight: bold; color: #2980b9;">{{ $book['borrow_count'] }} borrows</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: #9ca3af; padding: 12px;">No borrowing activity recorded this month.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
 
         <!-- Infographic Footer Badge -->
         <div class="footer">
-            Generated on {{ now()->format('Y-m-d H:i:s') }} | JHCSC College Library Infographics Statistics Report | System Powered by JHCSC KNOWLY
+            Generated on {{ now()->format('Y-m-d H:i:s') }} | JHCSC College Library Infographics Statistics Report | System Powered by JHCSC KNOWLY Library
         </div>
     </div>
 
