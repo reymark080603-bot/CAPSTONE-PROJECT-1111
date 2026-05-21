@@ -206,7 +206,7 @@
                 <div class="lg:col-span-2 bg-white p-8 rounded-lg shadow-sm">
                     <div class="flex items-center justify-between mb-6">
                         <div>
-                            <h3 class="text-xl font-semibold text-gray-900">Books Distribution by Course</h3>
+                            <h3 class="text-xl font-semibold text-gray-900">Distribution of books by programs</h3>
                             <p id="book-status-summary" class="text-sm text-gray-500 mt-1">Loading distribution data...</p>
                         </div>
                         <div class="flex space-x-2">
