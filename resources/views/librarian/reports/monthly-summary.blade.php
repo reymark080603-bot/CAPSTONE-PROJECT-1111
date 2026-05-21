@@ -406,7 +406,7 @@
                 @endif
             </div>
             <div class="panel-card p-6 lg:col-span-5 flex flex-col justify-between">
-                <h3 class="panel-title">Resource Type by Borrowing Activity</h3>
+                <h3 class="panel-title">Borrowing activity per type of resources</h3>
                 <div class="text-center mt-4">
                     <svg viewBox="0 0 100 100" class="w-24 h-24 inline-block transform hover:scale-105 transition-transform duration-300">
                         <circle cx="50" cy="50" r="25" fill="none" stroke="#e2eee2" stroke-width="14" />

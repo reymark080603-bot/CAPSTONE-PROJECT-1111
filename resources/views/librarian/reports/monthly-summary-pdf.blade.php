@@ -487,7 +487,7 @@
                 </td>
                 <td width="45%">
                     <div class="panel" style="height: 155px;">
-                        <div class="panel-title">Resource Type by Borrowing Activity</div>
+                        <div class="panel-title">Borrowing activity per type of resources</div>
                         <div style="text-align: center; padding-top: 6px;">
                             <svg viewBox="0 0 100 100" style="width: 76px; height: 76px; display: inline-block;">
                                 <!-- Overlapping circle segments representing exact resource ratios -->
