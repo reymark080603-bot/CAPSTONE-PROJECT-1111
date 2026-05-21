@@ -236,12 +236,11 @@
         <div class="monthly-header p-6 md:p-8 mb-6 shadow-lg">
             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                 <div>
-                    <p class="text-xs font-bold uppercase tracking-[0.25em] text-[#8cd19e] mb-1">J.H. CERILLES STATE COLLEGE</p>
-                    <h1 class="text-3xl md:text-4xl font-extrabold uppercase tracking-wide">KNOWLY COLLEGE LIBRARY</h1>
-                    <div class="inline-block bg-[#8c2626] text-white font-bold text-xs px-3 py-1 rounded-full uppercase tracking-wider mt-3 shadow">
+                    <h1 class="text-3xl md:text-5xl font-black uppercase tracking-widest text-white drop-shadow-md">KNOWLY</h1>
+                    <div class="inline-block bg-[#8c2626] text-white font-bold text-xs px-4 py-1.5 rounded-full uppercase tracking-wider mt-3 shadow">
                         {{ $data['period']['month_name'] }} Statistics
                     </div>
-                    <p class="text-xs text-[#dcead7] mt-3 max-w-2xl leading-relaxed">
+                    <p class="text-xs text-[#dcead7] mt-3 max-w-2xl leading-relaxed font-medium">
                         This dynamic monthly report showcases registered student campus distribution, book assignments by program, learning resource borrow rates, and active daily transaction activities across the {{ $data['period']['month_name'] }} reporting period.
                     </p>
                 </div>

@@ -95,7 +95,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JHCSC Knowly College Library - {{ $data['period']['month_name'] }} Statistics</title>
+    <title>Knowly - {{ $data['period']['month_name'] }} Statistics</title>
     <style>
         @page {
             size: A4 portrait;
@@ -135,18 +135,10 @@
 
         .header h1 {
             margin: 0;
-            font-size: 16px;
-            letter-spacing: 0.05em;
+            font-size: 22px;
+            letter-spacing: 0.15em;
             color: #ffffff;
-            font-weight: bold;
-        }
-
-        .header h2 {
-            margin: 2px 0;
-            font-size: 12px;
-            letter-spacing: 0.1em;
-            color: #8cd19e;
-            font-weight: normal;
+            font-weight: 900;
         }
 
         .header .period {
@@ -354,10 +346,8 @@
 </head>
 <body>
     <div class="shell">
-        <!-- Main Library Header Badge -->
         <div class="header">
-            <h1>J.H. CERILLES STATE COLLEGE</h1>
-            <h2>KNOWLY COLLEGE LIBRARY</h2>
+            <h1>KNOWLY</h1>
             <div class="period">{{ $data['period']['month_name'] }} Statistics</div>
             <div class="intro-copy">
                 This monthly analytics dashboard presents active registered student demographics, book distribution by course, learning resource borrowings, and daily transaction activities for the {{ $data['period']['month_name'] }} reporting period.
@@ -617,7 +607,7 @@
 
         <!-- Infographic Footer Badge -->
         <div class="footer">
-            Generated on {{ now()->format('Y-m-d H:i:s') }} | JHCSC College Library Infographics Statistics Report | System Powered by JHCSC KNOWLY Library
+            Generated on {{ now()->format('Y-m-d H:i:s') }} | Knowly Infographics Statistics Report | System Powered by Knowly
         </div>
     </div>
 
