@@ -151,7 +151,7 @@
                                 <i class="fas fa-check-circle mr-1.5"></i>Available
                             </span>
                             <span class="px-4 py-1.5 text-sm font-medium rounded-full bg-blue-100 text-blue-800">
-                                {{ $book->course ?: ($book->program ?: 'General') }}
+                                {{ $book->resource_type === 'e_journal' ? 'E-Journal' : ($book->resource_type === 'thesis' ? 'Thesis' : 'Book') }}
                             </span>
                         </div>
                         

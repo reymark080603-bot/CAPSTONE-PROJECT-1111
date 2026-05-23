@@ -682,7 +682,12 @@ class BooksManager {
         if (!bookDetails) return;
 
         const coverUrl = this.getCoverUrl(book.cover_photo);
-        const program = book.course || book.program || 'General';
+        const resourceTypeMap = {
+            'e_journal': 'E-Journal',
+            'thesis': 'Thesis',
+            'book': 'Book'
+        };
+        const resourceType = resourceTypeMap[book.resource_type] || 'Book';
         const year = book.published_year || '---';
         const course = book.course || 'All';
         const pages = book.pages || '---';
@@ -737,7 +742,7 @@ class BooksManager {
                                 Open Access
                             </span>
                             <span class="px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full">
-                                ${this.escapeHtml(program)}
+                                ${this.escapeHtml(resourceType)}
                             </span>
                         </div>
                     </div>
