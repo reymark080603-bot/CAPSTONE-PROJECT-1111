@@ -313,8 +313,8 @@ class LoanService
                     'borrowed_date' => $loan->borrowed_date,
                     'due_date' => $loan->due_date,
                     'is_overdue' => $loan->due_date < now(),
-                    'days_remaining' => $loan->due_date >= now() ? now()->diffInDays($loan->due_date) : 0,
-                    'days_overdue' => $loan->due_date < now() ? now()->diffInDays($loan->due_date) : 0,
+                    'days_remaining' => $loan->days_remaining,
+                    'days_overdue' => $loan->days_past_due,
                     'renewal_count' => $loan->renewal_count ?? 0
                 ];
             });

@@ -334,8 +334,8 @@ class StudentDashboardController extends Controller
                     'borrowed_date' => $borrow->borrowed_date,
                     'due_date' => $borrow->due_date,
                     'is_overdue' => $borrow->due_date < now(),
-                    'days_remaining' => $borrow->due_date >= now() ? now()->diffInDays($borrow->due_date) : 0,
-                    'days_overdue' => $borrow->due_date < now() ? now()->diffInDays($borrow->due_date) : 0
+                    'days_remaining' => $borrow->days_remaining,
+                    'days_overdue' => $borrow->days_past_due
                 ];
             });
 

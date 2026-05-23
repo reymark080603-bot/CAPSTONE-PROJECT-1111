@@ -137,8 +137,12 @@ class BorrowRecord extends Model
             return 0;
         }
         
+        if (now() >= $this->due_date) {
+            return 0;
+        }
+        
         $daysRemaining = (int) now()->diffInDays($this->due_date, false);
-        return max(0, $daysRemaining);
+        return max(1, $daysRemaining);
     }
     
     /**
