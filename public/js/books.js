@@ -682,7 +682,7 @@ class BooksManager {
         if (!bookDetails) return;
 
         const coverUrl = this.getCoverUrl(book.cover_photo);
-        const category = book.category || 'General';
+        const program = book.course || book.program || 'General';
         const year = book.published_year || '---';
         const course = book.course || 'All';
         const pages = book.pages || '---';
@@ -737,7 +737,7 @@ class BooksManager {
                                 Open Access
                             </span>
                             <span class="px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full">
-                                ${this.escapeHtml(category)}
+                                ${this.escapeHtml(program)}
                             </span>
                         </div>
                     </div>
