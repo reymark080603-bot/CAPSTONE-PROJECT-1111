@@ -67,7 +67,7 @@
                                 <form action="{{ route('logout') }}" method="POST" class="block">
                                     @csrf
                                     <button type="submit" class="w-full text-left px-2 py-1 hover:bg-gray-100 rounded text-red-600">Logout</button>
-                                </form>
+                                </form> 
                             </div>
                         </div>
                     </div>
@@ -137,7 +137,7 @@
                     <!-- Search Bar -->
                     <div class="library-search-wrap flex-1 min-w-[220px] sm:min-w-[280px]">
                         <div class="relative">
-                            <label for="search-books" class="sr-only">Search books by title, author, or category</label>
+                            <label for="search-books" class="sr-only">Search books by title, author</label>
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <i class="fas fa-search text-gray-400" aria-hidden="true"></i>
                                 <span class="sr-only">Search icon</span>
@@ -145,10 +145,10 @@
                             <input type="text" 
                                 id="search-books"
                                 name="search"
-                                placeholder="Search books by title, author, or category"
+                                placeholder="Search books by title, author"
                                 class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" 
                                 value="{{ request('search') }}"
-                                aria-label="Search books by title, author, or category">
+                                aria-label="Search books by title, author">
                         </div>
                     </div>
                     
