@@ -359,15 +359,15 @@ class BooksManager {
             // Put All Books search results at the very top of the arrangement
             this.rearrangeSectionsForSearch(true);
         } else {
-            // No search term - show user's course section and hide main grid
-            console.log('No search term - showing user course section');
-            this.showUserCourseSection();
+            // No search term - hide all course specific sections and show the main grid
+            console.log('No search term - hiding course sections, showing main grid');
+            this.hideCourseSections();
             this.toggleRecommendedSection(true);
             
-            // Hide the main books grid
+            // Show the main books grid
             const booksGrid = document.getElementById('books-grid');
             if (booksGrid) {
-                booksGrid.style.display = 'none';
+                booksGrid.style.display = 'grid';
             }
             
             // Reset section title
