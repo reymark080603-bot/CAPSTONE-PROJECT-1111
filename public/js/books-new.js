@@ -1017,10 +1017,14 @@ class BooksManager {
             if (ejournalSection) ejournalSection.style.display = 'none';
             if (thesisSection) thesisSection.style.display = 'none';
             
-            // Put #all-books-section at the very top of mainContent
-            const firstChild = mainContent.firstElementChild;
-            if (firstChild && firstChild !== allBooksSection) {
-                mainContent.insertBefore(allBooksSection, firstChild);
+            // Put #all-books-section immediately below the filter controls (which is children[1])
+            // children[0] is the page title wrapper, children[1] is the filter controls wrapper.
+            // So we insert it before children[2].
+            const targetBefore = mainContent.children[2];
+            if (targetBefore && targetBefore !== allBooksSection) {
+                mainContent.insertBefore(allBooksSection, targetBefore);
+            } else if (!targetBefore) {
+                mainContent.appendChild(allBooksSection);
             }
         } else {
             // No search: restore original arrangement: 1. Recommended, 2. E-Journals, 3. Theses, 4. All Books at the very bottom
