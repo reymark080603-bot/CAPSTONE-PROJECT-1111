@@ -180,15 +180,11 @@ class BulkUploadController extends Controller
                     }
                 }
 
-                // Attempt server-side cover generation whenever no frontend thumbnail was provided.
+                $shouldQueueCover = false;
+                // Attempt server-side cover generation asynchronously whenever no frontend thumbnail was provided.
                 // PDFs are now stored on local disk so Imagick/pdftoppm can always read them.
                 if (!$hasFrontendThumb) {
-                    $fullPdfPath    = Storage::disk('public')->path($filePath);
-                    $coverImagePath = $this->pdfCoverService->generateCover($fullPdfPath, $metadata['title']);
-                    if ($coverImagePath) {
-                        $coverToSave = $coverImagePath;
-                        $coversGenerated++;
-                    }
+                    $shouldQueueCover = true;
                 }
 
                 $bookData = [
@@ -216,6 +212,10 @@ class BulkUploadController extends Controller
 
                 $uploadedCount++;
                 $createdBookModels[] = $book;
+
+                if ($shouldQueueCover) {
+                    \App\Jobs\GenerateBookCoverJob::dispatch($book->id);
+                }
 
                 $responseCoverUrl = str_starts_with($coverToSave, 'http')
                     ? $coverToSave

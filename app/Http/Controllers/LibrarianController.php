@@ -951,6 +951,7 @@ class LibrarianController extends Controller
 
             foreach ($request->file('files') as $index => $file) {
                 try {
+                    $shouldQueueCover = false;
                     // Extract title from filename (remove extension)
                     $title = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
                     $originalName = $file->getClientOriginalName();
@@ -1011,17 +1012,16 @@ class LibrarianController extends Controller
                             }
                         }
 
-                        // If this is a PDF and no manual cover is mapped, auto-generate from first page.
+                        // If this is a PDF and no manual cover is mapped, queue background generation.
                         if ($type === 'pdf' && empty($book->cover_photo)) {
-                            $generatedCover = $this->generatePdfCoverFromStoredPath($path, $title);
-                            if (!empty($generatedCover)) {
-                                if (\Illuminate\Support\Facades\Schema::hasColumn('books', 'cover_image')) {
-                                    $book->cover_image = $generatedCover;
-                                }
-                                if (\Illuminate\Support\Facades\Schema::hasColumn('books', 'cover_photo')) {
-                                    $book->cover_photo = $generatedCover;
-                                }
+                            $defaultCover = 'covers/default-book.png';
+                            if (\Illuminate\Support\Facades\Schema::hasColumn('books', 'cover_image')) {
+                                $book->cover_image = $defaultCover;
                             }
+                            if (\Illuminate\Support\Facades\Schema::hasColumn('books', 'cover_photo')) {
+                                $book->cover_photo = $defaultCover;
+                            }
+                            $shouldQueueCover = true;
                         }
                     } else {
                         throw new \Exception("Unsupported file type: {$extension}");
@@ -1030,6 +1030,10 @@ class LibrarianController extends Controller
                     $book->save();
                     $uploadedCount++;
                     $createdIds[] = $book->id;
+
+                    if ($shouldQueueCover) {
+                        \App\Jobs\GenerateBookCoverJob::dispatch($book->id);
+                    }
                     
                 } catch (\Exception $e) {
                     $errors[] = "Failed to upload {$file->getClientOriginalName()}: " . $e->getMessage();

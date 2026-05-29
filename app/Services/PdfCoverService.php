@@ -134,7 +134,9 @@ class PdfCoverService
 
     private function optimizeImage(string $imagePath): void
     {
-        exec("optipng -o2 " . escapeshellarg($imagePath) . " 2>&1");
+        if (env('OPTIMIZE_COVERS', false)) {
+            exec("optipng -o2 " . escapeshellarg($imagePath) . " 2>&1");
+        }
     }
 
     private function generateCoverFilename(string $baseName): string
