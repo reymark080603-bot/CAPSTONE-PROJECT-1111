@@ -1011,22 +1011,23 @@ class BooksManager {
         if (!allBooksSection || !mainContent) return;
 
         if (isSearchActive) {
-            // Search active: arrange as: 1. All Books (Search Results), 2. E-Journals, 3. Theses
-            console.log('Rearranging sections: Search results first');
+            // Search active: Only show All Books/Search Results section and hide other static sections
+            console.log('Search active: showing search results only, hiding static sections');
             
-            // Put #all-books-section before recommended or ejournal
-            const targetBefore = recommendedSection || ejournalSection || thesisSection;
-            if (targetBefore) {
-                mainContent.insertBefore(allBooksSection, targetBefore);
-            }
+            if (ejournalSection) ejournalSection.style.display = 'none';
+            if (thesisSection) thesisSection.style.display = 'none';
             
-            // Ensure e-journals is before theses
-            if (ejournalSection && thesisSection) {
-                mainContent.insertBefore(ejournalSection, thesisSection);
+            // Put #all-books-section at the very top of mainContent
+            const firstChild = mainContent.firstElementChild;
+            if (firstChild && firstChild !== allBooksSection) {
+                mainContent.insertBefore(allBooksSection, firstChild);
             }
         } else {
             // No search: restore original arrangement: 1. Recommended, 2. E-Journals, 3. Theses, 4. All Books at the very bottom
-            console.log('Restoring original section arrangement');
+            console.log('Restoring original section arrangement and displaying static sections');
+            
+            if (ejournalSection) ejournalSection.style.display = '';
+            if (thesisSection) thesisSection.style.display = '';
             
             // Put E-journals before Theses
             if (ejournalSection && thesisSection) {
