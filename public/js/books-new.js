@@ -355,6 +355,9 @@ class BooksManager {
             if (allBooksTitle) {
                 allBooksTitle.textContent = `Search Results (${results.length})`;
             }
+
+            // Put All Books search results at the very top of the arrangement
+            this.rearrangeSectionsForSearch(true);
         } else {
             // No search term - show user's course section and hide main grid
             console.log('No search term - showing user course section');
@@ -372,6 +375,9 @@ class BooksManager {
             if (allBooksTitle) {
                 allBooksTitle.textContent = 'All Books';
             }
+
+            // Restore original section arrangement
+            this.rearrangeSectionsForSearch(false);
         }
         
         // Render results
@@ -989,6 +995,45 @@ class BooksManager {
         const indicator = document.getElementById('filter-indicator');
         if (indicator) {
             indicator.remove();
+        }
+
+        // Restore original section arrangement
+        this.rearrangeSectionsForSearch(false);
+    }
+
+    rearrangeSectionsForSearch(isSearchActive) {
+        const allBooksSection = document.getElementById('all-books-section');
+        const ejournalSection = document.getElementById('ejournal-section');
+        const thesisSection = document.getElementById('thesis-section');
+        const recommendedSection = document.getElementById('recommended-section');
+        const mainContent = document.querySelector('.main-content');
+        
+        if (!allBooksSection || !mainContent) return;
+
+        if (isSearchActive) {
+            // Search active: arrange as: 1. All Books (Search Results), 2. E-Journals, 3. Theses
+            console.log('Rearranging sections: Search results first');
+            
+            // Put #all-books-section before recommended or ejournal
+            const targetBefore = recommendedSection || ejournalSection || thesisSection;
+            if (targetBefore) {
+                mainContent.insertBefore(allBooksSection, targetBefore);
+            }
+            
+            // Ensure e-journals is before theses
+            if (ejournalSection && thesisSection) {
+                mainContent.insertBefore(ejournalSection, thesisSection);
+            }
+        } else {
+            // No search: restore original arrangement: 1. Recommended, 2. E-Journals, 3. Theses, 4. All Books at the very bottom
+            console.log('Restoring original section arrangement');
+            
+            // Put E-journals before Theses
+            if (ejournalSection && thesisSection) {
+                mainContent.insertBefore(ejournalSection, thesisSection);
+            }
+            // Put All Books at the very bottom
+            mainContent.appendChild(allBooksSection);
         }
     }
     
