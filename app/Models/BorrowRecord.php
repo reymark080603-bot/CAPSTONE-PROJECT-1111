@@ -60,18 +60,7 @@ class BorrowRecord extends Model
         return $query->where('status', 'returned');
     }
 
-    protected static function boot()
-    {
-        parent::boot();
-
-        // Auto-check for overdue books when the model is accessed
-        static::retrieved(function ($borrowRecord) {
-            // Check if this specific record is overdue and auto-return if needed
-            if ($borrowRecord->status === 'borrowed' && $borrowRecord->due_date < now()) {
-                $borrowRecord->autoReturnIfDue();
-            }
-        });
-    }
+    // Overdue auto-return is handled at request lifecycle startup via Middleware for peak performance
 
     /**
      * Auto-return the book if past due date

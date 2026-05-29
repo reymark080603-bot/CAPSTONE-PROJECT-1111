@@ -484,6 +484,7 @@ class HomeController extends Controller
             
             // Open access system - books remain available, no reservation logic needed
             $message = 'Book returned successfully!';
+            \Illuminate\Support\Facades\Cache::flush();
             
             return response()->json([
                 'success' => true,
@@ -614,90 +615,99 @@ class HomeController extends Controller
     public function getRecommendedBooks(Request $request)
     {
         $user = Auth::guard('student')->user();
-        
-        // Get course-specific books first
-        $courseSpecificBooks = collect([]);
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
         $userCourse = $user->course_name ?? $user->course;
-        
-        if (!empty($userCourse)) {
-            $userCourse = trim($userCourse);
+        $cacheKey = 'recommended_books_course_' . md5(trim((string)$userCourse));
+
+        $recommendedBooksData = \Illuminate\Support\Facades\Cache::remember($cacheKey, 600, function () use ($user, $userCourse) {
+            // Get course-specific books first
+            $courseSpecificBooks = collect([]);
             
-            // Course mapping for common abbreviations
-            $courseMappings = [
-                'BSIT' => 'Information Technology',
-                'BSN' => 'Nursing',
-                'BSNURSING' => 'Nursing',
-                'NURSING' => 'Nursing',
-                'BSHM' => 'Hospitality Management',
-                'HM' => 'Hospitality Management',
-                'BSED' => 'Education',
-                'BS EDUC' => 'Education',
-                'EDUCATION' => 'Education',
-                'BSEntrep' => 'Entrepreneurship',
-                'BS ENTREP' => 'Entrepreneurship',
-                'ENTREP' => 'Entrepreneurship',
-                'BS ENTREPRENEURSHIP' => 'Entrepreneurship'
-            ];
+            if (!empty($userCourse)) {
+                $userCourse = trim($userCourse);
+                
+                // Course mapping for common abbreviations
+                $courseMappings = [
+                    'BSIT' => 'Information Technology',
+                    'BSN' => 'Nursing',
+                    'BSNURSING' => 'Nursing',
+                    'NURSING' => 'Nursing',
+                    'BSHM' => 'Hospitality Management',
+                    'HM' => 'Hospitality Management',
+                    'BSED' => 'Education',
+                    'BS EDUC' => 'Education',
+                    'EDUCATION' => 'Education',
+                    'BSEntrep' => 'Entrepreneurship',
+                    'BS ENTREP' => 'Entrepreneurship',
+                    'ENTREP' => 'Entrepreneurship',
+                    'BS ENTREPRENEURSHIP' => 'Entrepreneurship'
+                ];
+                
+                // Normalize user course
+                $normalizedUserCourse = strtoupper($userCourse);
+                $mappedCourse = $courseMappings[$normalizedUserCourse] ?? $userCourse;
+                
+                $courseSpecificBooks = Book::where(function($query) use ($userCourse, $mappedCourse) {
+                        // Try exact match with original user course
+                        $query->where('course', $userCourse);
+                        
+                        // Try exact match with mapped course
+                        if ($mappedCourse !== $userCourse) {
+                            $query->orWhere('course', $mappedCourse);
+                        }
+                        
+                        // Try partial matches with all variations
+                        foreach ([$userCourse, $mappedCourse] as $course) {
+                            $query->orWhere('course', 'LIKE', '%' . $course . '%');
+                            $query->orWhereRaw('LOWER(course) LIKE ?', ['%' . strtolower($course) . '%']);
+                        }
+                    })
+                    ->where('availability_status', 'available')
+                    ->with(['categories', 'authors', 'publisher'])
+                    ->orderBy('created_at', 'desc')
+                    ->limit(6) // Limit course-specific books
+                    ->get();
+            }
             
-            // Normalize user course
-            $normalizedUserCourse = strtoupper($userCourse);
-            $mappedCourse = $courseMappings[$normalizedUserCourse] ?? $userCourse;
-            
-            $courseSpecificBooks = Book::where(function($query) use ($userCourse, $mappedCourse) {
-                    // Try exact match with original user course
-                    $query->where('course', $userCourse);
-                    
-                    // Try exact match with mapped course
-                    if ($mappedCourse !== $userCourse) {
-                        $query->orWhere('course', $mappedCourse);
-                    }
-                    
-                    // Try partial matches with all variations
-                    foreach ([$userCourse, $mappedCourse] as $course) {
-                        $query->orWhere('course', 'LIKE', '%' . $course . '%');
-                        $query->orWhereRaw('LOWER(course) LIKE ?', ['%' . strtolower($course) . '%']);
-                    }
-                })
-                ->where('availability_status', 'available')
+            // Get general available books to fill remaining slots
+            $generalBooks = Book::where('availability_status', 'available')
                 ->with(['categories', 'authors', 'publisher'])
                 ->orderBy('created_at', 'desc')
-                ->limit(6) // Limit course-specific books
+                ->limit(12)
                 ->get();
-        }
-        
-        // Get general available books to fill remaining slots
-        $generalBooks = Book::where('availability_status', 'available')
-            ->with(['categories', 'authors', 'publisher'])
-            ->orderBy('created_at', 'desc')
-            ->limit(12)
-            ->get();
-        
-        // For BSN students, only show Nursing books (no general books)
-        if (strtoupper($userCourse) === 'BSN') {
-            // BSN students get ONLY Nursing books
-            $recommendedBooks = $courseSpecificBooks;
-        } else {
-            // Other students get course-specific + general books
-            $recommendedBooks = $courseSpecificBooks;
-            $generalBooks = $generalBooks->reject(function($generalBook) use ($courseSpecificBooks) {
-                return $courseSpecificBooks->contains('id', $generalBook->id);
-            });
             
-            // Fill remaining slots with general books
-            $remainingSlots = 12 - $courseSpecificBooks->count();
-            if ($remainingSlots > 0) {
-                $recommendedBooks = $recommendedBooks->merge($generalBooks->take($remainingSlots));
+            // For BSN students, only show Nursing books (no general books)
+            if (strtoupper((string)$userCourse) === 'BSN') {
+                // BSN students get ONLY Nursing books
+                $recommendedBooks = $courseSpecificBooks;
+            } else {
+                // Other students get course-specific + general books
+                $recommendedBooks = $courseSpecificBooks;
+                $generalBooks = $generalBooks->reject(function($generalBook) use ($courseSpecificBooks) {
+                    return $courseSpecificBooks->contains('id', $generalBook->id);
+                });
+                
+                // Fill remaining slots with general books
+                $remainingSlots = 12 - $courseSpecificBooks->count();
+                if ($remainingSlots > 0) {
+                    $recommendedBooks = $recommendedBooks->merge($generalBooks->take($remainingSlots));
+                }
             }
-        }
-            
-        $recommendedBooks->transform(function ($book) {
-            $book->cover_photo = $book->display_cover_url;
-            return $book;
+                
+            $recommendedBooks->transform(function ($book) {
+                $book->cover_photo = $book->display_cover_url;
+                return $book;
+            });
+
+            return $recommendedBooks;
         });
 
         return response()->json([
             'user_course' => $userCourse,
-            'recommended' => $recommendedBooks
+            'recommended' => $recommendedBooksData
         ]);
     }
     
@@ -706,18 +716,20 @@ class HomeController extends Controller
      */
     public function getRecentBooks(Request $request)
     {
-        $user = Auth::guard('student')->user();
+        $recentBooks = \Illuminate\Support\Facades\Cache::remember('recent_books_list', 600, function () {
+            // Get recently added books (most recent 12 books, ordered by creation date)
+            // Changed from 30-day filter to get the most recent books regardless of age
+            $books = Book::orderBy('created_at', 'desc')
+                ->with(['categories', 'authors', 'publisher'])
+                ->limit(12) // Get more books for carousel
+                ->get();
 
-        // Get recently added books (most recent 12 books, ordered by creation date)
-        // Changed from 30-day filter to get the most recent books regardless of age
-        $recentBooks = Book::orderBy('created_at', 'desc')
-            ->with(['categories', 'authors', 'publisher'])
-            ->limit(12) // Get more books for carousel
-            ->get();
+            $books->transform(function ($book) {
+                $book->cover_photo = $book->display_cover_url;
+                return $book;
+            });
 
-        $recentBooks->transform(function ($book) {
-            $book->cover_photo = $book->display_cover_url;
-            return $book;
+            return $books;
         });
 
         return response()->json([
@@ -908,6 +920,7 @@ class HomeController extends Controller
             ]);
 
             $this->librarianNotificationService->notifyBookBorrowed($user, $book, $borrowRecord);
+            \Illuminate\Support\Facades\Cache::flush();
             
             return response()->json([
                 'success' => true,

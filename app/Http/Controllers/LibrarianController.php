@@ -1045,6 +1045,8 @@ class LibrarianController extends Controller
                 ], 422);
             }
 
+            \Illuminate\Support\Facades\Cache::flush();
+
             return response()->json([
                 'success' => true,
                 'message' => "Successfully uploaded {$uploadedCount} files",
@@ -1300,6 +1302,7 @@ class LibrarianController extends Controller
 
         try {
             $book = Book::create($bookData);
+            \Illuminate\Support\Facades\Cache::flush();
             
             // Sync author relationships if provided
             if (!empty($authorIds)) {
@@ -1440,6 +1443,7 @@ class LibrarianController extends Controller
 
         try {
             $book->update($bookData);
+            \Illuminate\Support\Facades\Cache::flush();
             
             // Sync author relationships if provided
             if (isset($authorIds)) {
@@ -1494,6 +1498,7 @@ class LibrarianController extends Controller
             $book->categories()->detach();
 
             $book->delete();
+            \Illuminate\Support\Facades\Cache::flush();
 
             DB::commit();
 

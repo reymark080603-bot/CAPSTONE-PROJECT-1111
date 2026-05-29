@@ -21,7 +21,10 @@ return Application::configure(basePath: dirname(__DIR__))
             '/librarian/login'
         ]);
 
-        $middleware->web(\App\Http\Middleware\SetLocale::class);
+        $middleware->web([
+            \App\Http\Middleware\SetLocale::class,
+            \App\Http\Middleware\AutoReturnOverdueLoans::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
