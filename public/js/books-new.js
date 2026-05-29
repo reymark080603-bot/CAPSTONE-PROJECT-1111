@@ -260,7 +260,7 @@ class BooksManager {
         }
         
         // Extract only from original Blade template, not from dynamically created elements
-        const bookElements = document.querySelectorAll('#books-grid > .book-card');
+        const bookElements = document.querySelectorAll('.book-card');
         console.log('Found original book elements:', bookElements.length);
         
         // Use a Map to ensure unique books by ID

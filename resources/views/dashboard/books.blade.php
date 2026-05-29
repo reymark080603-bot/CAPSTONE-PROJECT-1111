@@ -373,7 +373,18 @@
 
                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3">
                     @forelse($eJournalResources as $resource)
-                        <div class="book-card flex-shrink-0 w-full ejournal-card">
+                        <div class="book-card flex-shrink-0 w-full ejournal-card"
+                             data-book-id="{{ $resource->id }}"
+                             data-book-title="{{ $resource->title }}"
+                             data-book-author="{{ $resource->author ?? 'Unknown Author' }}"
+                             data-book-category="{{ $resource->category ?? 'General' }}"
+                             data-book-resource-type="{{ $resource->resource_type ?? 'e_journal' }}"
+                             data-book-course="{{ $resource->course ?? '' }}"
+                             data-book-program="{{ $resource->program ?? '' }}"
+                             data-book-year-level="{{ $resource->year_level ?? '' }}"
+                             data-book-published-year="{{ $resource->published_year ?? '' }}"
+                             data-book-description="{{ $resource->description ?? '' }}"
+                             data-book-cover="{{ $resource->display_cover_url ?? '' }}">
                             <div class="relative group">
                                 <div class="book-cover relative bg-gray-100 rounded-lg shadow-md overflow-hidden h-56 sm:h-60 md:h-64 hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
                                     <span class="absolute top-2 left-2 z-10 px-2 py-1 rounded-full bg-white/90 text-[10px] font-semibold text-gray-700 uppercase tracking-wide">E JOURNAL</span>
@@ -411,7 +422,18 @@
 
                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3">
                     @forelse($thesisResources as $resource)
-                        <div class="book-card flex-shrink-0 w-full">
+                        <div class="book-card flex-shrink-0 w-full"
+                             data-book-id="{{ $resource->id }}"
+                             data-book-title="{{ $resource->title }}"
+                             data-book-author="{{ $resource->author ?? 'Unknown Author' }}"
+                             data-book-category="{{ $resource->category ?? 'General' }}"
+                             data-book-resource-type="{{ $resource->resource_type ?? 'thesis' }}"
+                             data-book-course="{{ $resource->course ?? '' }}"
+                             data-book-program="{{ $resource->program ?? '' }}"
+                             data-book-year-level="{{ $resource->year_level ?? '' }}"
+                             data-book-published-year="{{ $resource->published_year ?? '' }}"
+                             data-book-description="{{ $resource->description ?? '' }}"
+                             data-book-cover="{{ $resource->display_cover_url ?? '' }}">
                             <div class="relative group">
                                 <div class="book-cover relative bg-gray-100 rounded-lg shadow-md overflow-hidden h-56 sm:h-60 md:h-64 hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
                                     <span class="absolute top-2 left-2 z-10 px-2 py-1 rounded-full bg-white/90 text-[10px] font-semibold text-gray-700 uppercase tracking-wide">THESIS</span>
