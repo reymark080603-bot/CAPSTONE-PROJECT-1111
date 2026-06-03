@@ -64,7 +64,7 @@ if ($yearLevelCount > 0) {
     echo "\nYear Levels:\n";
     $yearLevels = \Illuminate\Support\Facades\DB::table('year_levels')->get();
     foreach ($yearLevels as $yearLevel) {
-        echo "- ID: {$yearLevel->id}, Name: {$yearLevel->name}\n";
+        echo "- ID: {$yearLevel->id}, Level: {$yearLevel->level}\n";
     }
 }
 
