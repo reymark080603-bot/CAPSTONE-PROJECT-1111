@@ -32,6 +32,11 @@ return new class extends Migration
     {
         echo "Starting aggressive duplicate cleanup...\n";
         
+        $isSqlite = DB::getDriverName() === 'sqlite';
+        $groupConcatSql = $isSqlite 
+            ? 'GROUP_CONCAT(a.name) as author_names' 
+            : 'GROUP_CONCAT(a.name ORDER BY a.name) as author_names';
+
         // Get ALL books with their authors
         $allBooks = DB::table('books as b')
             ->leftJoin('author_book as ab', 'b.id', '=', 'ab.book_id')
@@ -40,7 +45,7 @@ return new class extends Migration
                 'b.id', 
                 'b.title', 
                 'b.created_at',
-                DB::raw('GROUP_CONCAT(a.name ORDER BY a.name) as author_names'),
+                DB::raw($groupConcatSql),
                 DB::raw('COUNT(ab.author_id) as author_count')
             )
             ->groupBy('b.id', 'b.title', 'b.created_at')
@@ -52,6 +57,14 @@ return new class extends Migration
         $totalDeleted = 0;
 
         foreach ($allBooks as $book) {
+            if ($isSqlite && $book->author_names) {
+                // In SQLite, GROUP_CONCAT doesn't support ORDER BY. 
+                // We split and sort the author names to ensure consistent key comparison.
+                $names = explode(',', $book->author_names);
+                sort($names);
+                $book->author_names = implode(',', $names);
+            }
+
             // Handle books with no authors
             $authorName = $book->author_names ?: 'Unknown Author';
             

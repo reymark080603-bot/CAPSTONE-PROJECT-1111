@@ -30,6 +30,11 @@ return new class extends Migration
      */
     private function cleanupDuplicateBooks(): void
     {
+        $isSqlite = DB::getDriverName() === 'sqlite';
+        $groupConcatSql = $isSqlite 
+            ? 'GROUP_CONCAT(b.id) as all_ids' 
+            : 'GROUP_CONCAT(b.id ORDER BY b.created_at DESC) as all_ids';
+
         // Step 1: Find exact duplicates using author relationships
         $duplicates = DB::table('books as b')
             ->join('author_book as ab', 'b.id', '=', 'ab.book_id')
@@ -39,7 +44,7 @@ return new class extends Migration
                 'a.name as author_name',
                 DB::raw('COUNT(*) as duplicate_count'),
                 DB::raw('MIN(b.id) as keep_id'),
-                DB::raw('GROUP_CONCAT(b.id ORDER BY b.created_at DESC) as all_ids')
+                DB::raw($groupConcatSql)
             )
             ->groupBy('b.title', 'a.name')
             ->having('duplicate_count', '>', 1)
@@ -50,6 +55,12 @@ return new class extends Migration
         foreach ($duplicates as $duplicate) {
             // Get all IDs for this duplicate group
             $allIds = explode(',', $duplicate->all_ids);
+            
+            if ($isSqlite) {
+                // In SQLite, GROUP_CONCAT doesn't support ORDER BY. 
+                // We sort them descending numerically to get the newest (highest) IDs first.
+                rsort($allIds);
+            }
             
             // Remove the first ID (the one we want to keep - most recent)
             $keepId = array_shift($allIds);
