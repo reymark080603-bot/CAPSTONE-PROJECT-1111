@@ -4,5 +4,11 @@ nixPkgs = ["php82", "poppler_utils", "imagemagick", "ghostscript"]
 [providers.php]
 extensions = ["gd", "imagick", "pdo_mysql", "pdo", "bcmath", "mbstring"]
 
+[phases.build]
+cmds = [
+    "composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader",
+    "npm install && npm run build"
+]
+
 [start]
 cmd = "bash start.sh"
