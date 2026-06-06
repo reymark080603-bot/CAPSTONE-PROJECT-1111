@@ -28,18 +28,31 @@ class LibrarianSeeder extends Seeder
 
         $nameParts = explode(' ', trim($adminName), 2);
 
-        // Create or update the deployment admin/librarian account.
-        User::updateOrCreate(
-            ['email' => $adminEmail],
-            [
+        // Create or update using DB to bypass Eloquent 'hashed' cast double-hashing
+        $existing = DB::table('users')->where('email', $adminEmail)->first();
+        if ($existing) {
+            DB::table('users')->where('email', $adminEmail)->update([
                 'name' => $adminName,
                 'firstname' => $nameParts[0] ?? $adminName,
                 'lastname' => $nameParts[1] ?? '',
                 'password' => Hash::make($adminPassword),
                 'role_id' => $librarianRole->id,
                 'email_verified_at' => now(),
-            ]
-        );
+                'updated_at' => now(),
+            ]);
+        } else {
+            DB::table('users')->insert([
+                'name' => $adminName,
+                'firstname' => $nameParts[0] ?? $adminName,
+                'lastname' => $nameParts[1] ?? '',
+                'email' => $adminEmail,
+                'password' => Hash::make($adminPassword),
+                'role_id' => $librarianRole->id,
+                'email_verified_at' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
         $this->command->info('Admin/librarian account created successfully!');
         $this->command->info('Name: ' . $adminName);
