@@ -15,9 +15,9 @@ class LibrarianSeeder extends Seeder
      */
     public function run(): void
     {
-        $adminEmail = env('ADMIN_EMAIL', 'mark123@gmail.com');
-        $adminPassword = env('ADMIN_PASSWORD', 'Mark87654321');
-        $adminName = env('ADMIN_NAME', 'Mark Talawan');
+        $adminEmail = env('ADMIN_EMAIL', 'JHCSCLibrarian@gmail.com');
+        $adminPassword = env('ADMIN_PASSWORD', 'JHCSCLib2026');
+        $adminName = env('ADMIN_NAME', 'Shienalie S. Lubon');
 
         // The deployed admin account uses the librarian role because admin and librarian are the same user type.
         $librarianRole = DB::table('roles')->where('name', 'librarian')->first();

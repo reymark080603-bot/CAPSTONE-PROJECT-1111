@@ -139,9 +139,6 @@
                             >
                             <span class="ml-2 text-sm text-gray-700">Remember me</span>
                         </label>
-                        <a href="{{ url('password/reset') }}" class="text-sm font-medium text-emerald-600 hover:text-emerald-700 transition-colors">
-                            Forgot password?
-                        </a>
                     </div>
 
                     <!-- Login Button -->

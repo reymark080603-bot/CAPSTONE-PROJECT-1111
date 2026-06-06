@@ -17,7 +17,7 @@ class ViewLibrarianInfo extends Command
             return 0;
         }
 
-        $email = $this->argument('email') ?? 'mark123@gmail.com';
+        $email = $this->argument('email') ?? 'JHCSCLibrarian@gmail.com';
         $user = User::where('email', $email)->first();
 
         if (!$user) {
