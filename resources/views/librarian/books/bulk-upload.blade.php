@@ -479,8 +479,8 @@ $(document).ready(function() {
                 </div>
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div class="text-center p-3 bg-white rounded-lg shadow-sm">
-                        <div class="text-2xl font-bold text-blue-600">${data.covers_generated || 0}</div>
-                        <div class="text-xs text-gray-500">Covers Generated</div>
+                        <div class="text-2xl font-bold text-blue-600">${data.uploaded}</div>
+                        <div class="text-xs text-gray-500">Covers Queued</div>
                     </div>
                     <div class="text-center p-3 bg-white rounded-lg shadow-sm">
                         <div class="text-2xl font-bold text-yellow-600">${data.duplicates_skipped || 0}</div>
