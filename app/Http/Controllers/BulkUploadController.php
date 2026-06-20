@@ -146,46 +146,9 @@ class BulkUploadController extends Controller
                     throw new \Exception('Failed to store PDF file.');
                 }
 
-                $coverToSave      = self::DEFAULT_COVER;
-                $thumbnails       = $request->input('thumbnails', []);
-                $hasFrontendThumb = false;
-
-                if (!empty($thumbnails[$originalName])) {
-                    try {
-                        $base64Data = $thumbnails[$originalName];
-                        if (preg_match('/^data:image\/(\w+);base64,/', $base64Data, $type)) {
-                            $ext = strtolower($type[1]);
-                            if (in_array($ext, ['jpg', 'jpeg', 'png'])) {
-                                if ($useCloudinary) {
-                                    $result           = Cloudinary::upload($base64Data, ['folder' => 'knowly/covers']);
-                                    $coverToSave      = $result->getSecurePath();
-                                    $coversGenerated++;
-                                    $hasFrontendThumb = true;
-                                } else {
-                                    $rawBase64 = substr($base64Data, strpos($base64Data, ',') + 1);
-                                    $decoded   = base64_decode($rawBase64);
-                                    if ($decoded !== false) {
-                                        $coverPath = 'covers/' . \Illuminate\Support\Str::random(12) . '_' . time() . '.' . $ext;
-                                        if (Storage::disk('public')->put($coverPath, $decoded)) {
-                                            $coverToSave      = $coverPath;
-                                            $coversGenerated++;
-                                            $hasFrontendThumb = true;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    } catch (\Exception $e) {
-                        Log::warning("Thumbnail save failed for {$originalName}: " . $e->getMessage());
-                    }
-                }
-
-                $shouldQueueCover = false;
-                // Attempt server-side cover generation asynchronously whenever no frontend thumbnail was provided.
-                // PDFs are now stored on local disk so Imagick/pdftoppm can always read them.
-                if (!$hasFrontendThumb) {
-                    $shouldQueueCover = true;
-                }
+                $coverToSave = self::DEFAULT_COVER;
+                $thumbnails  = $request->input('thumbnails', []);
+                $base64Data  = !empty($thumbnails[$originalName]) ? $thumbnails[$originalName] : null;
 
                 $bookData = [
                     'title'               => $metadata['title'],
@@ -213,13 +176,10 @@ class BulkUploadController extends Controller
                 $uploadedCount++;
                 $createdBookModels[] = $book;
 
-                if ($shouldQueueCover) {
-                    \App\Jobs\GenerateBookCoverJob::dispatch($book->id);
-                }
+                // Always dispatch the job to handle thumbnail upload/generation in background
+                \App\Jobs\GenerateBookCoverJob::dispatch($book->id, $base64Data);
 
-                $responseCoverUrl = str_starts_with($coverToSave, 'http')
-                    ? $coverToSave
-                    : asset('storage/' . ltrim($coverToSave, '/'));
+                $responseCoverUrl = asset('storage/' . ltrim($coverToSave, '/'));
 
                 $createdBooks[] = [
                     'id'          => $book->id,

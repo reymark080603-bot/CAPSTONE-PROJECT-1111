@@ -19,13 +19,15 @@ class GenerateBookCoverJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected int $bookId;
+    protected ?string $base64Thumbnail;
 
     /**
      * Create a new job instance.
      */
-    public function __construct(int $bookId)
+    public function __construct(int $bookId, ?string $base64Thumbnail = null)
     {
         $this->bookId = $bookId;
+        $this->base64Thumbnail = $base64Thumbnail;
     }
 
     /**
@@ -41,36 +43,65 @@ class GenerateBookCoverJob implements ShouldQueue
                 return;
             }
 
-            $pdfPath = $book->pdf_file ?? $book->file_path;
+            $generatedCover = null;
 
-            if (empty($pdfPath)) {
-                Log::warning("GenerateBookCoverJob: PDF file path is empty.", ['book_id' => $book->id]);
-                return;
+            // If a base64 thumbnail was generated on the frontend, upload it in the background
+            if (!empty($this->base64Thumbnail)) {
+                $useCloudinary = (bool) env('CLOUDINARY_URL');
+                if ($useCloudinary) {
+                    try {
+                        $result = \CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary::upload($this->base64Thumbnail, [
+                            'folder' => 'knowly/covers'
+                        ]);
+                        $generatedCover = $result->getSecurePath();
+                    } catch (\Exception $e) {
+                        Log::error("GenerateBookCoverJob Cloudinary Upload failed: " . $e->getMessage());
+                    }
+                } else {
+                    if (preg_match('/^data:image\/(\w+);base64,/', $this->base64Thumbnail, $type)) {
+                        $ext = strtolower($type[1]);
+                        if (in_array($ext, ['jpg', 'jpeg', 'png'])) {
+                            $rawBase64 = substr($this->base64Thumbnail, strpos($this->base64Thumbnail, ',') + 1);
+                            $decoded   = base64_decode($rawBase64);
+                            if ($decoded !== false) {
+                                $coverPath = 'covers/' . \Illuminate\Support\Str::random(12) . '_' . time() . '.' . $ext;
+                                if (Storage::disk('public')->put($coverPath, $decoded)) {
+                                    $generatedCover = $coverPath;
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
-            $normalized = ltrim($pdfPath, '/');
+            // Fallback to generating cover from PDF if no frontend thumbnail was provided or if its upload failed
+            if (empty($generatedCover)) {
+                $pdfPath = $book->pdf_file ?? $book->file_path;
 
-            if (str_starts_with($normalized, 'storage/')) {
-                $relative = substr($normalized, 8);
-                $fullPdfPath = Storage::disk('public')->path($relative);
-            } else {
-                $fullPdfPath = Storage::disk('public')->path($normalized);
+                if (!empty($pdfPath)) {
+                    $normalized = ltrim($pdfPath, '/');
+
+                    if (str_starts_with($normalized, 'storage/')) {
+                        $relative = substr($normalized, 8);
+                        $fullPdfPath = Storage::disk('public')->path($relative);
+                    } else {
+                        $fullPdfPath = Storage::disk('public')->path($normalized);
+                    }
+
+                    if (file_exists($fullPdfPath) && is_readable($fullPdfPath)) {
+                        Log::info('GenerateBookCoverJob: Starting cover generation from PDF', [
+                            'book_id' => $book->id,
+                            'title' => $book->title,
+                        ]);
+                        $generatedCover = $pdfCoverService->generateCover($fullPdfPath, $book->title);
+                    } else {
+                        Log::warning('GenerateBookCoverJob: PDF file missing or unreadable', [
+                            'book_id' => $book->id,
+                            'full_path' => $fullPdfPath,
+                        ]);
+                    }
+                }
             }
-
-            if (!file_exists($fullPdfPath) || !is_readable($fullPdfPath)) {
-                Log::warning('GenerateBookCoverJob: PDF file missing or unreadable', [
-                    'book_id' => $book->id,
-                    'full_path' => $fullPdfPath,
-                ]);
-                return;
-            }
-
-            Log::info('GenerateBookCoverJob: Starting cover generation', [
-                'book_id' => $book->id,
-                'title' => $book->title,
-            ]);
-
-            $generatedCover = $pdfCoverService->generateCover($fullPdfPath, $book->title);
 
             if (!empty($generatedCover)) {
                 if (Schema::hasColumn('books', 'cover_image')) {
@@ -90,7 +121,7 @@ class GenerateBookCoverJob implements ShouldQueue
                 // Flush cache to ensure the new cover is shown instantly on refresh
                 Cache::flush();
             } else {
-                Log::warning('GenerateBookCoverJob: Failed to generate cover.', [
+                Log::warning('GenerateBookCoverJob: Failed to generate/upload cover.', [
                     'book_id' => $book->id,
                 ]);
             }
