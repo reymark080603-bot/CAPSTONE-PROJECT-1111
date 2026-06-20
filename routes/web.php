@@ -127,6 +127,19 @@ Route::post('/debug-queue/run', function() {
     }
 });
 
+Route::get('/debug-logs', function() {
+    $logPath = storage_path('logs/laravel.log');
+    if (!file_exists($logPath)) {
+        return "Log file does not exist yet.";
+    }
+    
+    // Read the last 200 lines
+    $lines = file($logPath);
+    $lastLines = array_slice($lines, -200);
+    
+    return "<h1>Laravel System Logs (Last 200 lines)</h1><pre style='white-space: pre-wrap; word-break: break-all;'>" . htmlspecialchars(implode('', $lastLines)) . "</pre>";
+});
+
 // STORAGE PROXY - Bypasses broken symlinks on Railway
 Route::get('/storage/{path}', function($path) {
     $fullPath = storage_path('app/public/' . $path);
