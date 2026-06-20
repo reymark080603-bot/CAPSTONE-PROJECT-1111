@@ -193,20 +193,110 @@ $(document).ready(function() {
     // Store generated thumbnails
     let generatedThumbnails = {};
 
-    // Helper function to generate PDF thumbnail
-    function generatePdfThumbnail(file) {
+    // Store selected files array
+    let selectedFiles = [];
+
+    // Helper functions for escaping HTML and selectors
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    function escapeSelector(val) {
+        if (!val) return '';
+        return val.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    }
+
+    // File input change
+    $('#pdfs').on('change', function(e) {
+        const files = e.target.files;
+        
+        if (files && files.length > 0) {
+            // Overwrite selectedFiles with new files when input changes
+            selectedFiles = Array.from(files);
+            
+            // Cleanup generatedThumbnails for files that are no longer selected
+            const fileNames = new Set(selectedFiles.map(f => f.name));
+            for (const key of Object.keys(generatedThumbnails)) {
+                if (!fileNames.has(key)) {
+                    delete generatedThumbnails[key];
+                }
+            }
+            
+            renderFileList();
+        }
+    });
+
+    // Render the file list UI
+    function renderFileList() {
+        const filesContainer = $('#files-container');
+        filesContainer.html('');
+        
+        if (selectedFiles.length > 0) {
+            $('#file-list').removeClass('hidden');
+            
+            selectedFiles.forEach((file, index) => {
+                const hasThumb = !!generatedThumbnails[file.name];
+                const statusHtml = hasThumb 
+                    ? '<i class="fas fa-image text-green-500" title="Thumbnail generated"></i>' 
+                    : '<i class="fas fa-spinner fa-spin text-blue-500"></i>';
+
+                const row = `
+                    <div class="flex items-center justify-between p-2 bg-gray-50 rounded text-sm file-row">
+                        <div class="flex items-center flex-1 min-w-0 mr-4">
+                            <i class="fas fa-file-pdf text-red-500 mr-2 flex-shrink-0"></i>
+                            <span class="text-gray-700 truncate" title="${escapeHtml(file.name)}">${file.name}</span>
+                        </div>
+                        <div class="flex items-center space-x-3 flex-shrink-0">
+                            <span class="text-gray-500 text-xs">${formatBytes(file.size)}</span>
+                            <div class="thumb-status" data-name="${escapeHtml(file.name)}">${statusHtml}</div>
+                            <button type="button" class="remove-file-btn text-gray-400 hover:text-red-500 transition-colors p-1" data-index="${index}" title="Remove file">
+                                <i class="fas fa-times text-base"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                filesContainer.append(row);
+                
+                if (!hasThumb) {
+                    generateThumbnailForFile(file);
+                }
+            });
+        } else {
+            $('#file-list').addClass('hidden');
+        }
+        
+        syncInputFiles();
+    }
+
+    // Sync array to input files
+    function syncInputFiles() {
+        try {
+            const dt = new DataTransfer();
+            selectedFiles.forEach(file => dt.items.add(file));
+            document.getElementById('pdfs').files = dt.files;
+        } catch (err) {
+            console.error('Error syncing file input files:', err);
+        }
+    }
+
+    // Generate thumbnail and update status dynamically
+    function generateThumbnailForFile(file) {
         if (typeof pdfjsLib === 'undefined') return;
         
         const fileReader = new FileReader();
-        fileReader.onload = function(e) {
-            const typedarray = new Uint8Array(e.target.result);
+        fileReader.onload = function(ev) {
+            const typedarray = new Uint8Array(ev.target.result);
             
             pdfjsLib.getDocument(typedarray).promise.then(function(pdf) {
-                // Fetch the first page
                 return pdf.getPage(1);
             }).then(function(page) {
                 const viewport = page.getViewport({ scale: 1.0 });
-                // We want a standard cover size, around 400x600 but keep aspect ratio
                 const scale = Math.min(400 / viewport.width, 600 / viewport.height);
                 const scaledViewport = page.getViewport({ scale: scale });
 
@@ -221,79 +311,32 @@ $(document).ready(function() {
                 };
                 
                 return page.render(renderContext).promise.then(function() {
-                    // Extract as high-quality base64 jpeg
                     generatedThumbnails[file.name] = canvas.toDataURL('image/jpeg', 0.85);
+                    $(`.thumb-status[data-name="${escapeSelector(file.name)}"]`).html('<i class="fas fa-image text-green-500" title="Thumbnail generated"></i>');
                 });
             }).catch(function(error) {
                 console.error('Error generating thumbnail for', file.name, error);
+                $(`.thumb-status[data-name="${escapeSelector(file.name)}"]`).html('');
             });
         };
         fileReader.readAsArrayBuffer(file);
     }
 
-    // File input change
-    $('#pdfs').on('change', function(e) {
-        const files = e.target.files;
-        
-        if (files && files.length > 0) {
-            $('#file-list').removeClass('hidden');
-            $('#files-container').html('');
+    // Handle file removal clicking the 'x'
+    $(document).on('click', '.remove-file-btn', function(e) {
+        e.preventDefault();
+        const index = parseInt($(this).attr('data-index'));
+        if (!isNaN(index) && index >= 0 && index < selectedFiles.length) {
+            const removedFile = selectedFiles[index];
+            selectedFiles.splice(index, 1);
             
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                const row = `
-                    <div class="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
-                        <div class="flex items-center">
-                            <i class="fas fa-file-pdf text-red-500 mr-2"></i>
-                            <span class="text-gray-700">${file.name}</span>
-                        </div>
-                        <span class="text-gray-500 text-xs">${formatBytes(file.size)}</span>
-                        <div id="thumb-status-${i}" class="text-xs text-blue-500 ml-2"><i class="fas fa-spinner fa-spin"></i></div>
-                    </div>
-                `;
-                $('#files-container').append(row);
-                
-                // Track generation status
-                const originalFileGen = function(filename, index) {
-                     if (typeof pdfjsLib === 'undefined') return;
-                    
-                    const fileReader = new FileReader();
-                    fileReader.onload = function(ev) {
-                        const typedarray = new Uint8Array(ev.target.result);
-                        
-                        pdfjsLib.getDocument(typedarray).promise.then(function(pdf) {
-                            return pdf.getPage(1);
-                        }).then(function(page) {
-                            const viewport = page.getViewport({ scale: 1.0 });
-                            const scale = Math.min(400 / viewport.width, 600 / viewport.height);
-                            const scaledViewport = page.getViewport({ scale: scale });
-
-                            const canvas = document.createElement('canvas');
-                            const context = canvas.getContext('2d');
-                            canvas.height = scaledViewport.height;
-                            canvas.width = scaledViewport.width;
-
-                            const renderContext = {
-                                canvasContext: context,
-                                viewport: scaledViewport
-                            };
-                            
-                            return page.render(renderContext).promise.then(function() {
-                                generatedThumbnails[filename] = canvas.toDataURL('image/jpeg', 0.85);
-                                $('#thumb-status-' + index).html('<i class="fas fa-image text-green-500" title="Thumbnail generated"></i>');
-                            });
-                        }).catch(function(error) {
-                            console.error('Error', error);
-                            $('#thumb-status-' + index).html('');
-                        });
-                    };
-                    fileReader.readAsArrayBuffer(file);
-                };
-                originalFileGen(file.name, i);
+            // Clean up its thumbnail cache if it's no longer in the list (in case of duplicate names)
+            const stillExists = selectedFiles.some(f => f.name === removedFile.name);
+            if (!stillExists) {
+                delete generatedThumbnails[removedFile.name];
             }
-        } else {
-            $('#file-list').addClass('hidden');
-            generatedThumbnails = {};
+            
+            renderFileList();
         }
     });
 
@@ -365,6 +408,7 @@ $(document).ready(function() {
                     $('#pdfs').val('');
                     $('#file-list').addClass('hidden');
                     generatedThumbnails = {};
+                    selectedFiles = [];
                 } else {
                     showAlert('error', '<i class="fas fa-exclamation-circle mr-2"></i>' + response.message);
                 }
