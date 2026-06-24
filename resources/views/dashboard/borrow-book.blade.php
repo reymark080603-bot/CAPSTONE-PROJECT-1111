@@ -168,7 +168,7 @@
     </div>
 
     <!-- JavaScript -->
-    <script src="{{ asset('js/student-dashboard.js') }}"></script>
+    <script src="{{ asset('js/student-dashboard.js') }}?v={{ filemtime(public_path('js/student-dashboard.js')) }}"></script>
     @vite('resources/js/components/borrow-book.js')
 </body>
 </html>

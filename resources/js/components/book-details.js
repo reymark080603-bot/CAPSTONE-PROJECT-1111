@@ -89,10 +89,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Show notification function
     function showNotification(message, type = 'info') {
         const notification = document.createElement('div');
-        notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 bg-white text-gray-800 border border-gray-200`;
+        notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 ${
+            type === 'success' ? 'bg-white text-blue-600 border border-blue-200' :
+            'bg-white text-gray-800 border border-gray-200'
+        }`;
         notification.innerHTML = `
             <div class="flex items-center gap-2">
-                <i class="fas ${type === 'success' ? 'fa-check-circle text-green-500' : type === 'error' ? 'fa-exclamation-circle text-red-500' : 'fa-info-circle text-blue-500'}"></i>
+                <i class="fas ${type === 'success' ? 'fa-check-circle text-blue-600' : type === 'error' ? 'fa-exclamation-circle text-red-500' : 'fa-info-circle text-blue-500'}"></i>
                 <span>${message}</span>
             </div>
         `;
