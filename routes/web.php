@@ -76,6 +76,70 @@ Route::get('/check-system', function(PdfCoverService $pdfService) {
     return $html;
 });
 
+// QUEUE DEBBUGER AND MANUAL RUNNER
+Route::get('/debug-queue', function() {
+    $html = "<h1>Queue Debugger</h1>";
+    try {
+        $jobsCount = DB::table('jobs')->count();
+        $failedCount = DB::table('failed_jobs')->count();
+        $connection = config('queue.default');
+
+        $html .= "Default Queue Connection: <strong>{$connection}</strong><br>";
+        $html .= "Pending Jobs in DB: <strong>{$jobsCount}</strong><br>";
+        $html .= "Failed Jobs in DB: <strong>{$failedCount}</strong><br><br>";
+
+        if ($failedCount > 0) {
+            $html .= "<h3>Failed Jobs List (Last 5):</h3>";
+            $failed = DB::table('failed_jobs')->orderBy('id', 'desc')->limit(5)->get();
+            foreach ($failed as $job) {
+                $html .= "<div style='border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; background: #fff5f5;'>";
+                $html .= "<strong>ID:</strong> {$job->id}<br>";
+                $html .= "<strong>Queue:</strong> {$job->queue}<br>";
+                $html .= "<strong>Failed At:</strong> {$job->failed_at}<br>";
+                $html .= "<strong>Exception:</strong> <pre style='white-space: pre-wrap; word-break: break-all;'>" . substr($job->exception, 0, 500) . "...</pre>";
+                $html .= "</div>";
+            }
+        }
+
+        if ($jobsCount > 0) {
+            $html .= "<h3>Process Queue Now (Run 1 Job):</h3>";
+            $html .= "<form action='/debug-queue/run' method='POST'>" . csrf_field() . "<button type='submit' style='padding: 10px 20px; background: green; color: white; border: none; cursor: pointer;'>Run Queue Worker (Once)</button></form>";
+        } else {
+            $html .= "<p>No pending jobs to process.</p>";
+        }
+    } catch (\Exception $e) {
+        $html .= "<div style='color: red;'><strong>Error:</strong> " . $e->getMessage() . "</div>";
+    }
+
+    return $html;
+});
+
+Route::post('/debug-queue/run', function() {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('queue:work', [
+            '--once' => true,
+            '--tries' => 1,
+        ]);
+        $output = \Illuminate\Support\Facades\Artisan::output();
+        return "<h3>Worker Output:</h3><pre>{$output}</pre><br><a href='/debug-queue'>Go Back</a>";
+    } catch (\Exception $e) {
+        return "Error running worker: " . $e->getMessage() . "<br><a href='/debug-queue'>Go Back</a>";
+    }
+});
+
+Route::get('/debug-logs', function() {
+    $logPath = storage_path('logs/laravel.log');
+    if (!file_exists($logPath)) {
+        return "Log file does not exist yet.";
+    }
+    
+    // Read the last 200 lines
+    $lines = file($logPath);
+    $lastLines = array_slice($lines, -200);
+    
+    return "<h1>Laravel System Logs (Last 200 lines)</h1><pre style='white-space: pre-wrap; word-break: break-all;'>" . htmlspecialchars(implode('', $lastLines)) . "</pre>";
+});
+
 // STORAGE PROXY - Bypasses broken symlinks on Railway
 Route::get('/storage/{path}', function($path) {
     $fullPath = storage_path('app/public/' . $path);

@@ -23,6 +23,9 @@ echo "→ Fixing storage symlink (ABSOLUTE)..."
 rm -rf /app/public/storage
 ln -sf /app/storage/app/public /app/public/storage
 
+echo "→ Starting background queue worker..."
+php artisan queue:work --tries=3 --timeout=120 &
+
 echo "=== Starting PHP server on port ${PORT:-8000} ==="
 php -d upload_max_filesize=150M \
     -d post_max_size=200M \
