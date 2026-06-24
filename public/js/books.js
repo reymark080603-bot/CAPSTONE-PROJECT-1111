@@ -1050,17 +1050,31 @@ function initializeApp() {
     // Initialize toast function
     window.showToast = function(message, type = 'info') {
         const toast = document.createElement('div');
-        toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg text-white ${
-            type === 'success' ? 'bg-green-500' : 
-            type === 'error' ? 'bg-red-500' : 
-            type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
+        toast.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg border transition-all duration-300 ${
+            type === 'success' ? 'bg-white text-blue-600 border-blue-200' :
+            type === 'error' ? 'bg-red-500 text-white border-red-500' :
+            type === 'warning' ? 'bg-yellow-500 text-white border-yellow-500' :
+            'bg-blue-600 text-white border-blue-600'
         }`;
-        toast.textContent = message;
+        toast.innerHTML = `
+            <div class="flex items-center gap-2">
+                <i class="fas ${
+                    type === 'success' ? 'fa-check-circle' : 
+                    type === 'error' ? 'fa-exclamation-circle' : 
+                    type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle'
+                }"></i>
+                <span>${message}</span>
+            </div>
+        `;
         document.body.appendChild(toast);
 
         // Auto-remove after 5 seconds
         setTimeout(() => {
-            toast.remove();
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                toast.remove();
+            }, 300);
         }, 5000);
     };
 }

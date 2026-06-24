@@ -1139,12 +1139,12 @@ class BooksManager {
     showBorrowSuccess() {
         // Create success notification
         const notification = document.createElement('div');
-        notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg z-[10000] flex items-center space-x-3 transform translate-x-full transition-transform duration-300';
+        notification.className = 'fixed top-4 right-4 bg-white text-blue-600 border border-blue-200 px-6 py-4 rounded-lg shadow-lg z-[10000] flex items-center space-x-3 transform translate-x-full transition-transform duration-300';
         notification.innerHTML = `
-            <i class="fas fa-check-circle text-xl"></i>
+            <i class="fas fa-check-circle text-xl text-blue-600"></i>
             <div>
                 <p class="font-semibold">Book Borrowed Successfully!</p>
-                <p class="text-sm opacity-90">You can now read your borrowed book.</p>
+                <p class="text-sm text-blue-500">You can now read your borrowed book.</p>
             </div>
         `;
         

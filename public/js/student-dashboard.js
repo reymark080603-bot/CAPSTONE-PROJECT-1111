@@ -275,19 +275,19 @@
             showNotification(message, type = 'info') {
                 // Create notification element
                 const notification = document.createElement('div');
-                notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full ${
-                    type === 'success' ? 'bg-green-500 text-white' :
-                    type === 'error' ? 'bg-red-500 text-white' :
-                    'bg-blue-500 text-white'
+                notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg border transform transition-all duration-300 translate-x-full ${
+                    type === 'success' ? 'bg-white text-blue-600 border-blue-200' :
+                    type === 'error' ? 'bg-red-500 text-white border-red-500' :
+                    'bg-blue-500 text-white border-blue-500'
                 }`;
                 notification.innerHTML = `
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            ${type === 'success' ? '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>' :
-                          type === 'error' ? '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>' :
-                          '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'}
+                    <div class="flex items-center gap-2">
+                        <div class="flex-shrink-0 flex items-center">
+                            ${type === 'success' ? '<i class="fas fa-check-circle text-blue-600 text-lg"></i>' :
+                          type === 'error' ? '<i class="fas fa-exclamation-circle text-white text-lg"></i>' :
+                          '<i class="fas fa-info-circle text-white text-lg"></i>'}
                         </div>
-                        <div class="ml-3">
+                        <div class="ml-1">
                             <p class="text-sm font-medium">${message}</p>
                         </div>
                     </div>
