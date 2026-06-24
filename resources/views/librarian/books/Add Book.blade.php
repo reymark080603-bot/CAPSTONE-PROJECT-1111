@@ -56,6 +56,7 @@
     
     <form id="addBookForm" class="p-8" action="{{ route('librarian.books.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
+        <input type="hidden" name="pdf_cover_base64" id="pdfCoverBase64">
         
         <!-- Resource Type Selection -->
         <div class="mb-8">
@@ -590,8 +591,12 @@
 @endpush
 
 @section('scripts')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    if (typeof pdfjsLib !== 'undefined') {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
     initializeFileUpload();
     initializeEbookFileUploads();
     initializeResourceTypeSelection();
@@ -857,6 +862,15 @@ function initializeEbookFileUploads() {
         fileSize.textContent = formatFileSize(file.size);
         fileType.textContent = fileConfig.label;
         
+        // Clear previous base64 cover
+        const base64Input = document.getElementById('pdfCoverBase64');
+        if (base64Input) base64Input.value = '';
+        
+        // If PDF, generate client-side cover thumbnail
+        if (extension === 'pdf') {
+            generatePdfThumbnail(file);
+        }
+        
         // Update icon
         fileTypeIcon.className = `w-12 h-12 ${fileConfig.color} rounded-full flex items-center justify-center`;
         fileTypeIcon.innerHTML = `<i class="${fileConfig.icon} text-xl"></i>`;
@@ -864,6 +878,60 @@ function initializeEbookFileUploads() {
         // Show preview, hide upload area
         uploadArea.classList.add('hidden');
         preview.classList.remove('hidden');
+    }
+    
+    function generatePdfThumbnail(file) {
+        if (typeof pdfjsLib === 'undefined') return;
+        
+        const fileReader = new FileReader();
+        fileReader.onload = function(ev) {
+            const typedarray = new Uint8Array(ev.target.result);
+            
+            pdfjsLib.getDocument(typedarray).promise.then(function(pdf) {
+                return pdf.getPage(1);
+            }).then(function(page) {
+                const viewport = page.getViewport({ scale: 1.0 });
+                const scale = Math.min(400 / viewport.width, 600 / viewport.height);
+                const scaledViewport = page.getViewport({ scale: scale });
+
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.height = scaledViewport.height;
+                canvas.width = scaledViewport.width;
+
+                const renderContext = {
+                    canvasContext: context,
+                    viewport: scaledViewport
+                };
+                
+                return page.render(renderContext).promise.then(function() {
+                    const base64 = canvas.toDataURL('image/jpeg', 0.85);
+                    
+                    // 1. Populate hidden input
+                    const base64Input = document.getElementById('pdfCoverBase64');
+                    if (base64Input) {
+                        base64Input.value = base64;
+                    }
+                    
+                    // 2. Automatically show cover preview
+                    const coverInput = document.getElementById('coverInput');
+                    const coverPreview = document.getElementById('coverPreview');
+                    const coverUploadArea = document.getElementById('uploadArea');
+                    const coverPreviewArea = document.getElementById('previewArea');
+                    
+                    if (coverInput && (!coverInput.files || coverInput.files.length === 0)) {
+                        if (coverPreview && coverUploadArea && coverPreviewArea) {
+                            coverPreview.src = base64;
+                            coverUploadArea.classList.add('hidden');
+                            coverPreviewArea.classList.remove('hidden');
+                        }
+                    }
+                });
+            }).catch(function(error) {
+                console.error('Error generating client-side PDF thumbnail:', error);
+            });
+        };
+        fileReader.readAsArrayBuffer(file);
     }
     
     // Format file size
@@ -882,6 +950,22 @@ function initializeEbookFileUploads() {
             fileName.textContent = '';
             fileSize.textContent = '';
             fileType.textContent = '';
+            const base64Input = document.getElementById('pdfCoverBase64');
+            if (base64Input) base64Input.value = '';
+            
+            // Also reset cover preview if it was generated from the PDF
+            const coverInput = document.getElementById('coverInput');
+            const coverPreview = document.getElementById('coverPreview');
+            const coverUploadArea = document.getElementById('uploadArea');
+            const coverPreviewArea = document.getElementById('previewArea');
+            if (coverInput && (!coverInput.files || coverInput.files.length === 0)) {
+                if (coverPreview && coverUploadArea && coverPreviewArea) {
+                    coverPreview.src = '';
+                    coverUploadArea.classList.remove('hidden');
+                    coverPreviewArea.classList.add('hidden');
+                }
+            }
+            
             uploadArea.classList.remove('hidden');
             preview.classList.add('hidden');
         });

@@ -1296,11 +1296,19 @@ class LibrarianController extends Controller
         }
 
         // Auto-generate PDF cover when no manual cover was uploaded.
-        if (empty($bookData['cover_photo']) && !empty($bookData['pdf_file'])) {
-            $generatedCover = $this->generatePdfCoverFromStoredPath($bookData['pdf_file'], $bookData['title'] ?? 'book');
-            if (!empty($generatedCover)) {
-                $bookData['cover_image'] = $generatedCover;
-                $bookData['cover_photo'] = $generatedCover; // Keep legacy views compatible
+        if (empty($bookData['cover_photo'])) {
+            if ($request->filled('pdf_cover_base64')) {
+                $generatedCover = $this->saveBase64Cover($request->input('pdf_cover_base64'), $bookData['title'] ?? 'book');
+                if (!empty($generatedCover)) {
+                    $bookData['cover_image'] = $generatedCover;
+                    $bookData['cover_photo'] = $generatedCover; // Keep legacy views compatible
+                }
+            } elseif (!empty($bookData['pdf_file'])) {
+                $generatedCover = $this->generatePdfCoverFromStoredPath($bookData['pdf_file'], $bookData['title'] ?? 'book');
+                if (!empty($generatedCover)) {
+                    $bookData['cover_image'] = $generatedCover;
+                    $bookData['cover_photo'] = $generatedCover; // Keep legacy views compatible
+                }
             }
         }
 
@@ -1527,6 +1535,42 @@ class LibrarianController extends Controller
     }
 
     // ===== HELPER METHODS FOR FILE MANAGEMENT =====
+
+    /**
+     * Save a base64 encoded cover image to storage or Cloudinary.
+     */
+    private function saveBase64Cover(string $base64Data, string $title): ?string
+    {
+        try {
+            $useCloudinary = (bool) env('CLOUDINARY_URL');
+            if ($useCloudinary) {
+                $result = Cloudinary::upload($base64Data, [
+                    'folder' => 'knowly/covers'
+                ]);
+                return $result->getSecurePath();
+            }
+
+            if (preg_match('/^data:image\/(\w+);base64,/', $base64Data, $type)) {
+                $ext = strtolower($type[1]);
+                if (in_array($ext, ['jpg', 'jpeg', 'png'])) {
+                    $rawBase64 = substr($base64Data, strpos($base64Data, ',') + 1);
+                    $decoded   = base64_decode($rawBase64);
+                    if ($decoded !== false) {
+                        $sanitizedTitle = substr(preg_replace('/[^a-zA-Z0-9_-]/', '_', $title), 0, 50);
+                        $coverFilename = $sanitizedTitle . '_' . time() . '_' . \Illuminate\Support\Str::random(8) . '.' . $ext;
+                        $coverPath = 'covers/' . $coverFilename;
+                        if (\Illuminate\Support\Facades\Storage::disk('public')->put($coverPath, $decoded)) {
+                            return 'covers/' . $coverFilename;
+                        }
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Error saving base64 cover: ' . $e->getMessage());
+        }
+
+        return null;
+    }
 
     /**
      * Generate a PDF first-page cover from a stored public path.
