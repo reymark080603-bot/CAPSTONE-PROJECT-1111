@@ -183,16 +183,21 @@ class BulkUploadController extends Controller
                 $uploadedCount++;
                 $createdBookModels[] = $book;
 
-                // Always dispatch the job to handle thumbnail upload/generation in background
-                \App\Jobs\GenerateBookCoverJob::dispatch($book->id, $base64Data);
+                // Execute the job synchronously so the cover generates immediately without queue delay
+                \App\Jobs\GenerateBookCoverJob::dispatchSync($book->id, $base64Data);
 
-                $responseCoverUrl = asset('storage/' . ltrim($coverToSave, '/'));
+                // Reload the book from DB to get the generated cover details
+                $book->refresh();
+                $finalCover = $book->cover_photo ?: $book->cover_image ?: self::DEFAULT_COVER;
+                $responseCoverUrl = str_starts_with($finalCover, 'http')
+                    ? $finalCover
+                    : asset('storage/' . ltrim($finalCover, '/'));
 
                 $createdBooks[] = [
                     'id'          => $book->id,
                     'title'       => $book->title,
                     'author'      => $book->author,
-                    'cover_image' => $coverToSave,
+                    'cover_image' => $finalCover,
                     'cover_url'   => $responseCoverUrl,
                 ];
 

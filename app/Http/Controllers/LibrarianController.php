@@ -1032,7 +1032,7 @@ class LibrarianController extends Controller
                     $createdIds[] = $book->id;
 
                     if ($shouldQueueCover) {
-                        \App\Jobs\GenerateBookCoverJob::dispatch($book->id);
+                        \App\Jobs\GenerateBookCoverJob::dispatchSync($book->id);
                     }
                     
                 } catch (\Exception $e) {
