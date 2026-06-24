@@ -147,8 +147,15 @@ class BulkUploadController extends Controller
                 }
 
                 $coverToSave = self::DEFAULT_COVER;
-                $thumbnails  = $request->input('thumbnails', []);
-                $base64Data  = !empty($thumbnails[$originalName]) ? $thumbnails[$originalName] : null;
+                $base64Data = $request->input('thumbnail');
+                if (!$base64Data) {
+                    $thumbnails = $request->input('thumbnails', []);
+                    $base64Data = !empty($thumbnails[$originalName]) ? $thumbnails[$originalName] : null;
+                    if (!$base64Data) {
+                        $sanitizedKey = str_replace('.', '_', $originalName);
+                        $base64Data = !empty($thumbnails[$sanitizedKey]) ? $thumbnails[$sanitizedKey] : null;
+                    }
+                }
 
                 $bookData = [
                     'title'               => $metadata['title'],

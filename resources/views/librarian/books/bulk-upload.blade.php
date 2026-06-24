@@ -482,6 +482,7 @@ $(document).ready(function() {
 
             const base64 = generatedThumbnails[file.name];
             if (base64) {
+                formData.append('thumbnail', base64);
                 formData.append('thumbnails[' + file.name + ']', base64);
             }
 
