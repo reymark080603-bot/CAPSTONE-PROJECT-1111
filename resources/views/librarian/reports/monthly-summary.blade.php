@@ -27,8 +27,7 @@
     // Campus vertical bar chart data (Top 5 campuses)
     $top5Campuses = $campusDistribution->sortByDesc('count')->take(5);
 
-    // Book Distribution by Course line graph points calculation (Top 5 programs)
-    $booksPolylinePoints = "";
+    // Book Distribution by Course bar chart calculations (Top 5 programs)
     $booksPointIndex = 0;
     $top5BooksProg = collect($data['books_by_program'])->sortByDesc(fn($v) => $v)->take(5);
     $booksProgCount = $top5BooksProg->count();
@@ -42,7 +41,6 @@
             'label' => substr($program, 0, 8), 
             'count' => $count
         ];
-        $booksPolylinePoints .= "{$x},{$y} ";
         $booksPointIndex++;
     }
 
@@ -390,12 +388,16 @@
                             <line x1="20" y1="55" x2="300" y2="55" stroke="#e6eee6" stroke-width="1" />
                             <line x1="20" y1="90" x2="300" y2="90" stroke="#e6eee6" stroke-width="1" />
                             
-                            <polyline points="{{ trim($booksPolylinePoints) }}" fill="none" stroke="#b22222" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
-                            
                             @foreach($booksCoordinates as $pt)
+                                @php
+                                    $barHeight = 90 - $pt['y'];
+                                    if ($pt['count'] > 0 && $barHeight < 4) {
+                                        $barHeight = 4;
+                                    }
+                                @endphp
                                 <g class="cursor-pointer group">
-                                    <circle cx="{{ $pt['x'] }}" cy="{{ $pt['y'] }}" r="4.5" fill="#ffffff" stroke="#b22222" stroke-width="2.5" class="transition-all duration-300 hover:r-6" />
-                                    <text x="{{ $pt['x'] }}" y="{{ $pt['y'] - 8 }}" font-size="8" font-family="DejaVu Sans" font-weight="bold" fill="#b22222" text-anchor="middle">{{ $pt['count'] }}</text>
+                                    <rect x="{{ $pt['x'] - 12 }}" y="{{ 90 - $barHeight }}" width="24" height="{{ $barHeight }}" fill="#b22222" rx="4" class="transition-all duration-300 hover:fill-[#8c1c1c]" />
+                                    <text x="{{ $pt['x'] }}" y="{{ 90 - $barHeight - 6 }}" font-size="8" font-family="DejaVu Sans" font-weight="bold" fill="#b22222" text-anchor="middle">{{ $pt['count'] }}</text>
                                     <text x="{{ $pt['x'] }}" y="105" font-size="8" font-family="DejaVu Sans" font-weight="bold" fill="#1e4d3a" text-anchor="middle">{{ $pt['label'] }}</text>
                                 </g>
                             @endforeach

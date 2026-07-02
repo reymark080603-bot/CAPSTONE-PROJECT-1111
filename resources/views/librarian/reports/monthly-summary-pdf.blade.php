@@ -22,8 +22,7 @@
     // Campus vertical bar chart data (Top 5 campuses)
     $top5Campuses = $campusDistribution->sortByDesc('count')->take(5);
 
-    // Book Distribution by Course line graph points calculation (Top 5 programs)
-    $booksPolylinePoints = "";
+    // Book Distribution by Course bar chart calculations (Top 5 programs)
     $booksPointIndex = 0;
     $top5BooksProg = collect($data['books_by_program'])->sortByDesc(fn($v) => $v)->take(5);
     $booksProgCount = $top5BooksProg->count();
@@ -37,7 +36,6 @@
             'label' => substr($program, 0, 8), 
             'count' => $count
         ];
-        $booksPolylinePoints .= "{$x},{$y} ";
         $booksPointIndex++;
     }
 
@@ -471,11 +469,15 @@
                                     <line x1="20" y1="36" x2="220" y2="36" stroke="#e6eee6" stroke-width="1" />
                                     <line x1="20" y1="60" x2="220" y2="60" stroke="#e6eee6" stroke-width="1" />
                                     
-                                    <polyline points="{{ trim($booksPolylinePoints) }}" fill="none" stroke="#b22222" stroke-width="2.5" />
-                                    
                                     @foreach($booksCoordinates as $pt)
-                                        <circle cx="{{ $pt['x'] }}" cy="{{ $pt['y'] }}" r="3.5" fill="#ffffff" stroke="#b22222" stroke-width="2" />
-                                        <text x="{{ $pt['x'] }}" y="{{ $pt['y'] - 6 }}" font-size="7.5" font-family="DejaVu Sans" font-weight="bold" fill="#b22222" text-anchor="middle">{{ $pt['count'] }}</text>
+                                        @php
+                                            $barHeight = 65 - $pt['y'];
+                                            if ($pt['count'] > 0 && $barHeight < 3) {
+                                                $barHeight = 3;
+                                            }
+                                        @endphp
+                                        <rect x="{{ $pt['x'] - 8 }}" y="{{ 65 - $barHeight }}" width="16" height="{{ $barHeight }}" fill="#b22222" rx="2" />
+                                        <text x="{{ $pt['x'] }}" y="{{ 65 - $barHeight - 4 }}" font-size="7.5" font-family="DejaVu Sans" font-weight="bold" fill="#b22222" text-anchor="middle">{{ $pt['count'] }}</text>
                                         <text x="{{ $pt['x'] }}" y="76" font-size="7.5" font-family="DejaVu Sans" font-weight="bold" fill="#1e4d3a" text-anchor="middle">{{ $pt['label'] }}</text>
                                     @endforeach
                                 </svg>
