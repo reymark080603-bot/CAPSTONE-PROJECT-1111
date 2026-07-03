@@ -183,12 +183,16 @@ class BulkUploadController extends Controller
                         }
                     } catch (\Exception $e) {
                         Log::warning("Thumbnail save failed for {$originalName}: " . $e->getMessage());
+                        $errors[] = "Cloudinary Error for {$originalName}: " . $e->getMessage();
                     }
                 }
 
-                $shouldQueueCover = false;
+                // Process PDF cover thumbnail if NOT uploaded from frontend
                 if (!$hasFrontendThumb) {
+                    $errors[] = "Cover Generation Warning for {$originalName}: Could not extract or upload cover from PDF. Ensure Cloudinary quota is not exceeded.";
                     $shouldQueueCover = true;
+                } else {
+                    $shouldQueueCover = false;
                 }
 
                 $bookData = [
