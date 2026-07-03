@@ -302,7 +302,7 @@ $(document).ready(function() {
             </div>
         `;
         const $row = $(row).hide();
-        $('#file-list-container').append($row);
+        $('#files-container').append($row);
         $row.slideDown(250);
     }
 
