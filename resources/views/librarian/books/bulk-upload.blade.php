@@ -101,8 +101,8 @@
                         <span class="text-sm font-medium text-gray-700">Uploading books...</span>
                         <span id="progress-percent" class="text-sm text-gray-500">0%</span>
                     </div>
-                    <div class="w-full bg-gray-200 rounded-full h-2.5">
-                        <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                        <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300 ease-out" style="width: 0%"></div>
                     </div>
                 </div>
 
@@ -295,13 +295,15 @@ $(document).ready(function() {
                     <div class="upload-status-badge font-semibold text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600" id="upload-status-${id}">
                         Pending
                     </div>
-                    <button type="button" class="remove-file-btn text-gray-400 hover:text-red-500 transition-colors p-1" data-id="${id}" title="Remove file">
-                        <i class="fas fa-times text-base"></i>
+                    <button type="button" class="remove-file-btn ml-2 bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-700 rounded-md px-2.5 py-1.5 transition-all flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-red-200" data-id="${id}" title="Remove file">
+                        <i class="fas fa-times text-sm"></i>
                     </button>
                 </div>
             </div>
         `;
-        $('#files-container').append(row);
+        const $row = $(row).hide();
+        $('#file-list-container').append($row);
+        $row.slideDown(250);
     }
 
     // Update specific file row statuses dynamically
@@ -394,8 +396,10 @@ $(document).ready(function() {
             const removedFileObj = selectedFiles[index];
             selectedFiles.splice(index, 1);
             
-            // Remove DOM row
-            $(`#file-row-${id}`).remove();
+            // Remove DOM row smoothly
+            $(`#file-row-${id}`).slideUp(250, function() {
+                $(this).remove();
+            });
             
             // Remove from thumbnail generation queue
             thumbnailQueue = thumbnailQueue.filter(item => item.id !== id);
