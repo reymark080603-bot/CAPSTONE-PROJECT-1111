@@ -144,17 +144,51 @@ class BulkUploadController extends Controller
                 $filePath = $this->storeFile($file, $metadata['title']);
                 if (!$filePath) {
                     throw new \Exception('Failed to store PDF file.');
-                }
-
-                $coverToSave = self::DEFAULT_COVER;
+                }                $coverToSave = self::DEFAULT_COVER;
+                $thumbnails = $request->input('thumbnails', []);
+                $hasFrontendThumb = false;
                 $base64Data = $request->input('thumbnail');
+
                 if (!$base64Data) {
-                    $thumbnails = $request->input('thumbnails', []);
                     $base64Data = !empty($thumbnails[$originalName]) ? $thumbnails[$originalName] : null;
                     if (!$base64Data) {
                         $sanitizedKey = str_replace('.', '_', $originalName);
                         $base64Data = !empty($thumbnails[$sanitizedKey]) ? $thumbnails[$sanitizedKey] : null;
                     }
+                }
+
+                if ($base64Data) {
+                    try {
+                        if (preg_match('/^data:image\/(\w+);base64,/', $base64Data, $type)) {
+                            $ext = strtolower($type[1]);
+                            if (in_array($ext, ['jpg', 'jpeg', 'png'])) {
+                                if ($useCloudinary) {
+                                    $result = Cloudinary::upload($base64Data, ['folder' => 'knowly/covers']);
+                                    $coverToSave = $result->getSecurePath();
+                                    $coversGenerated++;
+                                    $hasFrontendThumb = true;
+                                } else {
+                                    $rawBase64 = substr($base64Data, strpos($base64Data, ',') + 1);
+                                    $decoded = base64_decode($rawBase64);
+                                    if ($decoded !== false) {
+                                        $coverPath = 'covers/' . \Illuminate\Support\Str::random(12) . '_' . time() . '.' . $ext;
+                                        if (Storage::disk('public')->put($coverPath, $decoded)) {
+                                            $coverToSave = $coverPath;
+                                            $coversGenerated++;
+                                            $hasFrontendThumb = true;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        Log::warning("Thumbnail save failed for {$originalName}: " . $e->getMessage());
+                    }
+                }
+
+                $shouldQueueCover = false;
+                if (!$hasFrontendThumb) {
+                    $shouldQueueCover = true;
                 }
 
                 $bookData = [
@@ -178,28 +212,27 @@ class BulkUploadController extends Controller
                 }
 
                 $book = Book::create($bookData);
+
                 DB::commit();
 
                 $uploadedCount++;
                 $createdBookModels[] = $book;
 
-                // Execute the job synchronously so the cover generates immediately without queue delay
-                \App\Jobs\GenerateBookCoverJob::dispatchSync($book->id, $base64Data);
+                if ($shouldQueueCover) {
+                    \App\Jobs\GenerateBookCoverJob::dispatch($book->id);
+                }
 
-                // Reload the book from DB to get the generated cover details
-                $book->refresh();
-                $finalCover = $book->cover_photo ?: $book->cover_image ?: self::DEFAULT_COVER;
-                $responseCoverUrl = str_starts_with($finalCover, 'http')
-                    ? $finalCover
-                    : asset('storage/' . ltrim($finalCover, '/'));
+                $responseCoverUrl = str_starts_with($coverToSave, 'http')
+                    ? $coverToSave
+                    : asset('storage/' . ltrim($coverToSave, '/'));
 
                 $createdBooks[] = [
                     'id'          => $book->id,
                     'title'       => $book->title,
                     'author'      => $book->author,
-                    'cover_image' => $finalCover,
+                    'cover_image' => $coverToSave,
                     'cover_url'   => $responseCoverUrl,
-                ];
+                ];];
 
             } catch (\Exception $e) {
                 DB::rollBack();

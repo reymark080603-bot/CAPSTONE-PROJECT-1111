@@ -10,11 +10,16 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="{{ asset('css/student-dashboard.css') }}" rel="stylesheet">
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-gray-50 min-h-screen homepage-dashboard">
     <!-- Header -->
-    <div class="header sidebar-expanded bg-green-500 shadow-lg">
+    <div class="header sidebar-expanded bg-green-600 shadow-lg">
         <div class="flex items-center justify-between px-6 py-4 w-full">
             <div class="flex items-center space-x-4 flex-shrink-0">
+                <!-- Sidebar Toggle Button -->
+                <button id="sidebar-toggle" class="sidebar-toggle text-white hover:bg-white/10 p-2 rounded-lg transition-all">
+                    <i class="fas fa-bars text-lg"></i>
+                </button>
+                
                 <!-- Back Button -->
                 <button type="button" onclick="window.goBackToPreviousPage()" class="text-white hover:bg-white/10 p-2 rounded-lg transition-all" title="Back">
                     <i class="fas fa-arrow-left text-lg"></i>
@@ -45,13 +50,28 @@
                     };
                 </script>
                 
-                <div class="flex items-center">
+                <a href="{{ route('dashboard') }}" class="flex items-center">
                     <img src="{{ asset('images/jhcsclibrary-logo.png') }}" alt="Knowly logo" class="w-8 h-8 rounded-full object-cover mr-3" />
-                    <h1 class="text-white text-2xl font-bold">Book Details</h1>
-                </div>
+                    <h1 class="text-white text-2xl font-bold">Knowly</h1>
+                </a>
             </div>
             
-            <div class="flex items-center space-x-4 flex-shrink-0">
+            <div class="header-actions flex items-center flex-shrink-0 gap-3">
+                <!-- Quick Search Bar -->
+                <form action="{{ route('student.books') }}" method="GET" id="header-search-form" class="quick-search-form relative w-full max-w-[14rem] sm:max-w-xs">
+                    <div class="relative w-full">
+                        <span class="absolute inset-y-0 left-0 z-10 flex items-center pl-4 text-gray-500 pointer-events-none">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text"
+                               id="header-search"
+                               name="search"
+                               placeholder="Quick search books..."
+                               class="block w-full min-w-0 rounded-full border border-gray-300 bg-white py-2 pl-11 pr-4 text-sm text-gray-800 placeholder-gray-600 shadow-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:text-base">
+                    </div>
+                    <div id="header-search-results" class="quick-search-results hidden absolute left-0 right-0 sm:right-0 sm:left-auto mt-2 w-full sm:w-96 max-w-[calc(100vw-2rem)] max-h-96 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-xl z-[60]"></div>
+                </form>
+                
                 <!-- User Profile -->
                 <div class="flex items-center space-x-3">
                     <div class="relative group" data-profile-wrapper>
@@ -76,38 +96,38 @@
         </div>
     </div>
 
-    <div class="dashboard-container">
+    <div class="dashboard-container flex">
+        <!-- Mobile Backdrop -->
+        <div class="sidebar-backdrop hidden" id="sidebar-backdrop"></div>
+        
         <!-- Sidebar -->
-        <div class="sidebar bg-gray-800 min-h-screen">
+        <div class="sidebar bg-gray-800 text-white min-h-screen w-64 fixed md:relative transition-all">
             <div class="p-4">
-                <div class="sidebar-welcome text-white mb-6">
-                    <div class="flex items-center gap-3">
-                        <img src="{{ asset('images/jhcsclibrary-logo.png') }}" alt="Knowly logo" class="w-8 h-8 rounded-full object-cover" />
-                        <h2 class="font-semibold text-lg">Knowly</h2>
-                    </div>
+                <div class="sidebar-welcome mb-6">
+                    <a href="{{ route('dashboard') }}" class="font-semibold text-lg inline-block">Knowly</a>
                     <p class="text-gray-400 text-sm">Welcome, {{ $user->firstname ?? 'Student' }}</p>
                 </div>
                 
                 <nav class="space-y-2">
-                    <a href="{{ route('home') }}" class="sidebar-link flex items-center space-x-3 text-gray-300 px-4 py-3 rounded-lg transition-all hover:text-white">
-                        <i class="fas fa-home sidebar-icon"></i>
+                    <a href="{{ route('dashboard') }}" class="sidebar-link flex items-center space-x-3 text-gray-300 px-4 py-3 rounded-lg transition-all hover:text-white hover:bg-gray-700">
+                        <i class="fas fa-home"></i>
                         <span class="sidebar-text">Home</span>
                     </a>
-                    <a href="{{ route('student.books') }}" class="sidebar-link active flex items-center space-x-3 text-white px-4 py-3 rounded-lg transition-all">
-                        <i class="fas fa-book sidebar-icon"></i>
+                    <a href="{{ route('student.books') }}" class="sidebar-link active flex items-center space-x-3 text-white px-4 py-3 rounded-lg transition-all bg-green-600">
+                        <i class="fas fa-book"></i>
                         <span class="sidebar-text">Library</span>
                     </a>
-                    <a href="{{ route('student.loans') }}" class="sidebar-link flex items-center space-x-3 text-gray-300 px-4 py-3 rounded-lg transition-all hover:text-white">
-                        <i class="fas fa-hand-holding sidebar-icon"></i>
+                    <a href="{{ route('student.loans') }}" class="sidebar-link flex items-center space-x-3 text-gray-300 px-4 py-3 rounded-lg transition-all hover:text-white hover:bg-gray-700">
+                        <i class="fas fa-hand-holding"></i>
                         <span class="sidebar-text">Borrowed E-Resource</span>
                     </a>
-                    <a href="{{ route('student.history') }}" class="sidebar-link flex items-center space-x-3 text-gray-300 px-4 py-3 rounded-lg transition-all hover:text-white">
-                        <i class="fas fa-history sidebar-icon"></i>
+                    <a href="{{ route('student.history') }}" class="sidebar-link flex items-center space-x-3 text-gray-300 px-4 py-3 rounded-lg transition-all hover:text-white hover:bg-gray-700">
+                        <i class="fas fa-history"></i>
                         <span class="sidebar-text">History</span>
                     </a>
-                    <form action="{{ route('logout') }}" method="POST" class="inline">
+                    <form action="{{ route('logout') }}" method="POST" class="mt-4">
                         @csrf
-                        <button type="submit" class="sidebar-link flex items-center space-x-3 text-gray-300 px-4 py-3 rounded-lg transition-all hover:text-white w-full text-left">
+                        <button type="submit" class="w-full sidebar-link flex items-center space-x-3 text-gray-300 px-4 py-3 rounded-lg transition-all hover:text-white hover:bg-red-700 text-left">
                             <i class="fas fa-sign-out-alt"></i>
                             <span class="sidebar-text">Logout</span>
                         </button>
@@ -117,7 +137,7 @@
         </div>
 
         <!-- Main Content -->
-        <div class="main-content p-0 h-full">
+        <div class="main-content flex-1 p-0 ml-0 md:ml-0 h-full">
             <!-- Book Details Content -->
             <div class="p-4 sm:p-6 lg:p-8 h-full overflow-y-auto">
                 <!-- Book Card -->

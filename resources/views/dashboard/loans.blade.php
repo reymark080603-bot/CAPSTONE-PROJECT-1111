@@ -10,7 +10,7 @@
     <link href="{{ asset('css/loans.css') }}?v={{ filemtime(public_path('css/loans.css')) }}" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-gray-50 min-h-screen homepage-dashboard">
     <!-- Header -->
     <div class="header sidebar-expanded bg-green-600 shadow-lg">
         <div class="flex items-center justify-between px-6 py-4 w-full">
@@ -66,38 +66,38 @@
         </div>
     </div>
 
-    <div class="dashboard-container">
+    <div class="dashboard-container flex">
         <!-- Mobile Backdrop -->
-        <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+        <div class="sidebar-backdrop hidden" id="sidebar-backdrop"></div>
         
         <!-- Sidebar -->
-        <div class="sidebar bg-gray-800 min-h-screen">
+        <div class="sidebar bg-gray-800 text-white min-h-screen w-64 fixed md:relative transition-all">
             <div class="p-4">
-                <div class="sidebar-welcome text-white mb-6">
+                <div class="sidebar-welcome mb-6">
                     <a href="{{ route('dashboard') }}" class="font-semibold text-lg inline-block">Knowly</a>
                     <p class="text-gray-400 text-sm">Welcome, {{ $user->firstname }}</p>
                 </div>
                 
                 <nav class="space-y-2">
-                    <a href="{{ route('dashboard') }}" class="sidebar-link flex items-center space-x-3 text-gray-300 px-4 py-3 rounded-lg transition-all hover:text-white">
-                        <i class="fas fa-home sidebar-icon"></i>
+                    <a href="{{ route('dashboard') }}" class="sidebar-link flex items-center space-x-3 text-gray-300 px-4 py-3 rounded-lg transition-all hover:text-white hover:bg-gray-700">
+                        <i class="fas fa-home"></i>
                         <span class="sidebar-text">Home</span>
                     </a>
-                    <a href="{{ route('student.books') }}" class="sidebar-link flex items-center space-x-3 text-gray-300 px-4 py-3 rounded-lg transition-all hover:text-white">
-                        <i class="fas fa-book sidebar-icon"></i>
+                    <a href="{{ route('student.books') }}" class="sidebar-link flex items-center space-x-3 text-gray-300 px-4 py-3 rounded-lg transition-all hover:text-white hover:bg-gray-700">
+                        <i class="fas fa-book"></i>
                         <span class="sidebar-text">Library</span>
                     </a>
-                    <a href="{{ route('student.loans') }}" class="sidebar-link active flex items-center space-x-3 text-white px-4 py-3 rounded-lg transition-all">
-                        <i class="fas fa-hand-holding sidebar-icon"></i>
+                    <a href="{{ route('student.loans') }}" class="sidebar-link active flex items-center space-x-3 text-white px-4 py-3 rounded-lg transition-all bg-green-600">
+                        <i class="fas fa-hand-holding"></i>
                         <span class="sidebar-text">Borrowed E-Resource</span>
                     </a>
-                    <a href="{{ route('student.history') }}" class="sidebar-link flex items-center space-x-3 text-gray-300 px-4 py-3 rounded-lg transition-all hover:text-white">
-                        <i class="fas fa-history sidebar-icon"></i>
+                    <a href="{{ route('student.history') }}" class="sidebar-link flex items-center space-x-3 text-gray-300 px-4 py-3 rounded-lg transition-all hover:text-white hover:bg-gray-700">
+                        <i class="fas fa-history"></i>
                         <span class="sidebar-text">History</span>
                     </a>
-                    <form action="{{ route('logout') }}" method="POST" class="inline">
+                    <form action="{{ route('logout') }}" method="POST" class="mt-4">
                         @csrf
-                        <button type="submit" class="sidebar-link flex items-center space-x-3 text-gray-300 px-4 py-3 rounded-lg transition-all hover:text-white w-full text-left">
+                        <button type="submit" class="w-full sidebar-link flex items-center space-x-3 text-gray-300 px-4 py-3 rounded-lg transition-all hover:text-white hover:bg-red-700 text-left">
                             <i class="fas fa-sign-out-alt"></i>
                             <span class="sidebar-text">Logout</span>
                         </button>
@@ -107,7 +107,7 @@
         </div>
 
         <!-- Main Content -->
-        <div class="main-content p-4 sm:p-6">
+        <div class="main-content flex-1 p-4 sm:p-6 ml-0 md:ml-0">
             <div class="mb-6">
                 <h1 class="text-3xl font-bold text-gray-900">Borrowed E-Resources</h1>
             </div>
