@@ -525,11 +525,22 @@ $(document).ready(function() {
                 success: function(response) {
                     if (response.success && response.data) {
                         const data = response.data;
+                        
+                        // Always capture non-fatal errors even if upload was successful
+                        if (data.errors && data.errors.length > 0) {
+                            data.errors.forEach(function(err) {
+                                errors.push(err);
+                            });
+                        }
+
                         if (data.uploaded > 0) {
                             uploadedCount++;
                             updateFileStatusUIById(id, 'success');
                             if (data.created_books && data.created_books.length > 0) {
                                 createdBooks.push(...data.created_books);
+                            }
+                            if (data.covers_generated > 0) {
+                                coversGeneratedCount++;
                             }
                         } else if (data.duplicates_skipped > 0) {
                             duplicatesCount++;
@@ -538,7 +549,10 @@ $(document).ready(function() {
                             failedCount++;
                             const errStr = data.errors && data.errors.length > 0 ? data.errors[0] : 'Unknown error';
                             updateFileStatusUIById(id, 'failed', errStr);
-                            errors.push(errStr);
+                            // Avoid duplicating the error since we added it above
+                            if (!data.errors || data.errors.length === 0) {
+                                errors.push(errStr);
+                            }
                         }
                     } else {
                         failedCount++;
