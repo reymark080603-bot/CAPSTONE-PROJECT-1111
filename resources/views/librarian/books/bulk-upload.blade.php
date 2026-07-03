@@ -452,6 +452,7 @@ $(document).ready(function() {
         let uploadedCount = 0;
         let failedCount = 0;
         let duplicatesCount = 0;
+        let coversGeneratedCount = 0;
         let errors = [];
         let createdBooks = [];
 
@@ -472,6 +473,7 @@ $(document).ready(function() {
                     uploaded: uploadedCount,
                     failed: failedCount,
                     duplicates_skipped: duplicatesCount,
+                    covers_generated: coversGeneratedCount,
                     created_books: createdBooks,
                     errors: errors
                 });
