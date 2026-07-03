@@ -415,9 +415,20 @@ $(document).ready(function() {
     // Form submission sequential runner
     $('#bulk-upload-form').on('submit', function(e) {
         e.preventDefault();
+        
+        // Block removal during active upload
+        if ($('#upload-btn').prop('disabled')) {
+            return;
+        }
 
         if (selectedFiles.length === 0) {
             showAlert('error', '<i class="fas fa-exclamation-circle mr-2"></i>Please select at least one PDF file.');
+            return;
+        }
+
+        // Check if there are still thumbnails generating
+        if (isGeneratingThumbnail || thumbnailQueue.length > 0) {
+            showAlert('warning', '<i class="fas fa-clock mr-2"></i>Please wait for all PDF cover thumbnails to finish generating before uploading.');
             return;
         }
 
