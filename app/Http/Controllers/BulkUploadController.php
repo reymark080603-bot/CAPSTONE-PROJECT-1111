@@ -232,7 +232,7 @@ class BulkUploadController extends Controller
                     'author'      => $book->author,
                     'cover_image' => $coverToSave,
                     'cover_url'   => $responseCoverUrl,
-                ];];
+                ];
 
             } catch (\Exception $e) {
                 DB::rollBack();
