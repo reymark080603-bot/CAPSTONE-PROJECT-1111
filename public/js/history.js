@@ -1065,29 +1065,43 @@ class HistoryManager {
         }
     }
     
-    showNotification(message, type = 'info') {
+    showNotification(message, type = 'success') {
+        const existingToasts = document.querySelectorAll('.knowly-toast-notification');
+        existingToasts.forEach(t => t.remove());
+
+        const isError = type === 'error';
+        const isWarning = type === 'warning';
+
         const notification = document.createElement('div');
-        notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg border transition-all duration-300 ${
-            type === 'success' ? 'bg-white text-blue-600 border-blue-200' :
-            type === 'error' ? 'bg-red-500 text-white border-red-500' :
-            'bg-blue-500 text-white border-blue-500'
+        notification.className = `knowly-toast-notification fixed top-5 right-5 z-[10000] min-w-[300px] max-w-md p-4 rounded-xl shadow-2xl transition-all duration-300 transform translate-x-full bg-white border ${
+            isError ? 'border-red-200' : (isWarning ? 'border-amber-200' : 'border-green-200')
         }`;
+
+        const iconBg = isError ? 'bg-red-100 text-red-600' : (isWarning ? 'bg-amber-100 text-amber-600' : 'bg-green-100 text-green-600');
+        const iconClass = isError ? 'fa-exclamation-circle' : (isWarning ? 'fa-exclamation-triangle' : 'fa-check-circle');
+        const subtext = isError ? 'Please check your action or try again.' : (isWarning ? 'Note your borrowing status.' : 'Operation completed successfully.');
+
         notification.innerHTML = `
-            <div class="flex items-center gap-2">
-                <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
-                <span>${message}</span>
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full ${iconBg} flex items-center justify-center flex-shrink-0">
+                    <i class="fas ${iconClass} text-base"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="font-semibold text-sm text-gray-900 leading-snug">${message}</p>
+                    <p class="text-xs text-gray-500 mt-0.5">${subtext}</p>
+                </div>
+                <button type="button" class="text-gray-400 hover:text-gray-600 p-1 text-xs" onclick="this.closest('.knowly-toast-notification').remove()">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
         `;
-        
+
         document.body.appendChild(notification);
-        
+        setTimeout(() => notification.classList.remove('translate-x-full'), 10);
         setTimeout(() => {
-            notification.style.opacity = '0';
-            notification.style.transform = 'translateX(100%)';
-            setTimeout(() => {
-                document.body.removeChild(notification);
-            }, 300);
-        }, 3000);
+            notification.classList.add('translate-x-full');
+            setTimeout(() => { if (notification.parentNode) notification.remove(); }, 300);
+        }, 3500);
     }
 }
 

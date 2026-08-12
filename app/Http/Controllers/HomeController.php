@@ -910,12 +910,17 @@ class HomeController extends Controller
         }
         
         try {
+            // Determine requested duration (capped at book's max limit, default 5)
+            $maxLimit = max(1, intval($book->borrow_days ?: 5));
+            $requestedDays = intval($request->input('borrow_days', 1));
+            $borrowDays = min(max(1, $requestedDays), $maxLimit);
+
             // Create borrow record
             $borrowRecord = BorrowRecord::create([
                 'user_id' => $user->id,
                 'book_id' => $book->id,
                 'borrowed_date' => now(),
-                'due_date' => now()->addDays(1), // 1 day borrowing period
+                'due_date' => now()->addDays($borrowDays),
                 'status' => 'borrowed'
             ]);
 

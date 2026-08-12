@@ -78,8 +78,8 @@
                         <p class="text-xs text-blue-600 mt-2">
                             Example: <code>Beginning PHP and MySQL - Jason Gilmore - 2018 - BSIT - Book.pdf</code>
                         </p>
-                        <p class="text-xs text-blue-600 mt-1">
-                            Allowed type values: <code>Book</code>, <code>E-Journal</code>, <code>Thesis</code>
+                        <p class="text-xs text-blue-600 mt-2">
+                            Allowed type values: <code>Book</code>, <code>E-Journal</code>, <code>Thesis</code>, <code>Homegrown</code>
                         </p>
                         <p class="text-xs text-blue-500 mt-1">
                             If type is missing or invalid, it will default to <code>Book</code>.

@@ -13,6 +13,7 @@
     $resourceTypeDisplay = match ($resourceType) {
         'e_journal' => 'E-Journal',
         'thesis' => 'Thesis',
+        'homegrown' => 'Homegrown / Unpublished',
         default => 'Book',
     };
     $courseDisplay = $book->course ?? 'All Programs';
@@ -58,7 +59,7 @@
         <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                <div class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-gray-50 text-gray-900">{{ $book->title ?? 'Untitled' }}</div>
+                <div class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-gray-50 text-gray-900 font-semibold uppercase tracking-wide">{{ strtoupper($book->title ?? 'Untitled') }}</div>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Author</label>
@@ -78,12 +79,20 @@
                 <div class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-gray-50 text-gray-900">{{ $resourceTypeDisplay }}</div>
             </div>
             <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Subcategory</label>
+                <div class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-gray-50 text-gray-900">{{ $book->subcategory ?: 'Not specified' }}</div>
+            </div>
+            <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Published Year</label>
                 <div class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-gray-50 text-gray-900">{{ $publishedYearDisplay }}</div>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Language</label>
-                <div class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-gray-50 text-gray-900">{{ $languageDisplay }}</div>
+                <div class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-gray-50 text-gray-900">{{ $book->language ?? 'English' }}</div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1 text-blue-700 font-semibold"><i class="fas fa-clock mr-1"></i>Max Borrow Duration</label>
+                <div class="w-full border border-blue-200 rounded-lg px-4 py-3 bg-blue-50 text-blue-900 font-semibold">{{ $book->borrow_days ?? 5 }} Day(s)</div>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Created</label>

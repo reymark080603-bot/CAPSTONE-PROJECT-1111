@@ -3,6 +3,15 @@
  * Minimal custom CSS - Most styling done via Tailwind utility classes
  */
 
+/* ALL CAPS Title cataloging standard */
+.book-title,
+.book-card h3,
+.book-card h4,
+.book-card h5,
+.dataTable td h4 {
+    text-transform: uppercase !important;
+}
+
 /* Book Card Sizing - Match Borrowed Books Exactly */
 #books-grid .book-card,
 #recommended-books .book-card {

@@ -36,21 +36,23 @@
             }
 
             init() {
-                this.bindEvents();
-                this.handleResize();
-                this.initProfileMenus();
-                this.addAnimations();
-                this.initBookCarousel();
-                this.initRecommendedBooksCarousel();
-                this.loadUserBorrowedBooks().then(() => {
-                    this.loadRecommendedBooks();
-                    this.loadRecentBooks();
-                    this.loadContinueReading();
-                });
-                this.loadDashboardStats();
-                this.initQuickBorrowListeners();
-                this.initBorrowPopupEvents();
-                this.initHeaderSearch();
+                try { this.bindEvents(); } catch (e) {}
+                try { this.handleResize(); } catch (e) {}
+                try { this.initProfileMenus(); } catch (e) {}
+                try { this.addAnimations(); } catch (e) {}
+                try { this.initBookCarousel(); } catch (e) {}
+                try { this.initRecommendedBooksCarousel(); } catch (e) {}
+                try {
+                    this.loadUserBorrowedBooks().then(() => {
+                        try { this.loadRecommendedBooks(); } catch (e) {}
+                        try { this.loadRecentBooks(); } catch (e) {}
+                        try { this.loadContinueReading(); } catch (e) {}
+                    }).catch(() => {});
+                } catch (e) {}
+                try { this.loadDashboardStats(); } catch (e) {}
+                try { this.initQuickBorrowListeners(); } catch (e) {}
+                try { this.initBorrowPopupEvents(); } catch (e) {}
+                try { this.initHeaderSearch(); } catch (e) {}
             }
 
             bindEvents() {
@@ -272,43 +274,53 @@
                 return this.borrowedBooks.has(bookId);
             }
 
-            showNotification(message, type = 'info') {
-                // Create notification element
+            showNotification(message, type = 'success', persist = false) {
+                if (persist) {
+                    try {
+                        sessionStorage.setItem('knowly_toast', JSON.stringify({ message: message, type: type }));
+                    } catch (e) {}
+                }
+
+                document.querySelectorAll('.knowly-toast-notification').forEach(t => t.remove());
+
+                const isError = type === 'error';
+                const isWarning = type === 'warning';
+                const toastTypeClass = isError ? 'knowly-toast-error' : (isWarning ? 'knowly-toast-warning' : 'knowly-toast-success');
+
                 const notification = document.createElement('div');
-                notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg border transform transition-all duration-300 translate-x-full ${
-                    type === 'success' ? 'bg-white text-blue-600 border-blue-200' :
-                    type === 'error' ? 'bg-red-500 text-white border-red-500' :
-                    'bg-blue-500 text-white border-blue-500'
-                }`;
+                notification.className = `knowly-toast-notification ${toastTypeClass}`;
+
+                const iconBg = isError ? 'background-color: #fee2e2; color: #dc2626;' : (isWarning ? 'background-color: #fef3c7; color: #d97706;' : 'background-color: #dcfce7; color: #16a34a;');
+                const iconClass = isError ? 'fa-exclamation-circle' : (isWarning ? 'fa-exclamation-triangle' : 'fa-check-circle');
+                const subtext = isError ? 'Please check your action or try again.' : (isWarning ? 'Note your borrowing status.' : 'Operation completed successfully.');
+
                 notification.innerHTML = `
-                    <div class="flex items-center gap-2">
-                        <div class="flex-shrink-0 flex items-center">
-                            ${type === 'success' ? '<i class="fas fa-check-circle text-blue-600 text-lg"></i>' :
-                          type === 'error' ? '<i class="fas fa-exclamation-circle text-white text-lg"></i>' :
-                          '<i class="fas fa-info-circle text-white text-lg"></i>'}
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 38px; height: 38px; border-radius: 9999px; ${iconBg} display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i class="fas ${iconClass}" style="font-size: 16px;"></i>
                         </div>
-                        <div class="ml-1">
-                            <p class="text-sm font-medium">${message}</p>
+                        <div style="flex: 1; min-width: 0;">
+                            <p style="font-weight: 600; font-size: 14px; color: #111827; margin: 0; line-height: 1.3;">${message}</p>
+                            <p style="font-size: 12px; color: #6b7280; margin-top: 2px; margin-bottom: 0;">${subtext}</p>
                         </div>
+                        <button type="button" style="background: none; border: none; color: #9ca3af; cursor: pointer; padding: 4px; font-size: 12px;" onclick="this.closest('.knowly-toast-notification').remove()">
+                            <i class="fas fa-times"></i>
+                        </button>
                     </div>
                 `;
-                
+
                 document.body.appendChild(notification);
-                
-                // Animate in
+
+                requestAnimationFrame(() => {
+                    notification.classList.add('knowly-toast-show');
+                });
+
                 setTimeout(() => {
-                    notification.classList.remove('translate-x-full');
-                }, 100);
-                
-                // Remove after 3 seconds
-                setTimeout(() => {
-                    notification.classList.add('translate-x-full');
+                    notification.classList.remove('knowly-toast-show');
                     setTimeout(() => {
-                        if (notification.parentNode) {
-                            notification.parentNode.removeChild(notification);
-                        }
-                    }, 300);
-                }, 3000);
+                        if (notification.parentNode) notification.remove();
+                    }, 400);
+                }, 4000);
             }
 
             // Load recommended books
@@ -348,7 +360,7 @@
                     return `
                         <div class="book-card flex-shrink-0 w-40 sm:w-44 md:w-48">
                             <div class="relative group">
-                                <div class="book-cover relative bg-gray-100 rounded-lg shadow-md overflow-hidden h-56 sm:h-60 md:h-64 hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
+                                <div class="book-cover relative bg-gray-100 rounded-lg shadow-md overflow-hidden h-64 sm:h-72 md:h-80 hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
                                     <span class="absolute top-2 left-2 z-10 px-2 py-1 rounded-full bg-white/90 text-[10px] font-semibold text-gray-700 uppercase tracking-wide">${resourceType}</span>
                                     ${coverUrl ? 
                                         `<img src="${coverUrl}" alt="${bookTitle} Cover" class="w-full h-full object-cover rounded-lg">` : 
@@ -358,12 +370,12 @@
                                     }
                                 </div>
                                 <div class="mt-3 text-center">
-                                    <h5 class="font-semibold text-sm text-gray-900 truncate">${bookTitle}</h5>
+                                    <h5 class="font-semibold text-sm text-gray-900 truncate uppercase">${(bookTitle || '').toUpperCase()}</h5>
                                     <p class="text-xs text-gray-600 mb-2">${bookAuthor}</p>
                                     <p class="text-[11px] text-gray-500 mb-2 uppercase tracking-wide">${courseLabel}</p>
                                     <div class="flex gap-1">
                                         <button class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-2 py-2 rounded text-xs font-medium transition-colors" onclick="window.location.href='${this.getBookUrl(book.id)}'">View</button>
-                                        ${!isBorrowed ? `<button class="flex-1 bg-green-500 hover:bg-green-600 text-white px-2 py-2 rounded text-xs font-medium transition-colors btn-borrow-quick" data-book-id="${book.id}" data-book-title="${bookTitle}"><i class="fas fa-book-reader mr-1"></i>Borrow</button>` : ''}
+                                        ${!isBorrowed ? `<button class="flex-1 bg-green-500 hover:bg-green-600 text-white px-2 py-2 rounded text-xs font-medium transition-colors btn-borrow-quick" data-book-id="${book.id}" data-book-title="${bookTitle}" data-borrow-days="${book.borrow_days || 5}"><i class="fas fa-book-reader mr-1"></i>Borrow</button>` : ''}
                                     </div>
                                 </div>
                             </div>
@@ -438,7 +450,7 @@
                     return `
                         <div class="book-card flex-shrink-0 w-40 sm:w-44 md:w-48">
                             <div class="relative group">
-                                <div class="book-cover relative bg-gray-100 rounded-lg shadow-md overflow-hidden h-56 sm:h-60 md:h-64 hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
+                                <div class="book-cover relative bg-gray-100 rounded-lg shadow-md overflow-hidden h-64 sm:h-72 md:h-80 hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
                                     <span class="absolute top-2 left-2 z-10 px-2 py-1 rounded-full bg-white/90 text-[10px] font-semibold text-gray-700 uppercase tracking-wide">${resourceType}</span>
                                     ${coverUrl ? 
                                         `<img src="${coverUrl}" alt="${bookTitle} Cover" class="w-full h-full object-cover rounded-lg">` : 
@@ -448,7 +460,7 @@
                                     }
                                 </div>
                                 <div class="mt-3 text-center">
-                                    <h5 class="font-semibold text-sm text-gray-900 truncate">${bookTitle}</h5>
+                                    <h5 class="font-semibold text-sm text-gray-900 truncate uppercase">${(bookTitle || '').toUpperCase()}</h5>
                                     <p class="text-xs text-gray-600 mb-2">${bookAuthor}</p>
                                     <p class="text-[11px] text-gray-500 mb-2 uppercase tracking-wide">${courseLabel}</p>
                                     <div class="flex gap-1">
@@ -457,7 +469,7 @@
                                             View
                                         </button>
                                         ${!isBorrowed ? `<button class="flex-1 bg-green-500 hover:bg-green-600 text-white px-2 py-2 rounded text-xs font-medium transition-colors btn-borrow-quick" 
-                                                data-book-id="${book.id}" data-book-title="${bookTitle}">
+                                                data-book-id="${book.id}" data-book-title="${bookTitle}" data-borrow-days="${book.borrow_days || 5}">
                                             <i class="fas fa-book-reader mr-1"></i>Borrow
                                         </button>` : ''}
                                     </div>
@@ -688,49 +700,20 @@
                 // Add event listener for quick borrow buttons on the dashboard
                 document.addEventListener('click', (e) => {
                     // Find the closest button with btn-borrow-quick class to handle clicks on child elements
-                    const borrowButton = e.target.closest('.btn-borrow-quick');
+                    const borrowButton = e.target.closest('.btn-borrow-quick, .btn-borrow');
                     if (borrowButton) {
                         e.preventDefault();
                         const bookId = borrowButton.getAttribute('data-book-id');
                         const bookTitle = borrowButton.getAttribute('data-book-title');
-                        this.showBorrowPopup(bookId, bookTitle);
+                        const bookCard = borrowButton.closest('.book-card');
+                        const maxDays = borrowButton.getAttribute('data-borrow-days') || bookCard?.getAttribute('data-borrow-days') || 5;
+                        this.showBorrowPopup(bookId, bookTitle, maxDays);
                     }
                 });
             }
 
-            async borrowBookQuick(bookId, bookTitle) {
-                try {
-                    const formData = new FormData();
-                    formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
-                    formData.append('duration', 1); // 1-day duration
-                    
-                    const response = await fetch(this.getBorrowUrl(bookId), {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    const data = await response.json();
-
-                    if (response.ok && data.success) {
-                        this.showNotification(data.message || 'Book borrowed successfully! It will be returned automatically in 1 day.', 'success');
-                        
-                        // Refresh borrowed books list to update UI
-                        await this.loadUserBorrowedBooks();
-                        
-                        // Refresh all carousels to update button states
-                        this.loadRecommendedBooks();
-                        this.loadRecentBooks();
-                        this.loadContinueReading();
-                        
-                        setTimeout(() => {
-                            window.location.href = this.getBookUrl(bookId);
-                        }, 1500);
-                    } else {
-                        this.showNotification(data.message || 'Failed to borrow book', 'error');
-                    }
-                } catch (error) {
-                    this.showNotification('An error occurred while borrowing book', 'error');
-                }
+            borrowBookQuick(bookId, bookTitle, maxDays = 5) {
+                this.showBorrowPopup(bookId, bookTitle, maxDays);
             }
 
             // Header search functionality
@@ -806,26 +789,25 @@
                         const title = this.escapeHtml(item.title || 'Untitled');
                         const author = this.escapeHtml(item.author || 'Unknown Author');
                         const type = this.escapeHtml(item.type || 'BOOK');
-                        const viewUrl = this.escapeHtml(item.view_url || '#');
-                        const readUrl = item.read_url ? this.escapeHtml(item.read_url) : null;
+                        const targetUrl = this.escapeHtml(item.view_url || item.read_url || '#');
 
                         return `
-                            <div class="quick-search-item p-3 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors">
-                                <div class="quick-search-row flex gap-3">
-                                    <img src="${cover}" alt="${title}" class="quick-search-cover w-10 h-14 object-cover rounded border border-gray-200" loading="lazy">
+                            <a href="${targetUrl}" class="quick-search-item block p-3 border-b border-gray-100 last:border-b-0 hover:bg-green-50/70 transition-all group">
+                                <div class="quick-search-row flex items-center gap-3">
+                                    <img src="${cover}" alt="${title}" class="quick-search-cover w-10 h-14 object-cover rounded border border-gray-200 shadow-sm flex-shrink-0 group-hover:scale-105 transition-transform" loading="lazy">
                                     <div class="quick-search-meta flex-1 min-w-0">
                                         <div class="quick-search-head flex items-center justify-between gap-2">
-                                            <p class="text-sm font-semibold text-gray-900 truncate">${title}</p>
-                                            <span class="text-[10px] px-2 py-1 rounded-full bg-blue-50 text-blue-700 font-semibold">${type}</span>
+                                            <p class="text-sm font-semibold text-gray-900 truncate uppercase group-hover:text-green-700 transition-colors">${(title || '').toUpperCase()}</p>
+                                            <span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-semibold flex-shrink-0">${type}</span>
                                         </div>
                                         <p class="text-xs text-gray-600 truncate mt-0.5">${author}</p>
-                                        <div class="quick-search-actions mt-2 flex gap-2">
-                                            <a href="${viewUrl}" class="text-xs px-2 py-1 rounded bg-blue-600 text-white hover:bg-blue-700">View</a>
-                                            ${readUrl ? `<a href="${readUrl}" class="text-xs px-2 py-1 rounded bg-green-600 text-white hover:bg-green-700">Read</a>` : ''}
+                                        <div class="flex items-center text-xs text-green-600 font-medium mt-1 group-hover:translate-x-0.5 transition-transform">
+                                            <span>View Details & Borrow</span>
+                                            <i class="fas fa-chevron-right text-[10px] ml-1"></i>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </a>
                         `;
                     }).join('');
 
@@ -1027,11 +1009,30 @@
                 });
             }
 
-            showBorrowPopup(bookId, bookTitle, bookAuthor) {
+            showBorrowPopup(bookId, bookTitle, maxDays = 5) {
                 // Update popup content with book details
                 const titleElement = document.getElementById('borrowPopupTitle');
                 if (titleElement) {
-                    titleElement.textContent = bookTitle || 'Book Title';
+                    titleElement.textContent = (bookTitle || 'Book Title').toUpperCase();
+                }
+
+                // Populate duration choices (1 up to maxDays limit set by librarian)
+                const durationSelect = document.getElementById('borrowDurationSelect');
+                const limitNote = document.getElementById('borrowLimitNote');
+                const maxDaysLimit = Math.max(1, parseInt(maxDays || 5, 10));
+
+                if (durationSelect) {
+                    let optionsHtml = '';
+                    for (let i = 1; i <= maxDaysLimit; i++) {
+                        const label = i === 1 ? '1 Day' : `${i} Days`;
+                        optionsHtml += `<option value="${i}">${label}</option>`;
+                    }
+                    durationSelect.innerHTML = optionsHtml;
+                    durationSelect.value = 1;
+                }
+
+                if (limitNote) {
+                    limitNote.textContent = `Max allowed duration for this book: ${maxDaysLimit} day(s) set by librarian.`;
                 }
 
                 // Store book ID for borrowing
@@ -1055,9 +1056,20 @@
             initBorrowPopupEvents() {
                 const popup = document.getElementById('borrowPopup');
                 const cancelButton = document.getElementById('borrowPopupCancel');
+                const confirmButton = document.getElementById('borrowPopupConfirm');
 
                 if (cancelButton) {
-                    cancelButton.addEventListener('click', () => this.hideBorrowPopup());
+                    cancelButton.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        this.hideBorrowPopup();
+                    });
+                }
+
+                if (confirmButton) {
+                    confirmButton.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        this.confirmBorrow();
+                    });
                 }
 
                 if (popup) {
@@ -1078,6 +1090,8 @@
             async confirmBorrow() {
                 if (!this.currentBookId) return;
                 const bookId = this.currentBookId;
+                const durationSelect = document.getElementById('borrowDurationSelect');
+                const selectedDays = durationSelect ? parseInt(durationSelect.value || 1, 10) : 1;
 
                 // Show loading state
                 const confirmBtn = document.getElementById('borrowPopupConfirm');
@@ -1097,7 +1111,7 @@
                             'Accept': 'application/json',
                             'X-Requested-With': 'XMLHttpRequest'
                         },
-                        body: JSON.stringify({ duration: 1 })
+                        body: JSON.stringify({ borrow_days: selectedDays })
                     });
 
                     const data = await response.json();

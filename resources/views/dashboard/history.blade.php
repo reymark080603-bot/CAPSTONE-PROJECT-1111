@@ -53,8 +53,11 @@
                         <div data-profile-menu class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg p-3 hidden z-50">
                             <div class="text-sm text-gray-700">
                                 <p class="font-semibold">{{ $user->firstname ?? 'User' }} {{ $user->lastname ?? '' }}</p>
-                                <p class="text-gray-500">{{ $user->email ?? '' }}</p>
+                                <p class="text-gray-500 text-xs truncate">{{ $user->email ?? '' }}</p>
                                 <hr class="my-2">
+                                <a href="{{ route('student.profile') }}" class="block px-2 py-1 hover:bg-gray-100 rounded text-gray-700 font-medium mb-1">
+                                    <i class="fas fa-user-circle mr-1.5 text-green-600"></i> My Profile
+                                </a>
                                 <form action="{{ route('logout') }}" method="POST" class="block">
                                     @csrf
                                     <button type="submit" class="w-full text-left px-2 py-1 hover:bg-gray-100 rounded text-red-600">Logout</button>
@@ -95,6 +98,10 @@
                     <a href="{{ route('student.history') }}" class="sidebar-link active flex items-center space-x-3 text-white px-4 py-3 rounded-lg transition-all bg-green-600">
                         <i class="fas fa-history"></i>
                         <span class="sidebar-text">History</span>
+                    </a>
+                    <a href="{{ route('student.profile') }}" class="sidebar-link flex items-center space-x-3 text-gray-300 px-4 py-3 rounded-lg transition-all hover:text-white hover:bg-gray-700">
+                        <i class="fas fa-user-cog"></i>
+                        <span class="sidebar-text">My Profile</span>
                     </a>
                     <form action="{{ route('logout') }}" method="POST" class="mt-4">
                         @csrf

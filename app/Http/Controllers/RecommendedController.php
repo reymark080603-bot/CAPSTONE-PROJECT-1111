@@ -142,6 +142,7 @@ class RecommendedController extends Controller
             'cover_photo' => $book->display_cover_url,
             'resource_type' => $book->resource_type ?: 'book',
             'course' => $book->course ?: $book->program,
+            'borrow_days' => $book->borrow_days ?? 5,
             'borrow_records_count' => $book->borrow_records_count ?? 0,
         ];
     }

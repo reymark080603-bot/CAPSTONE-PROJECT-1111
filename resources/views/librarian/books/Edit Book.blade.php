@@ -64,6 +64,19 @@
                         <option value="book" {{ $resourceType === 'book' ? 'selected' : '' }}>Book</option>
                         <option value="e_journal" {{ $resourceType === 'e_journal' ? 'selected' : '' }}>E-Journal</option>
                         <option value="thesis" {{ $resourceType === 'thesis' ? 'selected' : '' }}>Thesis</option>
+                        <option value="homegrown" {{ $resourceType === 'homegrown' ? 'selected' : '' }}>Homegrown / Unpublished</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="subcategory" class="block text-sm font-medium text-gray-700 mb-1">Subcategory</label>
+                    @php($subCat = old('subcategory', $book->subcategory ?? ''))
+                    <select id="subcategory" name="subcategory" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select Subcategory (Optional)</option>
+                        <option value="Thesis & Dissertation" {{ $subCat === 'Thesis & Dissertation' ? 'selected' : '' }}>Thesis & Dissertation</option>
+                        <option value="Capstone Project" {{ $subCat === 'Capstone Project' ? 'selected' : '' }}>Capstone Project</option>
+                        <option value="Institutional Research" {{ $subCat === 'Institutional Research' ? 'selected' : '' }}>Institutional & Faculty Research</option>
+                        <option value="Course Module" {{ $subCat === 'Course Module' ? 'selected' : '' }}>Course Module / Learning Material</option>
+                        <option value="Institutional Publication" {{ $subCat === 'Institutional Publication' ? 'selected' : '' }}>Institutional Publication / Journal</option>
                     </select>
                 </div>
                 <div>
@@ -73,6 +86,20 @@
                 <div>
                     <label for="language" class="block text-sm font-medium text-gray-700 mb-1">Language</label>
                     <input type="text" id="language" name="language" value="{{ $book->language }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="borrow_days" class="block text-sm font-medium text-gray-700 mb-1">
+                        <i class="fas fa-clock text-blue-600 mr-1"></i>Max Borrowing Duration (Days)
+                    </label>
+                    @php($bDays = old('borrow_days', $book->borrow_days ?? 5))
+                    <select id="borrow_days" name="borrow_days" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-gray-900 bg-blue-50/50">
+                        <option value="1" {{ (int)$bDays === 1 ? 'selected' : '' }}>1 Day (Overnight)</option>
+                        <option value="3" {{ (int)$bDays === 3 ? 'selected' : '' }}>3 Days</option>
+                        <option value="5" {{ (int)$bDays === 5 ? 'selected' : '' }}>5 Days (Standard)</option>
+                        <option value="7" {{ (int)$bDays === 7 ? 'selected' : '' }}>7 Days (1 Week)</option>
+                        <option value="14" {{ (int)$bDays === 14 ? 'selected' : '' }}>14 Days (2 Weeks)</option>
+                        <option value="30" {{ (int)$bDays === 30 ? 'selected' : '' }}>30 Days (1 Month)</option>
+                    </select>
                 </div>
             </div>
         </div>

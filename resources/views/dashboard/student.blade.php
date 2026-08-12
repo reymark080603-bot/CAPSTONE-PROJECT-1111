@@ -56,8 +56,11 @@
                         <div data-profile-menu class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg p-3 hidden z-50">
                             <div class="text-sm text-gray-700">
                                 <p class="font-semibold">{{ $user->firstname ?? 'User' }} {{ $user->lastname ?? '' }}</p>
-                                <p class="text-gray-500">{{ $user->email ?? '' }}</p>
+                                <p class="text-gray-500 text-xs truncate">{{ $user->email ?? '' }}</p>
                                 <hr class="my-2">
+                                <a href="{{ route('student.profile') }}" class="block px-2 py-1 hover:bg-gray-100 rounded text-gray-700 font-medium mb-1">
+                                    <i class="fas fa-user-circle mr-1.5 text-green-600"></i> My Profile
+                                </a>
                                 <form action="{{ route('logout') }}" method="POST" class="block">
                                     @csrf
                                     <button type="submit" class="w-full text-left px-2 py-1 hover:bg-gray-100 rounded text-red-600">Logout</button>
@@ -98,6 +101,10 @@
                     <a href="{{ route('student.history') }}" class="sidebar-link flex items-center space-x-3 text-gray-300 px-4 py-3 rounded-lg transition-all hover:text-white hover:bg-gray-700">
                         <i class="fas fa-history"></i>
                         <span class="sidebar-text">History</span>
+                    </a>
+                    <a href="{{ route('student.profile') }}" class="sidebar-link flex items-center space-x-3 text-gray-300 px-4 py-3 rounded-lg transition-all hover:text-white hover:bg-gray-700">
+                        <i class="fas fa-user-cog"></i>
+                        <span class="sidebar-text">My Profile</span>
                     </a>
                     <form action="{{ route('logout') }}" method="POST" class="mt-4">
                         @csrf
@@ -210,9 +217,9 @@
                 <div class="p-6">
                     <div id="recentEJournalsContainer" class="book-carousel flex flex-nowrap overflow-x-auto gap-4 sm:gap-6 pb-2" style="scroll-behavior: smooth;">
                         @forelse($recentEJournalResources as $resource)
-                            <div class="book-card flex-shrink-0 w-40 sm:w-44 md:w-48">
+                            <div class="book-card flex-shrink-0 w-40 sm:w-44 md:w-48" data-book-id="{{ $resource->id }}" data-book-title="{{ $resource->title }}" data-borrow-days="{{ $resource->borrow_days ?? 5 }}">
                                 <div class="relative group">
-                                    <div class="book-cover relative bg-gray-100 rounded-lg shadow-md overflow-hidden h-56 sm:h-60 md:h-64 hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
+                                    <div class="book-cover relative bg-gray-100 rounded-lg shadow-md overflow-hidden h-64 sm:h-72 md:h-80 hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
                                         <span class="absolute top-2 left-2 z-10 px-2 py-1 rounded-full bg-white/90 text-[10px] font-semibold text-gray-700 uppercase tracking-wide">E Journal</span>
                                         <img src="{{ $resource->display_cover_url }}" alt="{{ $resource->title }}" class="w-full h-full object-cover rounded-lg" loading="lazy">
                                     </div>
@@ -224,7 +231,7 @@
 
                                         <div class="flex gap-1">
                                             <a href="{{ route('student.books.show', $resource->id) }}" class="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white px-2 py-2 rounded text-xs font-medium transition-colors">View</a>
-                                            <button onclick="quickBorrowBook({{ $resource->id }}, '{{ addslashes($resource->title) }}')" class="flex-1 text-center bg-green-500 hover:bg-green-600 text-white px-2 py-2 rounded text-xs font-medium transition-colors">Borrow</button>
+                                            <button onclick="quickBorrowBook({{ $resource->id }}, '{{ addslashes($resource->title) }}', {{ $resource->borrow_days ?? 5 }})" class="flex-1 text-center bg-green-500 hover:bg-green-600 text-white px-2 py-2 rounded text-xs font-medium transition-colors btn-borrow-quick" data-book-id="{{ $resource->id }}" data-book-title="{{ $resource->title }}" data-borrow-days="{{ $resource->borrow_days ?? 5 }}">Borrow</button>
                                         </div>
                                     </div>
                                 </div>
@@ -258,9 +265,9 @@
                 <div class="p-6">
                     <div id="recentThesisContainer" class="book-carousel flex flex-nowrap overflow-x-auto gap-4 sm:gap-6 pb-2" style="scroll-behavior: smooth;">
                         @forelse($recentThesisResources as $resource)
-                            <div class="book-card flex-shrink-0 w-40 sm:w-44 md:w-48">
+                            <div class="book-card flex-shrink-0 w-40 sm:w-44 md:w-48" data-book-id="{{ $resource->id }}" data-book-title="{{ $resource->title }}" data-borrow-days="{{ $resource->borrow_days ?? 5 }}">
                                 <div class="relative group">
-                                    <div class="book-cover relative bg-gray-100 rounded-lg shadow-md overflow-hidden h-56 sm:h-60 md:h-64 hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
+                                    <div class="book-cover relative bg-gray-100 rounded-lg shadow-md overflow-hidden h-64 sm:h-72 md:h-80 hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
                                         <span class="absolute top-2 left-2 z-10 px-2 py-1 rounded-full bg-white/90 text-[10px] font-semibold text-gray-700 uppercase tracking-wide">Thesis</span>
                                         <img src="{{ $resource->display_cover_url }}" alt="{{ $resource->title }}" class="w-full h-full object-cover rounded-lg" loading="lazy">
                                     </div>
@@ -272,7 +279,7 @@
 
                                         <div class="flex gap-1">
                                             <a href="{{ route('student.books.show', $resource->id) }}" class="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white px-2 py-2 rounded text-xs font-medium transition-colors">View</a>
-                                            <button onclick="quickBorrowBook({{ $resource->id }}, '{{ addslashes($resource->title) }}')" class="flex-1 text-center bg-green-500 hover:bg-green-600 text-white px-2 py-2 rounded text-xs font-medium transition-colors">Borrow</button>
+                                            <button onclick="quickBorrowBook({{ $resource->id }}, '{{ addslashes($resource->title) }}', {{ $resource->borrow_days ?? 5 }})" class="flex-1 text-center bg-green-500 hover:bg-green-600 text-white px-2 py-2 rounded text-xs font-medium transition-colors btn-borrow-quick" data-book-id="{{ $resource->id }}" data-book-title="{{ $resource->title }}" data-borrow-days="{{ $resource->borrow_days ?? 5 }}">Borrow</button>
                                         </div>
                                     </div>
                                 </div>
@@ -307,9 +314,9 @@
                 <div class="p-6">
                     <div id="recentBooksContainer" class="book-carousel flex flex-nowrap overflow-x-auto gap-4 sm:gap-6 pb-2" style="scroll-behavior: smooth;">
                         @forelse($recentBooks as $book)
-                            <div class="book-card flex-shrink-0 w-40 sm:w-44 md:w-48">
+                            <div class="book-card flex-shrink-0 w-40 sm:w-44 md:w-48" data-book-id="{{ $book->id }}" data-book-title="{{ $book->title }}" data-borrow-days="{{ $book->borrow_days ?? 5 }}">
                                 <div class="relative group">
-                                    <div class="book-cover relative bg-gray-100 rounded-lg shadow-md overflow-hidden h-56 sm:h-60 md:h-64 hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
+                                    <div class="book-cover relative bg-gray-100 rounded-lg shadow-md overflow-hidden h-64 sm:h-72 md:h-80 hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
                                         <span class="absolute top-2 left-2 z-10 px-2 py-1 rounded-full bg-white/90 text-[10px] font-semibold text-gray-700 uppercase tracking-wide">{{ strtoupper(str_replace('_', ' ', $book->resource_type ?: 'book')) }}</span>
                                         @if($book->display_cover_url)
                                             <img src="{{ $book->display_cover_url }}" alt="{{ $book->title }}" class="w-full h-full object-cover rounded-lg" loading="lazy">
@@ -328,7 +335,7 @@
                                         <div class="flex gap-1">
                                             <a href="{{ route('student.books.show', $book->id) }}" class="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white px-2 py-2 rounded text-xs font-medium transition-colors">View</a>
                                             @if($book->availability_status === 'available')
-                                                <button onclick="quickBorrowBook({{ $book->id }}, '{{ addslashes($book->title) }}')" class="flex-1 text-center bg-green-500 hover:bg-green-600 text-white px-2 py-2 rounded text-xs font-medium transition-colors">Borrow</button>
+                                                <button onclick="quickBorrowBook({{ $book->id }}, '{{ addslashes($book->title) }}', {{ $book->borrow_days ?? 5 }})" class="flex-1 text-center bg-green-500 hover:bg-green-600 text-white px-2 py-2 rounded text-xs font-medium transition-colors btn-borrow-quick" data-book-id="{{ $book->id }}" data-book-title="{{ $book->title }}" data-borrow-days="{{ $book->borrow_days ?? 5 }}">Borrow</button>
                                             @else
                                                 <button disabled class="flex-1 text-center bg-gray-300 text-gray-500 px-2 py-2 rounded text-xs font-medium cursor-not-allowed">Unavailable</button>
                                             @endif
@@ -365,11 +372,15 @@
                     <p class="text-lg font-semibold text-gray-900 truncate" id="borrowPopupTitle">Book Title</p>
                 </div>
                 
-                <div class="space-y-2 mb-6 text-sm">
-                    <div class="flex items-center justify-center text-gray-600">
-                        <i class="fas fa-calendar-alt text-blue-600 mr-2"></i>
-                        <span>Loan period: <strong>1 day</strong></span>
-                    </div>
+                <!-- Duration Selection Box -->
+                <div class="mb-6 text-left bg-gray-50 p-4 rounded-xl border border-gray-200">
+                    <label for="borrowDurationSelect" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                        <i class="fas fa-clock text-blue-600 mr-1"></i>Select Borrowing Duration:
+                    </label>
+                    <select id="borrowDurationSelect" class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        <option value="1">1 Day</option>
+                    </select>
+                    <p class="text-[11px] text-gray-500 mt-1.5" id="borrowLimitNote">Select duration up to the librarian's set limit for this resource.</p>
                 </div>
             </div>
             
@@ -402,9 +413,9 @@
     
     <script>
     // Quick Borrow function for Recently Added Books carousel
-    function quickBorrowBook(bookId, bookTitle) {
+    function quickBorrowBook(bookId, bookTitle, maxDays = 5) {
         if (window.__studentDashboard && typeof window.__studentDashboard.showBorrowPopup === 'function') {
-            window.__studentDashboard.showBorrowPopup(bookId, bookTitle);
+            window.__studentDashboard.showBorrowPopup(bookId, bookTitle, maxDays);
         }
     }
     </script>

@@ -59,7 +59,7 @@
             <i class="fas fa-filter text-gray-500 mr-2"></i>
             <h2 class="text-lg font-semibold text-gray-900">Search & Filters</h2>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 items-end">
             <div class="lg:col-span-2">
                 <label for="searchInput" class="block text-sm font-medium text-gray-700 mb-2">Search</label>
                 <div class="relative">
@@ -74,6 +74,18 @@
                     <option value="book">Books</option>
                     <option value="e_journal">E-Journals</option>
                     <option value="thesis">Thesis</option>
+                    <option value="homegrown">Homegrown / Unpublished</option>
+                </select>
+            </div>
+            <div>
+                <label for="subcategoryFilter" class="block text-sm font-medium text-gray-700 mb-2">Subcategory</label>
+                <select id="subcategoryFilter" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                    <option value="">All Subcategories</option>
+                    <option value="Thesis & Dissertation">Thesis & Dissertation</option>
+                    <option value="Capstone Project">Capstone Project</option>
+                    <option value="Institutional Research">Institutional Research</option>
+                    <option value="Course Module">Course Module</option>
+                    <option value="Institutional Publication">Institutional Publication</option>
                 </select>
             </div>
             <div>
@@ -967,6 +979,7 @@ document.addEventListener('DOMContentLoaded', function() {
             data: function(d) {
                 d.search = document.getElementById('searchInput').value;
                 d.resource_type = document.getElementById('resourceTypeFilter').value;
+                d.subcategory = document.getElementById('subcategoryFilter') ? document.getElementById('subcategoryFilter').value : '';
                 d.course = document.getElementById('courseFilter').value;
                 d.title_sort = document.getElementById('titleSortFilter').value;
             },
@@ -1028,11 +1041,14 @@ document.addEventListener('DOMContentLoaded', function() {
             {
                 data: null,
                 render: function(data, type, row) {
+                    const subcatBadge = row.subcategory ? `<span class="inline-block mt-1 px-2 py-0.5 bg-amber-50 border border-amber-200 text-amber-800 rounded text-[11px] font-medium"><i class="fas fa-sitemap mr-1"></i>${row.subcategory}</span>` : '';
+                    const titleUpper = (row.title ?? '').toUpperCase();
                     return `
                         <div class="min-w-0">
-                            <h4 class="font-medium text-gray-900" title="${row.title ?? ''}">${row.title}</h4>
+                            <h4 class="font-medium text-gray-900 uppercase tracking-wide" title="${titleUpper}">${titleUpper}</h4>
                             <p class="text-sm text-gray-600" title="${row.author ?? ''}">by ${row.author}</p>
                             ${row.isbn ? `<p class="text-xs text-gray-500">ISBN: ${row.isbn}</p>` : ''}
+                            ${subcatBadge}
                         </div>
                     `;
                 }
@@ -1043,7 +1059,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     const typeConfig = {
                         'book': { icon: 'fa-book', color: 'bg-blue-100 text-blue-800', label: 'Book' },
                         'e_journal': { icon: 'fa-newspaper', color: 'bg-purple-100 text-purple-800', label: 'E-Journal' },
-                        'thesis': { icon: 'fa-graduation-cap', color: 'bg-green-100 text-green-800', label: 'Thesis' }
+                        'thesis': { icon: 'fa-graduation-cap', color: 'bg-green-100 text-green-800', label: 'Thesis' },
+                        'homegrown': { icon: 'fa-house-user', color: 'bg-amber-100 text-amber-800', label: 'Homegrown' }
                     };
                     const config = typeConfig[data] || typeConfig.book;
                     return `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${config.color}"><i class="fas ${config.icon} mr-1"></i>${config.label}</span>`;
@@ -1085,6 +1102,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             <button onclick="editBook(${row.id})" class="text-emerald-600 hover:text-emerald-800" title="Edit">
                                 <i class="fas fa-edit"></i>
                             </button>
+                            <button onclick="toggleBookStatus(${row.id}, '${row.availability_status}')" class="${row.availability_status === 'maintenance' || row.availability_status === 'disabled' ? 'text-amber-600 hover:text-amber-800' : 'text-slate-500 hover:text-slate-800'}" title="${row.availability_status === 'maintenance' || row.availability_status === 'disabled' ? 'Enable Resource' : 'Disable Resource'}">
+                                <i class="fas ${row.availability_status === 'maintenance' || row.availability_status === 'disabled' ? 'fa-check-circle' : 'fa-ban'}"></i>
+                            </button>
                             <button onclick='deleteBook(${row.id}, ${safeTitle})' class="text-red-600 hover:text-red-800" title="Delete">
                                 <i class="fas fa-trash"></i>
                             </button>
@@ -1113,7 +1133,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    ['resourceTypeFilter', 'courseFilter', 'titleSortFilter'].forEach(filterId => {
+    ['resourceTypeFilter', 'subcategoryFilter', 'courseFilter', 'titleSortFilter'].forEach(filterId => {
         const element = document.getElementById(filterId);
         if (element) {
             element.addEventListener('change', function() {
@@ -1126,9 +1146,11 @@ document.addEventListener('DOMContentLoaded', function() {
         clearFiltersBtn.addEventListener('click', function() {
             if (searchInput) searchInput.value = '';
             const resourceTypeFilter = document.getElementById('resourceTypeFilter');
+            const subcategoryFilter = document.getElementById('subcategoryFilter');
             const courseFilter = document.getElementById('courseFilter');
             const titleSortFilter = document.getElementById('titleSortFilter');
             if (resourceTypeFilter) resourceTypeFilter.value = '';
+            if (subcategoryFilter) subcategoryFilter.value = '';
             if (courseFilter) courseFilter.value = '';
             if (titleSortFilter) titleSortFilter.value = '';
             table.draw();
@@ -1677,6 +1699,45 @@ async function startBulkUpload() {
         btnText.classList.remove('hidden');
         loader.classList.add('hidden');
     }
+}
+
+function toggleBookStatus(id, currentStatus) {
+    const isDisabling = (currentStatus === 'available');
+    const actionText = isDisabling ? 'disable' : 'enable';
+    
+    if (!confirm(`Are you sure you want to ${actionText} this resource?`)) {
+        return;
+    }
+
+    fetch(`/librarian/books/${id}/toggle-status`, {
+        method: 'PATCH',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (typeof showToast === 'function') {
+                showToast(data.message, 'success');
+            } else {
+                alert(data.message);
+            }
+            if (window.table) {
+                window.table.draw(false);
+            } else if (typeof $('#booksTable').DataTable === 'function') {
+                $('#booksTable').DataTable().draw(false);
+            }
+        } else {
+            alert(data.message || 'Error updating status.');
+        }
+    })
+    .catch(err => {
+        console.error('Error toggling resource status:', err);
+        alert('An error occurred while updating resource status.');
+    });
 }
 </script>
 @endsection

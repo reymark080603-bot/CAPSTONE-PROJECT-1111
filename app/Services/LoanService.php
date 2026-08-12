@@ -78,22 +78,16 @@ class LoanService
                 throw new \Exception('You already have this book borrowed.');
             }
 
-            // Check user's current borrow limit (max 3 books)
-            $currentBorrows = BorrowRecord::where('user_id', $userId)
-                ->where('status', 'borrowed')
-                ->count();
-
-            if ($currentBorrows >= 3) {
-                throw new \Exception('You have reached the maximum borrow limit (3 books).');
-            }
-
+            // Calculate allowed borrow days based on book settings and requested days
+            $maxDays = max(1, intval($book->borrow_days ?: 5));
+            $daysToBorrow = min(max(1, intval($borrowDays ?: 1)), $maxDays);
 
             // Create borrow record
             $borrowRecord = BorrowRecord::create([
                 'user_id' => $userId,
                 'book_id' => $bookId,
                 'borrowed_date' => now(),
-                'due_date' => now()->addDays($borrowDays),
+                'due_date' => now()->addDays($daysToBorrow),
                 'status' => 'borrowed'
             ]);
 

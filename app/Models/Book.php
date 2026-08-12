@@ -37,6 +37,8 @@ class Book extends Model
         'year_level',
         'author',
         'category',
+        'subcategory',
+        'borrow_days',
         // Bulk upload fields
         'year',
         'program',
@@ -46,6 +48,7 @@ class Book extends Model
 
     protected $casts = [
         'published_year' => 'integer',
+        'borrow_days' => 'integer',
     ];
 
     public function borrowRecords()

@@ -851,6 +851,11 @@ class LibrarianController extends Controller
             });
         }
 
+        // Filter by subcategory
+        if ($request->has('subcategory') && !empty($request->subcategory)) {
+            $query->where('subcategory', $request->subcategory);
+        }
+
         // Filter by course
         if ($request->has('course') && !empty($request->course)) {
             $query->where('course', $request->course);
@@ -898,6 +903,7 @@ class LibrarianController extends Controller
                     'publisher' => $book->publisher_name,
                     'resource_type' => $book->resource_type ?? 'book',
                     'category' => $categoryNames !== '' ? $categoryNames : ($book->getOriginal('category') ?? ''),
+                    'subcategory' => $book->subcategory ?? '',
                     'course' => $book->course ?: ($book->program ?? ''),
                     'program' => $book->program ?? '',
                     'year_level' => $book->year_level ?? '',
@@ -930,8 +936,9 @@ class LibrarianController extends Controller
                 'files.*' => 'required|file|max:102400|mimes:pdf,epub,doc,docx,jpg,jpeg,png',
                 'covers.*' => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
                 'cover_map' => 'nullable|string',
-                'resource_type' => 'required|in:book,e_journal,thesis',
+                'resource_type' => 'required|in:book,e_journal,thesis,homegrown',
                 'category' => 'nullable|string',
+                'subcategory' => 'nullable|string',
                 'course' => 'nullable|string'
             ]);
 
@@ -962,6 +969,7 @@ class LibrarianController extends Controller
                     if (\Illuminate\Support\Facades\Schema::hasColumn('books', 'author')) $book->author = 'Bulk Upload';
                     if (\Illuminate\Support\Facades\Schema::hasColumn('books', 'resource_type')) $book->resource_type = $request->resource_type;
                     if (\Illuminate\Support\Facades\Schema::hasColumn('books', 'category')) $book->category = $request->category;
+                    if (\Illuminate\Support\Facades\Schema::hasColumn('books', 'subcategory')) $book->subcategory = $request->subcategory;
                     if (\Illuminate\Support\Facades\Schema::hasColumn('books', 'course')) $book->course = $request->course;
                     if (\Illuminate\Support\Facades\Schema::hasColumn('books', 'availability_status')) $book->availability_status = 'available';
                     if (\Illuminate\Support\Facades\Schema::hasColumn('books', 'copies_total')) $book->copies_total = 1;
@@ -1084,13 +1092,13 @@ class LibrarianController extends Controller
     public function storeBook(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'resource_type' => 'required|in:book,e_journal,thesis',
+            'resource_type' => 'required|in:book,e_journal,thesis,homegrown',
             'title' => 'required|string|max:255',
             'author' => 'required|string|max:255',
             'isbn' => 'nullable|string|max:20|unique:books,isbn',
             'category' => 'nullable|string|max:100',
+            'subcategory' => 'nullable|string|max:100',
             'course' => 'nullable|string|max:50',
-            'resource_type' => 'required|in:book,e_journal,thesis',
             'description' => 'nullable|string',
             'published_year' => 'nullable|integer|min:1000|max:' . date('Y'),
             'publisher' => 'nullable|string|max:255',
@@ -1201,6 +1209,11 @@ class LibrarianController extends Controller
         
         // Handle resource type
         $bookData['resource_type'] = $request->resource_type ?? 'book';
+
+        // Handle subcategory
+        if ($request->filled('subcategory')) {
+            $bookData['subcategory'] = trim($request->subcategory);
+        }
         
         // Handle ISBN field
         if ($request->filled('isbn')) {
@@ -2994,5 +3007,28 @@ class LibrarianController extends Controller
         }
         
         return $this->generateCsvResponse($csvData, 'monthly-summary-' . date('Y-m-d') . '.csv');
+    }
+
+    /**
+     * Toggle book availability status (Disable/Enable for maintenance)
+     */
+    public function toggleBookStatus(Book $book)
+    {
+        try {
+            $newStatus = ($book->availability_status === 'maintenance' || $book->availability_status === 'disabled') ? 'available' : 'maintenance';
+            $book->availability_status = $newStatus;
+            $book->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Resource status updated to ' . ucfirst($newStatus),
+                'new_status' => $newStatus,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update resource status: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

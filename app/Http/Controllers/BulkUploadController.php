@@ -336,6 +336,7 @@ class BulkUploadController extends Controller
         return match ($normalized) {
             'e_journal', 'ejournal', 'journal' => 'e_journal',
             'e_thesis', 'thesis'               => 'thesis',
+            'homegrown', 'unpublished', 'homegrown_books', 'unpublished_books' => 'homegrown',
             'ebook', 'ebooks', 'book', 'books' => 'book',
             default                            => 'book',
         };

@@ -10,6 +10,7 @@ class BooksManager {
             filteredBooks: [],
             filters: {
                 category: '',
+                subcategory: '',
                 program: '',
                 year: '',
                 sort: 'title-asc'
@@ -39,6 +40,7 @@ class BooksManager {
             filterDropdownBtn: document.getElementById('filter-dropdown-btn'),
             filterDropdown: document.getElementById('filter-dropdown'),
             filterCategory: document.getElementById('filter-category'),
+            filterSubcategory: document.getElementById('filter-subcategory'),
             filterProgram: document.getElementById('filter-program'),
             filterYear: document.getElementById('filter-year'),
             filterSort: document.getElementById('filter-sort'),
@@ -157,19 +159,21 @@ class BooksManager {
         }
 
         document.addEventListener('click', (e) => {
-            const quickBorrowButton = e.target.closest('.btn-borrow-quick');
+            const quickBorrowButton = e.target.closest('.btn-borrow-quick, .btn-borrow');
             if (!quickBorrowButton) return;
 
             e.preventDefault();
             const bookId = quickBorrowButton.dataset.bookId;
-            const bookTitle = quickBorrowButton.dataset.bookTitle || quickBorrowButton.closest('.book-card')?.dataset.bookTitle || 'Book Title';
+            const bookCard = quickBorrowButton.closest('.book-card');
+            const bookTitle = quickBorrowButton.dataset.bookTitle || bookCard?.dataset.bookTitle || 'Book Title';
+            const customMaxDays = quickBorrowButton.dataset.borrowDays || bookCard?.dataset.borrowDays || null;
 
             if (!bookId) {
                 this.showBorrowError('Book ID not found');
                 return;
             }
 
-            this.showBorrowPopup(bookId, bookTitle);
+            this.showBorrowPopup(bookId, bookTitle, customMaxDays);
         });
         
         // Borrow popup events
@@ -277,12 +281,14 @@ class BooksManager {
                         || bookEl.querySelector('p.text-xs.text-gray-600')?.textContent?.trim()
                         || 'Unknown Author',
                     category: bookEl.dataset.bookCategory?.trim() || '',
+                    subcategory: bookEl.dataset.bookSubcategory?.trim() || bookEl.dataset.bookCategory?.trim() || '',
                     resourceType: bookEl.dataset.bookResourceType?.trim() || 'book',
                     course: bookEl.dataset.bookCourse?.trim() || '',
                     program: bookEl.dataset.bookProgram?.trim() || '',
                     yearLevel: bookEl.dataset.bookYearLevel?.trim() || '',
                     publishedYear: bookEl.dataset.bookPublishedYear?.trim() || '',
                     description: bookEl.dataset.bookDescription?.trim() || '',
+                    borrow_days: parseInt(bookEl.dataset.borrowDays || 5, 10),
                     available: true,
                     cover: bookEl.dataset.bookCover?.trim() || bookEl.querySelector('.book-cover-img')?.src || ''
                 };
@@ -310,6 +316,7 @@ class BooksManager {
                 (book.title && book.title.toLowerCase().includes(searchLower)) ||
                 (book.author && book.author.toLowerCase().includes(searchLower)) ||
                 (book.category && book.category.toLowerCase().includes(searchLower)) ||
+                (book.subcategory && book.subcategory.toLowerCase().includes(searchLower)) ||
                 (book.description && book.description.toLowerCase().includes(searchLower)) ||
                 (book.course && book.course.toLowerCase().includes(searchLower))
             );
@@ -319,6 +326,14 @@ class BooksManager {
         if (this.state.filters.category) {
             const categoryNeedle = this.normalizeFilterValue(this.state.filters.category);
             results = results.filter(book => this.normalizeFilterValue(book.resourceType).includes(categoryNeedle));
+        }
+
+        if (this.state.filters.subcategory) {
+            const subcategoryNeedle = this.normalizeFilterValue(this.state.filters.subcategory);
+            results = results.filter(book => 
+                this.normalizeFilterValue(book.subcategory).includes(subcategoryNeedle) ||
+                this.normalizeFilterValue(book.category).includes(subcategoryNeedle)
+            );
         }
 
         if (this.state.filters.program) {
@@ -388,6 +403,7 @@ class BooksManager {
 
     applyFilters() {
         this.state.filters.category = this.elements.filterCategory?.value?.trim() || '';
+        this.state.filters.subcategory = this.elements.filterSubcategory?.value?.trim() || '';
         this.state.filters.program = this.elements.filterProgram?.value?.trim() || '';
         this.state.filters.year = this.elements.filterYear?.value?.trim() || '';
         this.state.filters.sort = this.elements.filterSort?.value?.trim() || 'title-asc';
@@ -401,6 +417,7 @@ class BooksManager {
     resetFilters() {
         this.state.filters = {
             category: '',
+            subcategory: '',
             program: '',
             year: '',
             sort: 'title-asc'
@@ -408,6 +425,7 @@ class BooksManager {
         this.state.currentPage = 1;
 
         if (this.elements.filterCategory) this.elements.filterCategory.value = '';
+        if (this.elements.filterSubcategory) this.elements.filterSubcategory.value = '';
         if (this.elements.filterProgram) this.elements.filterProgram.value = '';
         if (this.elements.filterYear) this.elements.filterYear.value = '';
         if (this.elements.filterSort) this.elements.filterSort.value = 'title-asc';
@@ -463,6 +481,10 @@ class BooksManager {
 
         if (this.state.filters.category) {
             tags.push(`Type: ${this.elements.filterCategory?.selectedOptions?.[0]?.text || this.state.filters.category}`);
+        }
+
+        if (this.state.filters.subcategory) {
+            tags.push(`Subcategory: ${this.elements.filterSubcategory?.selectedOptions?.[0]?.text || this.state.filters.subcategory}`);
         }
 
         if (this.state.filters.program) {
@@ -675,13 +697,13 @@ class BooksManager {
             ? `<a href="${this.getBookUrl(book.id)}" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-2 rounded text-xs text-center transition-colors">View</a>`
             : `
                     <a href="${this.getBookUrl(book.id)}" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-2 rounded text-xs text-center transition-colors">View</a>
-                    <button class="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-2 rounded text-xs transition-colors btn-borrow" data-book-id="${book.id}">Borrow</button>
+                    <button class="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-2 rounded text-xs transition-colors btn-borrow" data-book-id="${book.id}" data-borrow-days="${book.borrow_days || 5}">Borrow</button>
               `;
 
         return `
-        <div class="book-card flex-shrink-0 w-full" data-book-id="${book.id}">
+        <div class="book-card flex-shrink-0 w-full" data-book-id="${book.id}" data-borrow-days="${book.borrow_days || 5}">
             <div class="relative group">
-                <div class="book-cover relative bg-gray-100 rounded-lg shadow-md overflow-hidden h-56 sm:h-60 md:h-64 hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
+                <div class="book-cover relative bg-gray-100 rounded-lg shadow-md overflow-hidden h-64 sm:h-72 md:h-80 hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
                     <span class="absolute top-2 left-2 z-10 px-2 py-1 rounded-full bg-white/90 text-[10px] font-semibold text-gray-700 uppercase tracking-wide">${resourceType}</span>
                     ${cover}
                 </div>
@@ -714,25 +736,40 @@ class BooksManager {
     }
 
     // Borrow popup methods
-    showBorrowPopup(bookId, fallbackTitle = 'Book Title') {
-        console.log('showBorrowPopup called with bookId:', bookId);
-        console.log('typeof bookId:', typeof bookId);
+    showBorrowPopup(bookId, fallbackTitle = 'Book Title', customMaxDays = null) {
+        console.log('showBorrowPopup called with bookId:', bookId, 'customMaxDays:', customMaxDays);
         
-        const book = this.state.allBooks.find(b => b.id == bookId); // Use == for string comparison
-        console.log('Found book:', book);
+        const book = this.state.allBooks.find(b => b.id == bookId);
+        const maxDays = Math.max(1, parseInt(customMaxDays || book?.borrow_days || 5, 10));
         
         const popup = document.getElementById('borrowPopup');
         const popupCard = document.getElementById('borrowPopupCard');
         const titleElement = document.getElementById('borrowPopupTitle');
+        const durationSelect = document.getElementById('borrowDurationSelect');
+        const limitNote = document.getElementById('borrowLimitNote');
         
         if (!popup || !popupCard || !titleElement) return;
         
         // Set book title
-        titleElement.textContent = book?.title || fallbackTitle;
+        titleElement.textContent = (book?.title || fallbackTitle).toUpperCase();
+        
+        // Populate duration choices (1 up to maxDays limit set by librarian)
+        if (durationSelect) {
+            let optionsHtml = '';
+            for (let i = 1; i <= maxDays; i++) {
+                const label = i === 1 ? '1 Day' : `${i} Days`;
+                optionsHtml += `<option value="${i}">${label}</option>`;
+            }
+            durationSelect.innerHTML = optionsHtml;
+            durationSelect.value = 1;
+        }
+
+        if (limitNote) {
+            limitNote.textContent = `Max allowed duration for this book: ${maxDays} day(s) set by librarian.`;
+        }
         
         // Store current book ID for confirmation
         this.currentBorrowBookId = bookId;
-        console.log('Set currentBorrowBookId to:', this.currentBorrowBookId);
         
         // Show popup with animation
         popup.classList.remove('hidden');
@@ -772,6 +809,8 @@ class BooksManager {
         
         const confirmButton = document.getElementById('borrowPopupConfirm');
         const confirmText = document.getElementById('borrowPopupConfirmText');
+        const durationSelect = document.getElementById('borrowDurationSelect');
+        const selectedDays = durationSelect ? parseInt(durationSelect.value || 1, 10) : 1;
         
         // Show loading state
         if (confirmButton) {
@@ -780,13 +819,10 @@ class BooksManager {
         }
         
         try {
-            console.log('Attempting to borrow book:', bookId);
+            console.log('Attempting to borrow book:', bookId, 'for days:', selectedDays);
             
             const url = this.getBorrowUrl(bookId);
-            console.log('Request URL:', url);
-            console.log('Request method: POST');
             
-            // Use the exact same approach as student-dashboard.js
             const response = await fetch(url, {
                 method: 'POST',
                 headers: {
@@ -796,7 +832,7 @@ class BooksManager {
                     'X-Requested-With': 'XMLHttpRequest'
                 },
                 body: JSON.stringify({
-                    duration: 1 // Fixed 1-day duration
+                    borrow_days: selectedDays
                 })
             });
 
@@ -1136,60 +1172,62 @@ class BooksManager {
         return 'BSIT'; // Default to BSIT if we can't determine
     }
     
-    showBorrowSuccess() {
-        // Create success notification
+    showBorrowSuccess(message = 'Book Borrowed Successfully!') {
+        const existingToasts = document.querySelectorAll('.knowly-toast-notification');
+        existingToasts.forEach(t => t.remove());
+
         const notification = document.createElement('div');
-        notification.className = 'fixed top-4 right-4 bg-white text-blue-600 border border-blue-200 px-6 py-4 rounded-lg shadow-lg z-[10000] flex items-center space-x-3 transform translate-x-full transition-transform duration-300';
+        notification.className = 'knowly-toast-notification fixed top-5 right-5 z-[10000] min-w-[300px] max-w-md p-4 rounded-xl shadow-2xl transition-all duration-300 transform translate-x-full bg-white border border-green-200';
         notification.innerHTML = `
-            <i class="fas fa-check-circle text-xl text-blue-600"></i>
-            <div>
-                <p class="font-semibold">Book Borrowed Successfully!</p>
-                <p class="text-sm text-blue-500">You can now read your borrowed book.</p>
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full bg-green-100 text-green-600 flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-check-circle text-base"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="font-semibold text-sm text-gray-900 leading-snug">${message}</p>
+                    <p class="text-xs text-gray-500 mt-0.5">You can now read your borrowed book.</p>
+                </div>
+                <button type="button" class="text-gray-400 hover:text-gray-600 p-1 text-xs" onclick="this.closest('.knowly-toast-notification').remove()">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
         `;
-        
+
         document.body.appendChild(notification);
-        
-        // Show notification
-        setTimeout(() => {
-            notification.classList.remove('translate-x-full');
-        }, 10);
-        
-        // Hide notification after 3 seconds
+        setTimeout(() => notification.classList.remove('translate-x-full'), 10);
         setTimeout(() => {
             notification.classList.add('translate-x-full');
-            setTimeout(() => {
-                document.body.removeChild(notification);
-            }, 300);
-        }, 3000);
+            setTimeout(() => { if (notification.parentNode) notification.remove(); }, 300);
+        }, 3500);
     }
     
-    showBorrowError(message) {
-        // Create error notification
+    showBorrowError(message = 'Failed to borrow book') {
+        const existingToasts = document.querySelectorAll('.knowly-toast-notification');
+        existingToasts.forEach(t => t.remove());
+
         const notification = document.createElement('div');
-        notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-4 rounded-lg shadow-lg z-[10000] flex items-center space-x-3 transform translate-x-full transition-transform duration-300';
+        notification.className = 'knowly-toast-notification fixed top-5 right-5 z-[10000] min-w-[300px] max-w-md p-4 rounded-xl shadow-2xl transition-all duration-300 transform translate-x-full bg-white border border-red-200';
         notification.innerHTML = `
-            <i class="fas fa-exclamation-circle text-xl"></i>
-            <div>
-                <p class="font-semibold">Borrow Failed</p>
-                <p class="text-sm opacity-90">${message}</p>
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full bg-red-100 text-red-600 flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-exclamation-circle text-base"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="font-semibold text-sm text-gray-900 leading-snug">Borrow Failed</p>
+                    <p class="text-xs text-gray-500 mt-0.5">${message}</p>
+                </div>
+                <button type="button" class="text-gray-400 hover:text-gray-600 p-1 text-xs" onclick="this.closest('.knowly-toast-notification').remove()">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
         `;
-        
+
         document.body.appendChild(notification);
-        
-        // Show notification
-        setTimeout(() => {
-            notification.classList.remove('translate-x-full');
-        }, 10);
-        
-        // Hide notification after 3 seconds
+        setTimeout(() => notification.classList.remove('translate-x-full'), 10);
         setTimeout(() => {
             notification.classList.add('translate-x-full');
-            setTimeout(() => {
-                document.body.removeChild(notification);
-            }, 300);
-        }, 3000);
+            setTimeout(() => { if (notification.parentNode) notification.remove(); }, 300);
+        }, 3500);
     }
 }
 

@@ -189,12 +189,16 @@ Route::get('/fix-admin-access', function() {
     }
 });
 
-// Admin/librarian login routes redirect to the shared login page.
-    Route::get('/librarian/login', function () {
-        return redirect()->route('login');
-    })->name('librarian.login');
+// Admin/librarian login routes
+Route::get('/librarian/login', function () {
+    return view('Staff.login');
+})->name('librarian.login');
 
-    Route::post('/librarian/login', [LoginController::class, 'login'])->name('librarian.login.post');
+Route::get('/staff/login', function () {
+    return view('Staff.login');
+});
+
+Route::post('/librarian/login', [LoginController::class, 'login'])->name('librarian.login.post');
 
     // Main route - redirect to login
     Route::get('/', function () {
@@ -231,6 +235,9 @@ Route::get('/fix-admin-access', function() {
         Route::get('/home', [HomeController::class, 'index'])->name('home');
         Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
         Route::get('/student/dashboard', [StudentDashboardController::class, 'index'])->name('student.dashboard');
+        Route::get('/student/profile', [StudentDashboardController::class, 'profile'])->name('student.profile');
+        Route::post('/student/profile', [StudentDashboardController::class, 'updateProfile'])->name('student.profile.update');
+        Route::post('/student/change-password', [HomeController::class, 'changePassword'])->name('student.change-password');
         Route::get('/dashboard/recommended', [RecommendedController::class, 'index'])->name('dashboard.recommended');
         Route::get('/dashboard/recent', [HomeController::class, 'getRecentBooks'])->name('dashboard.recent');
         Route::get('/dashboard/stats', [HomeController::class, 'getDashboardStats'])->name('dashboard.stats');
@@ -317,6 +324,7 @@ Route::get('/fix-admin-access', function() {
             Route::get('/{book}', [LibrarianController::class, 'showBook'])->name('show');
             Route::get('/{book}/edit', [LibrarianController::class, 'editBook'])->name('edit');
             Route::put('/{book}', [LibrarianController::class, 'updateBook'])->name('update');
+            Route::patch('/{book}/toggle-status', [LibrarianController::class, 'toggleBookStatus'])->name('toggle-status');
             Route::delete('/{book}', [LibrarianController::class, 'destroyBook'])->name('destroy');
         });
 

@@ -143,9 +143,28 @@ class LoginController extends Controller
     {
         $request->validate(['email' => 'required|email']);
 
-        // For now, just return success message
-        // You can implement actual email sending later
-        return back()->with('status', 'Password reset link sent to your email address.');
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return back()->withErrors(['email' => 'No registered account found with this email address.']);
+        }
+
+        // Generate a random 8-character password
+        $newPassword = \Illuminate\Support\Str::random(8);
+
+        // Save hashed password to database
+        $user->password = Hash::make($newPassword);
+        $user->save();
+
+        // Send email via Mailer model
+        $mailer = new \App\Models\Mailer();
+        $res = $mailer->generate_password($user->email, $newPassword, $user->email);
+
+        if (is_array($res) && isset($res['status']) && $res['status'] === 200) {
+            return back()->with('status', 'A new temporary password has been sent to your email address!');
+        }
+
+        return back()->withErrors(['email' => 'Failed to send password reset email. Please check your email settings or try again later.']);
     }
 
     /**

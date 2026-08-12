@@ -16,6 +16,7 @@
         $pageTitle = match($resourceType ?? null) {
             'e_journal' => 'Browse E-Journals',
             'thesis' => 'Browse Theses',
+            'homegrown' => 'Browse Homegrown & Unpublished Resources',
             'book' => 'Browse Books',
             default => match($scope ?? null) {
                 'recommended' => 'Browse Recommended Resources',
@@ -27,6 +28,7 @@
         $pageSubtitle = match($resourceType ?? null) {
             'e_journal' => 'Explore all academic e-journals in the library collection',
             'thesis' => 'Explore all thesis and capstone references in the library collection',
+            'homegrown' => 'Explore internal research, capstones, modules, and unpublished institutional works',
             'book' => 'Explore all books in the library collection',
             default => match($scope ?? null) {
                 'recommended' => 'Explore all resources recommended for your program',
@@ -76,8 +78,11 @@
                         <div data-profile-menu class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg p-3 hidden z-50">
                             <div class="text-sm text-gray-700">
                                 <p class="font-semibold">{{ $user->firstname ?? 'User' }} {{ $user->lastname ?? '' }}</p>
-                                <p class="text-gray-500">{{ $user->email ?? '' }}</p>
+                                <p class="text-gray-500 text-xs truncate">{{ $user->email ?? '' }}</p>
                                 <hr class="my-2">
+                                <a href="{{ route('student.profile') }}" class="block px-2 py-1 hover:bg-gray-100 rounded text-gray-700 font-medium mb-1">
+                                    <i class="fas fa-user-circle mr-1.5 text-green-600"></i> My Profile
+                                </a>
                                 <form action="{{ route('logout') }}" method="POST" class="block">
                                     @csrf
                                     <button type="submit" class="w-full text-left px-2 py-1 hover:bg-gray-100 rounded text-red-600">Logout</button>
@@ -118,6 +123,10 @@
                     <a href="{{ route('student.history') }}" class="sidebar-link flex items-center space-x-3 text-gray-300 px-4 py-3 rounded-lg transition-all hover:text-white hover:bg-gray-700">
                         <i class="fas fa-history"></i>
                         <span class="sidebar-text">History</span>
+                    </a>
+                    <a href="{{ route('student.profile') }}" class="sidebar-link flex items-center space-x-3 text-gray-300 px-4 py-3 rounded-lg transition-all hover:text-white hover:bg-gray-700">
+                        <i class="fas fa-user-cog"></i>
+                        <span class="sidebar-text">My Profile</span>
                     </a>
                     <form action="{{ route('logout') }}" method="POST" class="mt-4">
                         @csrf
@@ -185,6 +194,20 @@
                                         <option value="book">Books</option>
                                         <option value="e_journal">E-Journal</option>
                                         <option value="thesis">E-Thesis</option>
+                                        <option value="homegrown">Homegrown / Unpublished</option>
+                                    </select>
+                                </div>
+
+                                <!-- Subcategory Filter -->
+                                <div>
+                                    <label for="filter-subcategory" class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Subcategory</label>
+                                    <select id="filter-subcategory" class="w-full border border-gray-300 rounded-lg py-1.5 sm:py-2 pl-3 pr-8 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="">All Subcategories</option>
+                                        <option value="Thesis & Dissertation">Thesis & Dissertation</option>
+                                        <option value="Capstone Project">Capstone Project</option>
+                                        <option value="Institutional Research">Institutional Research</option>
+                                        <option value="Course Module">Course Module</option>
+                                        <option value="Institutional Publication">Institutional Publication</option>
                                     </select>
                                 </div>
                                 
@@ -280,9 +303,10 @@
                              data-book-year-level="{{ $book->year_level ?? '' }}"
                              data-book-published-year="{{ $book->published_year ?? '' }}"
                              data-book-description="{{ $book->description ?? '' }}"
-                             data-book-cover="{{ $book->display_cover_url ?? '' }}">
+                             data-book-cover="{{ $book->display_cover_url ?? '' }}"
+                             data-borrow-days="{{ $book->borrow_days ?? 5 }}">
                             <div class="relative group">
-                                <div class="book-cover relative bg-gray-100 rounded-lg shadow-md overflow-hidden h-56 sm:h-60 md:h-64 hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
+                                <div class="book-cover relative bg-gray-100 rounded-lg shadow-md overflow-hidden h-64 sm:h-72 md:h-80 hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
                                     <span class="absolute top-2 left-2 z-10 px-2 py-1 rounded-full bg-white/90 text-[10px] font-semibold text-gray-700 uppercase tracking-wide">{{ strtoupper(str_replace('_', ' ', $book->resource_type ?: 'book')) }}</span>
                                     @if($book->display_cover_url)
                                         <img src="{{ $book->display_cover_url }}" alt="{{ $book->title }} Cover" class="w-full h-full object-cover rounded-lg book-cover-img" loading="lazy">
@@ -298,7 +322,7 @@
                                     <p class="text-[11px] text-gray-500 mb-2 uppercase tracking-wide line-clamp-1">{{ $book->course ?: ($book->program ?: '') }}</p>
                                     <div class="flex gap-1">
                                         <a href="{{ route('student.books.show', $book) }}" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-2 rounded text-xs text-center transition-colors">View</a>
-                                        <button class="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-2 rounded text-xs transition-colors btn-borrow-quick" data-book-id="{{ $book->id }}" data-book-title="{{ $book->title }}">Borrow</button>
+                                        <button class="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-2 rounded text-xs transition-colors btn-borrow-quick" data-book-id="{{ $book->id }}" data-book-title="{{ $book->title }}" data-borrow-days="{{ $book->borrow_days ?? 5 }}">Borrow</button>
                                     </div>
                                 </div>
                             </div>
@@ -343,9 +367,9 @@
 
                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3">
                     @forelse($selectedResources as $resource)
-                        <div class="book-card flex-shrink-0 w-full {{ ($resource->resource_type ?? null) === 'e_journal' ? 'ejournal-card' : '' }}">
+                        <div class="book-card flex-shrink-0 w-full {{ ($resource->resource_type ?? null) === 'e_journal' ? 'ejournal-card' : '' }}" data-book-id="{{ $resource->id }}" data-book-title="{{ $resource->title }}" data-borrow-days="{{ $resource->borrow_days ?? 5 }}">
                             <div class="relative group">
-                                <div class="book-cover relative bg-gray-100 rounded-lg shadow-md overflow-hidden h-56 sm:h-60 md:h-64 hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
+                                <div class="book-cover relative bg-gray-100 rounded-lg shadow-md overflow-hidden h-64 sm:h-72 md:h-80 hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
                                     <span class="absolute top-2 left-2 z-10 px-2 py-1 rounded-full bg-white/90 text-[10px] font-semibold text-gray-700 uppercase tracking-wide">{{ strtoupper(str_replace('_', ' ', $resource->resource_type ?: 'book')) }}</span>
                                     <img src="{{ $resource->display_cover_url }}" alt="{{ $resource->title }} Cover" class="w-full h-full object-cover rounded-lg book-cover-img" loading="lazy">
                                 </div>
@@ -355,7 +379,7 @@
                                     <p class="text-[11px] text-gray-500 mb-2 uppercase tracking-wide line-clamp-1">{{ $resource->course ?: ($resource->program ?: '') }}</p>
                                     <div class="flex gap-1">
                                         <a href="{{ route('student.books.show', $resource) }}" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-2 rounded text-xs text-center transition-colors">View</a>
-                                        <button class="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-2 rounded text-xs transition-colors btn-borrow-quick" data-book-id="{{ $resource->id }}" data-book-title="{{ $resource->title }}">Borrow</button>
+                                        <button class="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-2 rounded text-xs transition-colors btn-borrow-quick" data-book-id="{{ $resource->id }}" data-book-title="{{ $resource->title }}" data-borrow-days="{{ $resource->borrow_days ?? 5 }}">Borrow</button>
                                     </div>
                                 </div>
                             </div>
@@ -398,9 +422,10 @@
                              data-book-year-level="{{ $resource->year_level ?? '' }}"
                              data-book-published-year="{{ $resource->published_year ?? '' }}"
                              data-book-description="{{ $resource->description ?? '' }}"
-                             data-book-cover="{{ $resource->display_cover_url ?? '' }}">
+                             data-book-cover="{{ $resource->display_cover_url ?? '' }}"
+                             data-borrow-days="{{ $resource->borrow_days ?? 5 }}">
                             <div class="relative group">
-                                <div class="book-cover relative bg-gray-100 rounded-lg shadow-md overflow-hidden h-56 sm:h-60 md:h-64 hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
+                                <div class="book-cover relative bg-gray-100 rounded-lg shadow-md overflow-hidden h-64 sm:h-72 md:h-80 hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
                                     <span class="absolute top-2 left-2 z-10 px-2 py-1 rounded-full bg-white/90 text-[10px] font-semibold text-gray-700 uppercase tracking-wide">E JOURNAL</span>
                                     <img src="{{ $resource->display_cover_url }}" alt="{{ $resource->title }} Cover" class="w-full h-full object-cover rounded-lg book-cover-img" loading="lazy">
                                 </div>
@@ -410,7 +435,7 @@
                                     <p class="text-[11px] text-gray-500 mb-2 uppercase tracking-wide line-clamp-1">{{ $resource->course ?: ($resource->program ?: '') }}</p>
                                     <div class="flex gap-1">
                                         <a href="{{ route('student.books.show', $resource) }}" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-2 rounded text-xs text-center transition-colors">View</a>
-                                        <button class="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-2 rounded text-xs transition-colors btn-borrow-quick" data-book-id="{{ $resource->id }}" data-book-title="{{ $resource->title }}">Borrow</button>
+                                        <button class="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-2 rounded text-xs transition-colors btn-borrow-quick" data-book-id="{{ $resource->id }}" data-book-title="{{ $resource->title }}" data-borrow-days="{{ $resource->borrow_days ?? 5 }}">Borrow</button>
                                     </div>
                                 </div>
                             </div>
@@ -447,9 +472,10 @@
                              data-book-year-level="{{ $resource->year_level ?? '' }}"
                              data-book-published-year="{{ $resource->published_year ?? '' }}"
                              data-book-description="{{ $resource->description ?? '' }}"
-                             data-book-cover="{{ $resource->display_cover_url ?? '' }}">
+                             data-book-cover="{{ $resource->display_cover_url ?? '' }}"
+                             data-borrow-days="{{ $resource->borrow_days ?? 5 }}">
                             <div class="relative group">
-                                <div class="book-cover relative bg-gray-100 rounded-lg shadow-md overflow-hidden h-56 sm:h-60 md:h-64 hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
+                                <div class="book-cover relative bg-gray-100 rounded-lg shadow-md overflow-hidden h-64 sm:h-72 md:h-80 hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
                                     <span class="absolute top-2 left-2 z-10 px-2 py-1 rounded-full bg-white/90 text-[10px] font-semibold text-gray-700 uppercase tracking-wide">THESIS</span>
                                     <img src="{{ $resource->display_cover_url }}" alt="{{ $resource->title }} Cover" class="w-full h-full object-cover rounded-lg book-cover-img" loading="lazy">
                                 </div>
@@ -459,7 +485,7 @@
                                     <p class="text-[11px] text-gray-500 mb-2 uppercase tracking-wide line-clamp-1">{{ $resource->course ?: ($resource->program ?: '') }}</p>
                                     <div class="flex gap-1">
                                         <a href="{{ route('student.books.show', $resource) }}" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-2 rounded text-xs text-center transition-colors">View</a>
-                                        <button class="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-2 rounded text-xs transition-colors btn-borrow-quick" data-book-id="{{ $resource->id }}" data-book-title="{{ $resource->title }}">Borrow</button>
+                                        <button class="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-2 rounded text-xs transition-colors btn-borrow-quick" data-book-id="{{ $resource->id }}" data-book-title="{{ $resource->title }}" data-borrow-days="{{ $resource->borrow_days ?? 5 }}">Borrow</button>
                                     </div>
                                 </div>
                             </div>
@@ -497,9 +523,10 @@
                              data-book-year-level="{{ $book->year_level ?? '' }}"
                              data-book-published-year="{{ $book->published_year ?? '' }}"
                              data-book-description="{{ $book->description ?? '' }}"
-                             data-book-cover="{{ $book->display_cover_url ?? '' }}">
+                             data-book-cover="{{ $book->display_cover_url ?? '' }}"
+                             data-borrow-days="{{ $book->borrow_days ?? 5 }}">
                             <div class="relative group">
-                                <div class="book-cover relative bg-gray-100 rounded-lg shadow-md overflow-hidden h-56 sm:h-60 md:h-64 hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
+                                <div class="book-cover relative bg-gray-100 rounded-lg shadow-md overflow-hidden h-64 sm:h-72 md:h-80 hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
                                     <span class="absolute top-2 left-2 z-10 px-2 py-1 rounded-full bg-white/90 text-[10px] font-semibold text-gray-700 uppercase tracking-wide">{{ strtoupper(str_replace('_', ' ', $book->resource_type ?: 'book')) }}</span>
                                     @if($book->display_cover_url)
                                         <img src="{{ $book->display_cover_url }}" alt="{{ $book->title }} Cover" class="w-full h-full object-cover rounded-lg book-cover-img" loading="lazy">
@@ -515,7 +542,7 @@
                                     <p class="text-[11px] text-gray-500 mb-2 uppercase tracking-wide line-clamp-1">{{ $book->course ?: ($book->program ?: '') }}</p>
                                     <div class="flex gap-1">
                                         <a href="{{ route('student.books.show', $book) }}" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-2 rounded text-xs text-center transition-colors">View</a>
-                                        <button class="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-2 rounded text-xs transition-colors btn-borrow-quick" data-book-id="{{ $book->id }}" data-book-title="{{ $book->title }}">Borrow</button>
+                                        <button class="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-2 rounded text-xs transition-colors btn-borrow-quick" data-book-id="{{ $book->id }}" data-book-title="{{ $book->title }}" data-borrow-days="{{ $book->borrow_days ?? 5 }}">Borrow</button>
                                     </div>
                                 </div>
                             </div>
@@ -1122,11 +1149,15 @@
                     <p class="text-lg font-semibold text-gray-900 truncate" id="borrowPopupTitle">Book Title</p>
                 </div>
                 
-                <div class="space-y-2 mb-6 text-sm">
-                    <div class="flex items-center justify-center text-gray-600">
-                        <i class="fas fa-calendar-alt text-blue-600 mr-2"></i>
-                        <span>Loan period: <strong>1 day</strong></span>
-                    </div>
+                <!-- Duration Selection Box -->
+                <div class="mb-6 text-left bg-gray-50 p-4 rounded-xl border border-gray-200">
+                    <label for="borrowDurationSelect" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                        <i class="fas fa-clock text-blue-600 mr-1"></i>Select Borrowing Duration:
+                    </label>
+                    <select id="borrowDurationSelect" class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        <option value="1">1 Day</option>
+                    </select>
+                    <p class="text-[11px] text-gray-500 mt-1.5" id="borrowLimitNote">Select duration up to the librarian's set limit for this resource.</p>
                 </div>
             </div>
             

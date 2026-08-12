@@ -118,9 +118,23 @@
                                 onclick="togglePassword('password')" 
                                 class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                             >
-                                <i class="fas fa-eye" id="password-eye"></i>
-                            </button>
                         </div>
+                    </div>
+
+                    <!-- Remember Me and Forgot Password -->
+                    <div class="flex items-center justify-between">
+                        <label class="flex items-center cursor-pointer">
+                            <input 
+                                type="checkbox" 
+                                id="remember" 
+                                name="remember" 
+                                class="w-4 h-4 text-purple-600 border-2 border-gray-300 rounded focus:ring-purple-500 focus:ring-2"
+                            >
+                            <span class="ml-2 text-sm text-gray-700">Remember me</span>
+                        </label>
+                        <a href="{{ route('password.request') }}" class="text-sm font-medium text-purple-600 hover:text-purple-700 transition-colors">
+                            Forgot password?
+                        </a>
                     </div>
 
                     <!-- Admin Notice -->

@@ -82,8 +82,11 @@
                         <div data-profile-menu class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg p-3 hidden z-50">
                             <div class="text-sm text-gray-700">
                                 <p class="font-semibold">{{ $user->firstname ?? 'User' }} {{ $user->lastname ?? '' }}</p>
-                                <p class="text-gray-500">{{ $user->email ?? '' }}</p>
+                                <p class="text-gray-500 text-xs truncate">{{ $user->email ?? '' }}</p>
                                 <hr class="my-2">
+                                <a href="{{ route('student.profile') }}" class="block px-2 py-1 hover:bg-gray-100 rounded text-gray-700 font-medium mb-1">
+                                    <i class="fas fa-user-circle mr-1.5 text-green-600"></i> My Profile
+                                </a>
                                 <form action="{{ route('logout') }}" method="POST" class="block">
                                     @csrf
                                     <button type="submit" class="w-full text-left px-2 py-1 hover:bg-gray-100 rounded text-red-600">Logout</button>
@@ -124,6 +127,10 @@
                     <a href="{{ route('student.history') }}" class="sidebar-link flex items-center space-x-3 text-gray-300 px-4 py-3 rounded-lg transition-all hover:text-white hover:bg-gray-700">
                         <i class="fas fa-history"></i>
                         <span class="sidebar-text">History</span>
+                    </a>
+                    <a href="{{ route('student.profile') }}" class="sidebar-link flex items-center space-x-3 text-gray-300 px-4 py-3 rounded-lg transition-all hover:text-white hover:bg-gray-700">
+                        <i class="fas fa-user-cog"></i>
+                        <span class="sidebar-text">My Profile</span>
                     </a>
                     <form action="{{ route('logout') }}" method="POST" class="mt-4">
                         @csrf
@@ -178,9 +185,10 @@
                         <!-- Action Buttons -->
                         <div class="flex flex-col sm:flex-row flex-wrap justify-center gap-3 sm:gap-4 mb-8 w-full sm:w-auto">
                             @if(!$book->user_has_borrowed)
-                                <button class="btn-borrow w-full sm:w-auto justify-center px-6 sm:px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors flex items-center text-base sm:text-lg" 
+                                <button type="button" class="btn-borrow w-full sm:w-auto justify-center px-6 sm:px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors flex items-center text-base sm:text-lg" 
                                         data-book-id="{{ $book->id }}" 
-                                        data-book-title="{{ $book->title }}">
+                                        data-book-title="{{ $book->title }}"
+                                        data-borrow-days="{{ $book->borrow_days ?? 5 }}">
                                     <i class="fas fa-book-reader mr-2"></i>Borrow Book
                                 </button>
                             @else
@@ -206,13 +214,50 @@
                             </div>
                         </div>
 
-                        <!-- Description Section -->
-                        @if($book->description)
-                        <div class="w-full">
-                            <h2 class="text-xl lg:text-2xl font-bold text-gray-900 mb-4">Description</h2>
-                            <p class="text-gray-700 leading-relaxed text-left">{{ $book->description }}</p>
+                        <!-- Summary & Overview Section -->
+                        <div class="w-full mt-8 pt-6 border-t border-gray-200/80 text-left">
+                            <div class="flex items-center justify-between mb-4">
+                                <h2 class="text-xl lg:text-2xl font-bold text-gray-900 flex items-center gap-2">
+                                    <i class="fas fa-file-alt text-blue-600"></i>
+                                    <span>Summary & Overview</span>
+                                </h2>
+                                <span class="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-semibold rounded-full border border-blue-100 uppercase tracking-wide">
+                                    {{ $book->category ?? ($book->resource_type ?? 'Resource') }}
+                                </span>
+                            </div>
+
+                            <div class="bg-gradient-to-br from-gray-50 to-blue-50/40 rounded-xl p-5 sm:p-6 border border-gray-200/80 shadow-sm relative overflow-hidden">
+                                <div class="absolute top-0 right-0 w-32 h-32 bg-blue-100/30 rounded-full blur-2xl pointer-events-none"></div>
+
+                                @if(!empty(trim($book->description ?? '')))
+                                    <p class="text-gray-700 leading-relaxed text-sm sm:text-base whitespace-pre-line relative z-10">{{ $book->description }}</p>
+                                @else
+                                    <p class="text-gray-700 leading-relaxed text-sm sm:text-base relative z-10">
+                                        <span class="font-semibold text-gray-900">"{{ $book->title }}"</span> is an academic {{ strtolower(str_replace('_', ' ', $book->resource_type ?? 'resource')) }} authored by <span class="font-semibold text-gray-900">{{ $book->author ?? 'the designated author' }}</span>.
+                                        @if($book->published_year) Published in <span class="font-semibold text-gray-900">{{ $book->published_year }}</span>.@endif
+                                        @if($book->course && $book->course !== 'All') It is recommended for <span class="font-semibold text-blue-800">{{ $book->course }}</span> students.@endif
+                                        Available for online reading and borrowing via Knowly Library with up to <span class="font-semibold text-blue-800">{{ $book->borrow_days ?? 5 }} days</span> borrowing duration.
+                                    </p>
+                                @endif
+
+                                <!-- Quick Metadata Tags -->
+                                <div class="mt-4 pt-4 border-t border-gray-200/60 flex flex-wrap gap-2 text-xs text-gray-600 relative z-10">
+                                    @if($book->subcategory)
+                                        <span class="inline-flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-2xs font-medium text-gray-700">
+                                            <i class="fas fa-bookmark text-blue-500"></i> {{ $book->subcategory }}
+                                        </span>
+                                    @endif
+                                    @if($book->language)
+                                        <span class="inline-flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-2xs font-medium text-gray-700">
+                                            <i class="fas fa-globe text-green-500"></i> {{ $book->language }}
+                                        </span>
+                                    @endif
+                                    <span class="inline-flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-2xs font-medium text-gray-700">
+                                        <i class="fas fa-clock text-amber-500"></i> Max {{ $book->borrow_days ?? 5 }} Days Borrowing
+                                    </span>
+                                </div>
+                            </div>
                         </div>
-                        @endif
 
                     </div>
                 </div>
@@ -252,43 +297,230 @@
     </script>
     <script src="{{ asset('js/student-dashboard.js') }}?v={{ filemtime(public_path('js/student-dashboard.js')) }}"></script>
     @vite('resources/js/components/book-details.js')
-    <!-- Hidden borrow notification overlay; kept in markup for future activation but does not block page interactions -->
-    <div id="borrowNotification" class="hidden fixed inset-0 flex items-center justify-center z-[9999] pointer-events-none">
-        <div class="bg-white rounded-2xl shadow-2xl border border-gray-200 max-w-md w-[90%] mx-4 p-6 transform transition-all duration-300 scale-95 opacity-0">
-            <!-- Icon and Header -->
-            <div class="flex items-start gap-3 mb-4">
-                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                    <i class="fas fa-hand-holding text-blue-600 text-lg"></i>
-                </div>
-                <div class="flex-1">
-                    <!-- Title -->
-                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Borrow Book</h3>
-                    
-                    <!-- Description -->
-                    <p class="text-sm text-gray-600 mb-4">
-                        Borrow this book for 1 day? It will be automatically returned after the period ends.
-                    </p>
-                    
-                    <!-- Book Title -->
-                    <div class="bg-gray-50 rounded-lg p-3">
-                        <p class="text-sm font-medium text-gray-800" id="borrowNotificationTitle">
-                            "{{ $book->title }}"
-                        </p>
-                    </div>
+
+    <!-- Borrow Duration Selection Popup Modal -->
+    <div id="borrowPopup" class="hidden fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-xs z-[9999] p-4 transition-all duration-300">
+        <div id="borrowPopupCard" class="bg-white rounded-2xl shadow-2xl max-w-md w-full sm:w-[90%] p-6 sm:p-8 transform transition-all duration-200 scale-95 opacity-0 border border-gray-100">
+            <div class="flex justify-center mb-6">
+                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center border-2 border-blue-200">
+                    <i class="fas fa-book text-3xl text-blue-600"></i>
                 </div>
             </div>
             
-            <!-- Action Buttons -->
-            <div class="flex justify-end gap-3 mt-5">
-                <button id="borrowNotificationCancel" class="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors">
+            <div class="text-center mb-6">
+                <h3 class="text-2xl font-bold text-gray-900 mb-2">Ready to Borrow?</h3>
+                <p class="text-gray-600 text-sm mb-4">You're about to borrow:</p>
+                
+                <div class="bg-blue-50 rounded-xl p-4 mb-4 border border-blue-200">
+                    <p class="text-lg font-semibold text-gray-900 truncate" id="borrowPopupTitle">{{ $book->title }}</p>
+                </div>
+                
+                <!-- Duration Selection Box -->
+                <div class="mb-6 text-left bg-gray-50 p-4 rounded-xl border border-gray-200">
+                    <label for="borrowDurationSelect" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                        <i class="fas fa-clock text-blue-600 mr-1"></i>Select Borrowing Duration:
+                    </label>
+                    <select id="borrowDurationSelect" class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        <option value="1">1 Day</option>
+                    </select>
+                    <p class="text-[11px] text-gray-500 mt-1.5" id="borrowLimitNote">Select duration up to the librarian's set limit for this resource.</p>
+                </div>
+            </div>
+            
+            <div class="flex gap-3">
+                <button id="borrowPopupCancel" type="button" class="flex-1 px-4 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all font-medium text-sm" onclick="if(window.__studentDashboard) window.__studentDashboard.hideBorrowPopup()">
                     Cancel
                 </button>
-                <button id="borrowNotificationConfirm" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
-                    <span id="borrowNotificationConfirmText">Confirm</span>
+                <button id="borrowPopupConfirm" type="button" class="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all font-medium text-sm shadow-md hover:shadow-lg" onclick="if(window.__studentDashboard) window.__studentDashboard.confirmBorrow()">
+                    <span id="borrowPopupConfirmText">Confirm Borrow</span>
                 </button>
             </div>
+            
+            <p class="text-xs text-gray-500 text-center mt-4">
+                Manage your loans in <a href="{{ route('student.loans') }}" class="text-blue-600 hover:underline">Loan Books</a>
+            </p>
         </div>
     </div>
 
+    <!-- Self-Contained Direct Script for Book Details Borrow Duration Selection Modal -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const borrowPopup = document.getElementById('borrowPopup');
+        const borrowPopupCard = document.getElementById('borrowPopupCard');
+        const borrowPopupTitle = document.getElementById('borrowPopupTitle');
+        const borrowDurationSelect = document.getElementById('borrowDurationSelect');
+        const borrowLimitNote = document.getElementById('borrowLimitNote');
+        const borrowPopupCancel = document.getElementById('borrowPopupCancel');
+        const borrowPopupConfirm = document.getElementById('borrowPopupConfirm');
+        const borrowPopupConfirmText = document.getElementById('borrowPopupConfirmText');
+
+        let currentBookIdToBorrow = null;
+
+        document.querySelectorAll('.btn-borrow').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const bookId = this.dataset.bookId || '{{ $book->id }}';
+                const bookTitle = this.dataset.bookTitle || @json($book->title);
+                const maxDays = parseInt(this.dataset.borrowDays || '{{ $book->borrow_days ?? 5 }}', 10);
+
+                currentBookIdToBorrow = bookId;
+
+                if (borrowPopupTitle) {
+                    borrowPopupTitle.textContent = bookTitle.toUpperCase();
+                }
+
+                if (borrowDurationSelect) {
+                    let optionsHtml = '';
+                    const limit = Math.max(1, maxDays);
+                    for (let i = 1; i <= limit; i++) {
+                        const label = i === 1 ? '1 Day' : i + ' Days';
+                        optionsHtml += '<option value="' + i + '">' + label + '</option>';
+                    }
+                    borrowDurationSelect.innerHTML = optionsHtml;
+                    borrowDurationSelect.value = '1';
+                }
+
+                if (borrowLimitNote) {
+                    borrowLimitNote.textContent = 'Select duration up to the librarian\'s set limit for this resource (' + maxDays + ' day(s)).';
+                }
+
+                if (borrowPopup && borrowPopupCard) {
+                    borrowPopup.classList.remove('hidden');
+                    setTimeout(function() {
+                        borrowPopupCard.classList.remove('scale-95', 'opacity-0');
+                        borrowPopupCard.classList.add('scale-100', 'opacity-100');
+                    }, 10);
+                    document.body.style.overflow = 'hidden';
+                }
+            });
+        });
+
+        function closePopup() {
+            if (borrowPopup && borrowPopupCard) {
+                borrowPopupCard.classList.add('scale-95', 'opacity-0');
+                borrowPopupCard.classList.remove('scale-100', 'opacity-100');
+                setTimeout(function() {
+                    borrowPopup.classList.add('hidden');
+                    document.body.style.overflow = '';
+                }, 200);
+            }
+            currentBookIdToBorrow = null;
+        }
+
+        if (borrowPopupCancel) {
+            borrowPopupCancel.addEventListener('click', function(e) {
+                e.preventDefault();
+                closePopup();
+            });
+        }
+
+        if (borrowPopup) {
+            borrowPopup.addEventListener('click', function(e) {
+                if (e.target === borrowPopup) {
+                    closePopup();
+                }
+            });
+        }
+
+        function showToast(message, type) {
+            document.querySelectorAll('.knowly-toast-notification').forEach(t => t.remove());
+
+            const isError = type === 'error';
+            const isWarning = type === 'warning';
+            const toastTypeClass = isError ? 'knowly-toast-error' : (isWarning ? 'knowly-toast-warning' : 'knowly-toast-success');
+
+            const notification = document.createElement('div');
+            notification.className = `knowly-toast-notification ${toastTypeClass}`;
+
+            const iconBg = isError ? 'background-color: #fee2e2; color: #dc2626;' : (isWarning ? 'background-color: #fef3c7; color: #d97706;' : 'background-color: #dcfce7; color: #16a34a;');
+            const iconClass = isError ? 'fa-exclamation-circle' : (isWarning ? 'fa-exclamation-triangle' : 'fa-check-circle');
+            const subtext = isError ? 'Please check your action or try again.' : (isWarning ? 'Note your borrowing status.' : 'You can now read this resource in your library.');
+
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 38px; height: 38px; border-radius: 9999px; ${iconBg} display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fas ${iconClass}" style="font-size: 16px;"></i>
+                    </div>
+                    <div style="flex: 1; min-width: 0;">
+                        <p style="font-weight: 600; font-size: 14px; color: #111827; margin: 0; line-height: 1.3;">${message}</p>
+                        <p style="font-size: 12px; color: #6b7280; margin-top: 2px; margin-bottom: 0;">${subtext}</p>
+                    </div>
+                    <button type="button" style="background: none; border: none; color: #9ca3af; cursor: pointer; padding: 4px; font-size: 12px;" onclick="this.closest('.knowly-toast-notification').remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+
+            document.body.appendChild(notification);
+
+            requestAnimationFrame(() => {
+                notification.classList.add('knowly-toast-show');
+            });
+
+            setTimeout(() => {
+                notification.classList.remove('knowly-toast-show');
+                setTimeout(() => {
+                    if (notification.parentNode) notification.remove();
+                }, 400);
+            }, 4000);
+        }
+
+        // Auto display persisted toast upon reload
+        try {
+            const storedToast = sessionStorage.getItem('knowly_toast');
+            if (storedToast) {
+                sessionStorage.removeItem('knowly_toast');
+                const tData = JSON.parse(storedToast);
+                showToast(tData.message, tData.type || 'success');
+            }
+        } catch (e) {}
+
+        if (borrowPopupConfirm) {
+            borrowPopupConfirm.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (!currentBookIdToBorrow) return;
+
+                const selectedDays = borrowDurationSelect ? parseInt(borrowDurationSelect.value || 1, 10) : 1;
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+                borrowPopupConfirm.disabled = true;
+                if (borrowPopupConfirmText) borrowPopupConfirmText.textContent = 'Borrowing...';
+
+                fetch('/student/books/' + currentBookIdToBorrow + '/borrow', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ borrow_days: selectedDays })
+                })
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (data.success) {
+                        closePopup();
+                        const msg = data.message || ('Book borrowed successfully for ' + selectedDays + ' day(s)!');
+                        try {
+                            sessionStorage.setItem('knowly_toast', JSON.stringify({ message: msg, type: 'success' }));
+                        } catch (e) {}
+                        window.location.reload();
+                    } else {
+                        showToast(data.message || 'Failed to borrow book', 'error');
+                        borrowPopupConfirm.disabled = false;
+                        if (borrowPopupConfirmText) borrowPopupConfirmText.textContent = 'Confirm Borrow';
+                    }
+                })
+                .catch(function(err) {
+                    showToast('An error occurred. Please try again.', 'error');
+                    borrowPopupConfirm.disabled = false;
+                    if (borrowPopupConfirmText) borrowPopupConfirmText.textContent = 'Confirm Borrow';
+                });
+            });
+        }
+    });
+    </script>
 </body>
 </html>

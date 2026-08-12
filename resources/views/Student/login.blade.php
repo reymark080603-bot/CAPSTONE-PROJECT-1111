@@ -130,7 +130,7 @@
 
                     <!-- Remember Me and Forgot Password -->
                     <div class="flex items-center justify-between">
-                        <label class="flex items-center">
+                        <label class="flex items-center cursor-pointer">
                             <input 
                                 type="checkbox" 
                                 id="remember" 
@@ -139,6 +139,9 @@
                             >
                             <span class="ml-2 text-sm text-gray-700">Remember me</span>
                         </label>
+                        <a href="{{ route('password.request') }}" class="text-sm font-medium text-emerald-600 hover:text-emerald-700 transition-colors">
+                            Forgot password?
+                        </a>
                     </div>
 
                     <!-- Login Button -->

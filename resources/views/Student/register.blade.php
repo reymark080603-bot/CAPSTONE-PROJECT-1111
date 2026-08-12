@@ -182,6 +182,7 @@
                                         <option value="BSIT" {{ old('course') == 'BSIT' ? 'selected' : '' }}>BSIT</option>
                                         <option value="BSN" {{ old('course') == 'BSN' ? 'selected' : '' }}>BSN</option>
                                         <option value="BSTM" {{ old('course') == 'BSTM' ? 'selected' : '' }}>BSTM</option>
+                                        <option value="Visitor / Guest" {{ old('course') == 'Visitor / Guest' ? 'selected' : '' }}>Visitor / Guest Researcher</option>
                                     </select>
                                 </div>
                                 @error('course')
@@ -208,6 +209,7 @@
                                         <option value="2nd Year" {{ old('year_level') == '2nd Year' ? 'selected' : '' }}>2nd Year</option>
                                         <option value="3rd Year" {{ old('year_level') == '3rd Year' ? 'selected' : '' }}>3rd Year</option>
                                         <option value="4th Year" {{ old('year_level') == '4th Year' ? 'selected' : '' }}>4th Year</option>
+                                        <option value="N/A (Visitor)" {{ old('year_level') == 'N/A (Visitor)' ? 'selected' : '' }}>N/A (Visitor / Guest)</option>
                                     </select>
                                 </div>
                                 @error('year_level')
@@ -235,6 +237,7 @@
                                     <option value="Pagadian Campus" {{ old('campus') == 'Pagadian Campus' ? 'selected' : '' }}>Pagadian Campus</option>
                                     <option value="Dumingag Campus" {{ old('campus') == 'Dumingag Campus' ? 'selected' : '' }}>Dumingag Campus</option>
                                     <option value="Canuto MS Enerio Campus" {{ old('campus') == 'Canuto MS Enerio Campus' ? 'selected' : '' }}>Canuto MS Enerio Campus</option>
+                                    <option value="External / Visitor" {{ old('campus') == 'External / Visitor' ? 'selected' : '' }}>External / Visitor</option>
                                 </select>
                             </div>
                             @error('campus')

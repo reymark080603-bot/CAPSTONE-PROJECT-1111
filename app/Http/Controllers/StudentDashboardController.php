@@ -343,4 +343,61 @@ class StudentDashboardController extends Controller
             'borrows' => $borrows
         ]);
     }
+
+    /**
+     * Show student profile page
+     */
+    public function profile()
+    {
+        $user = Auth::guard('student')->user();
+        return view('dashboard.profile', compact('user'));
+    }
+
+    /**
+     * Update student profile
+     */
+    public function updateProfile(Request $request)
+    {
+        $user = Auth::guard('student')->user();
+
+        $rules = [
+            'firstname' => 'required|string|max:255',
+            'lastname' => 'required|string|max:255',
+            'mi' => 'nullable|string|max:10',
+            'course' => 'nullable|string|max:255',
+            'campus' => 'nullable|string|max:255',
+            'year' => 'nullable|string|max:255',
+            'gender' => 'nullable|string|max:50',
+        ];
+
+        // Add password validation rules if password fields are filled
+        if ($request->filled('new_password')) {
+            $rules['current_password'] = 'required|string';
+            $rules['new_password'] = 'required|string|min:8|confirmed';
+        }
+
+        $validated = $request->validate($rules);
+
+        // Verify current password if user is attempting to change password
+        if ($request->filled('new_password')) {
+            if (!\Illuminate\Support\Facades\Hash::check($request->current_password, $user->password)) {
+                return back()->withErrors(['current_password' => 'The provided current password is incorrect.'])->withInput();
+            }
+            $user->password = \Illuminate\Support\Facades\Hash::make($request->new_password);
+        }
+
+        // Update profile fields (email is explicitly omitted to prevent modification)
+        $user->firstname = $validated['firstname'];
+        $user->lastname = $validated['lastname'];
+        $user->mi = $validated['mi'] ?? $user->mi;
+        $user->name = trim($validated['firstname'] . ' ' . $validated['lastname']);
+        $user->course = $validated['course'] ?? $user->course;
+        $user->campus = $validated['campus'] ?? $user->campus;
+        $user->year = $validated['year'] ?? $user->year;
+        $user->gender = $validated['gender'] ?? $user->gender;
+
+        $user->save();
+
+        return back()->with('success', 'Profile updated successfully!');
+    }
 }

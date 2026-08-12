@@ -33,6 +33,15 @@ class LoansManager {
         this.setupHeaderSearch();
         this.initSearchFromURL();
         this.loadCurrentLoans();
+
+        try {
+            const storedToast = sessionStorage.getItem('knowly_toast');
+            if (storedToast) {
+                sessionStorage.removeItem('knowly_toast');
+                const tData = JSON.parse(storedToast);
+                this.showNotification(tData.message, tData.type || 'success');
+            }
+        } catch (e) {}
     }
     
     setupEventListeners() {
@@ -578,117 +587,52 @@ class LoansManager {
     
     createLoanCard(loan) {
         const cardDiv = document.createElement('div');
-        cardDiv.className = 'group relative bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 book-card overflow-hidden';
+        cardDiv.className = 'book-card flex-shrink-0 w-full';
 
         const status = this.getLoanStatus(loan);
-        const daysLeft = this.getDaysLeft(loan.due_date);
-        const category = loan.book?.category || 'General';
-        const catKey = category.toLowerCase().replace(/\s+/g, '') || 'blue';
+        const resourceType = (loan.book?.resource_type || 'book').replace('_', ' ').toUpperCase();
         const coverUrl = this.getCoverUrl(loan.book?.cover_photo);
-        const badgeText = (loan.status || 'borrowed');
         const badgeClass = status === 'Overdue' ? 'bg-red-500 text-white' : (status === 'Due Soon' ? 'bg-yellow-500 text-white' : 'bg-green-500 text-white');
-        const icon = ({
-            programming: 'fa-code', mathematics: 'fa-calculator', literature: 'fa-feather-alt', science: 'fa-flask',
-            business: 'fa-chart-line', technology: 'fa-microchip', education: 'fa-graduation-cap', reference: 'fa-bookmark'
-        })[catKey] || 'fa-book';
-
-        // Match student books color mapping
-        const categoryColor = ({
-            'programming': 'bg-blue-600',
-            'mathematics': 'bg-green-600',
-            'literature': 'bg-purple-600',
-            'science': 'bg-red-600',
-            'business': 'bg-amber-600',
-            'technology': 'bg-indigo-600',
-            'education': 'bg-pink-600',
-            'reference': 'bg-gray-600'
-        })[catKey] || 'bg-gray-600';
-
-        const categoryBgColor = ({
-            'programming': 'bg-blue-100',
-            'mathematics': 'bg-green-100',
-            'literature': 'bg-purple-100',
-            'science': 'bg-red-100',
-            'business': 'bg-amber-100',
-            'technology': 'bg-indigo-100',
-            'education': 'bg-pink-100',
-            'reference': 'bg-gray-100'
-        })[catKey] || 'bg-gray-100';
 
         cardDiv.innerHTML = `
-            <!-- Book Cover -->
-            <div class="relative aspect-[3/4] bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden shadow border border-gray-200">
-                ${coverUrl ? `
-                    <img
-                        src="${coverUrl}"
-                        alt="${this.escapeHtml(loan.book?.title || 'Book Cover')}"
-                        class="w-full h-full object-cover book-cover-img"
-                        onload="this.style.opacity = '1'; this.nextElementSibling.style.display='none';"
-                        onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
-                        style="opacity: 0; transition: opacity 0.3s ease-in-out;"
-                        loading="lazy"
-                    >
-                ` : ''}
+            <div class="relative group">
+                <!-- Book Cover Container - Matches Library Page Size (h-64 sm:h-72 md:h-80) -->
+                <div class="book-cover relative bg-gray-100 rounded-lg shadow-md overflow-hidden h-64 sm:h-72 md:h-80 hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
+                    <span class="absolute top-2 left-2 z-10 px-2 py-1 rounded-full bg-white/90 text-[10px] font-semibold text-gray-700 uppercase tracking-wide">${this.escapeHtml(resourceType)}</span>
 
-                <!-- Default book cover design -->
-                <div class="absolute inset-0 bg-white default-book-cover" style="display: ${coverUrl ? 'none' : 'block'};">
-                    <div class="h-8 ${categoryColor} relative">
-                        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
-                    </div>
-                    
-                    <div class="p-3 h-full flex flex-col justify-between">
-                        <div class="text-center">
-                            <h3 class="text-xs font-bold text-gray-900 leading-tight mb-1">${this.escapeHtml(loan.book?.title || 'Unknown Book')}</h3>
-                            <p class="text-xs text-gray-600 font-medium line-clamp-1">${this.escapeHtml(loan.book?.author || 'Unknown Author')}</p>
+                    ${coverUrl ? `
+                        <img
+                            src="${coverUrl}"
+                            alt="${this.escapeHtml(loan.book?.title || 'Book Cover')}"
+                            class="w-full h-full object-cover rounded-lg book-cover-img"
+                            loading="lazy"
+                        >
+                    ` : `
+                        <div class="w-full h-full bg-gray-200 flex items-center justify-center">
+                            <i class="fas fa-book text-gray-400 text-4xl"></i>
                         </div>
-                        
-                        <div class="flex-1 flex items-center justify-center my-1">
-                            <div class="w-10 h-10 ${categoryBgColor} rounded-full flex items-center justify-center">
-                                <i class="fas ${icon} text-lg ${categoryColor.replace('bg-', 'text-')}"></i>
-                            </div>
-                        </div>
-                        
-                        <div class="text-center">
-                            <div class="text-xs text-gray-500 uppercase tracking-wide font-semibold">${this.escapeHtml(category)}</div>
-                        </div>
-                    </div>
-                    
-                    <div class="absolute bottom-0 left-0 right-0 h-8 ${categoryColor}">
-                        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
-                    </div>
+                    `}
                 </div>
-                
-                <!-- Status Badge -->
-                <div class="absolute top-2 left-2 z-20">
-                    <span class="px-2 py-1 text-xs font-bold rounded-full shadow ${badgeClass}">${badgeText}</span>
-                </div>
-            </div>
 
-            <!-- Book Details -->
-            <div class="p-2 bg-white">
-                <p class="text-gray-600 text-xs mb-2 line-clamp-1">
-                    ${this.escapeHtml(loan.book?.author || 'Unknown Author')}
-                </p>
-                
-                <div class="space-y-1 text-xs mb-2">
-                    <div class="flex justify-between">
-                        <span class="text-gray-500">Borrowed:</span>
-                        <span class="text-gray-900">${this.formatDate(loan.borrowed_date)}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-500">Due:</span>
-                        <span class="text-gray-900 ${this.getDueDateClass(loan)}">${this.formatDate(loan.due_date)}</span>
-                    </div>
-                    ${daysLeft !== null ? `
-                        <div class="flex justify-between">
-                            <span class="text-gray-500">Days:</span>
-                            <span class="font-medium ${this.getDaysLeftClass(daysLeft)}">${this.formatDaysLeft(daysLeft)}</span>
+                <!-- Book Card Meta Details -->
+                <div class="mt-3 text-center">
+                    <h3 class="text-sm font-semibold text-gray-900 line-clamp-2 mb-0.5" title="${this.escapeHtml(loan.book?.title || 'Unknown Title')}">${this.escapeHtml(loan.book?.title || 'Unknown Title')}</h3>
+                    <p class="text-xs text-gray-600 mb-1.5 line-clamp-1">${this.escapeHtml(loan.book?.author || 'Unknown Author')}</p>
+                    
+                    <div class="space-y-0.5 text-[11px] text-gray-500 mb-2 font-medium">
+                        <div class="flex justify-between items-center text-gray-600">
+                            <span>Borrowed:</span>
+                            <span>${this.formatDate(loan.borrowed_date)}</span>
                         </div>
-                    ` : ''}
-                </div>
-                
-                <div class="flex gap-1">
-                    ${this.renderLoanActions(loan)}
+                        <div class="flex justify-between items-center">
+                            <span>Due:</span>
+                            <span class="${this.getDueDateClass(loan)}">${this.formatDate(loan.due_date)}</span>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-1">
+                        ${this.renderLoanActions(loan)}
+                    </div>
                 </div>
             </div>
         `;
@@ -892,29 +836,53 @@ class LoansManager {
         }
     }
     
-    showNotification(message, type = 'info') {
+    showNotification(message, type = 'success', persist = false) {
+        if (persist) {
+            try {
+                sessionStorage.setItem('knowly_toast', JSON.stringify({ message: message, type: type }));
+            } catch (e) {}
+        }
+
+        document.querySelectorAll('.knowly-toast-notification').forEach(t => t.remove());
+
+        const isError = type === 'error';
+        const isWarning = type === 'warning';
+        const toastTypeClass = isError ? 'knowly-toast-error' : (isWarning ? 'knowly-toast-warning' : 'knowly-toast-success');
+
         const notification = document.createElement('div');
-        notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg border transition-all duration-300 ${
-            type === 'success' ? 'bg-white text-blue-600 border-blue-200' :
-            type === 'error' ? 'bg-red-500 text-white border-red-500' :
-            'bg-blue-500 text-white border-blue-500'
-        }`;
+        notification.className = `knowly-toast-notification ${toastTypeClass}`;
+
+        const iconBg = isError ? 'background-color: #fee2e2; color: #dc2626;' : (isWarning ? 'background-color: #fef3c7; color: #d97706;' : 'background-color: #dcfce7; color: #16a34a;');
+        const iconClass = isError ? 'fa-exclamation-circle' : (isWarning ? 'fa-exclamation-triangle' : 'fa-check-circle');
+        const subtext = isError ? 'Please check your action or try again.' : (isWarning ? 'Note your borrowing status.' : 'Operation completed successfully.');
+
         notification.innerHTML = `
-            <div class="flex items-center gap-2">
-                <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
-                <span>${message}</span>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 38px; height: 38px; border-radius: 9999px; ${iconBg} display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <i class="fas ${iconClass}" style="font-size: 16px;"></i>
+                </div>
+                <div style="flex: 1; min-width: 0;">
+                    <p style="font-weight: 600; font-size: 14px; color: #111827; margin: 0; line-height: 1.3;">${message}</p>
+                    <p style="font-size: 12px; color: #6b7280; margin-top: 2px; margin-bottom: 0;">${subtext}</p>
+                </div>
+                <button type="button" style="background: none; border: none; color: #9ca3af; cursor: pointer; padding: 4px; font-size: 12px;" onclick="this.closest('.knowly-toast-notification').remove()">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
         `;
 
         document.body.appendChild(notification);
 
+        requestAnimationFrame(() => {
+            notification.classList.add('knowly-toast-show');
+        });
+
         setTimeout(() => {
-            notification.style.opacity = '0';
-            notification.style.transform = 'translateX(100%)';
+            notification.classList.remove('knowly-toast-show');
             setTimeout(() => {
-                document.body.removeChild(notification);
-            }, 300);
-        }, 3000);
+                if (notification.parentNode) notification.remove();
+            }, 400);
+        }, 4000);
     }
 
     // Return confirmation popup (same UX as Borrow)

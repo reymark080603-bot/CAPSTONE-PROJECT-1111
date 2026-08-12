@@ -6,6 +6,15 @@
     -webkit-line-clamp: 2;
 }
 
+/* ALL CAPS Title cataloging standard */
+.book-title,
+.book-card h3,
+.book-card h4,
+.book-card h5,
+.dataTable td h4 {
+    text-transform: uppercase !important;
+}
+
 /* Enhanced book card animations */
 .book-card {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);

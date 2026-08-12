@@ -66,7 +66,7 @@
                     <h4 class="text-lg font-semibold text-gray-900">Resource Type</h4>
                     <span class="ml-2 px-2 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded-full">Required</span>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div class="resource-type-option">
                         <input type="radio" id="resource_book" name="resource_type" value="book" class="hidden" checked>
                         <label for="resource_book" class="block border-2 border-blue-500 bg-blue-50 rounded-lg p-4 cursor-pointer hover:bg-blue-100 transition-colors text-center">
@@ -89,6 +89,14 @@
                             <i class="fas fa-graduation-cap text-gray-600 text-2xl mb-2"></i>
                             <h5 class="font-semibold text-gray-900">Thesis</h5>
                             <p class="text-sm text-gray-600">Research papers, dissertations, academic work</p>
+                        </label>
+                    </div>
+                    <div class="resource-type-option">
+                        <input type="radio" id="resource_homegrown" name="resource_type" value="homegrown" class="hidden">
+                        <label for="resource_homegrown" class="block border-2 border-gray-300 bg-white rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors text-center">
+                            <i class="fas fa-house-user text-gray-600 text-2xl mb-2"></i>
+                            <h5 class="font-semibold text-gray-900">Homegrown</h5>
+                            <p class="text-sm text-gray-600">Unpublished internal materials, modules, capstones</p>
                         </label>
                     </div>
                 </div>
@@ -273,6 +281,22 @@
                             </select>
                         </div>
 
+                        <!-- Max Borrowing Duration -->
+                        <div>
+                            <label for="borrow_days" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-clock text-blue-600 mr-1"></i>
+                                Max Borrowing Duration (Days)
+                            </label>
+                            <select id="borrow_days" name="borrow_days" class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-medium text-gray-900 bg-blue-50/50">
+                                <option value="1" {{ old('borrow_days') == '1' ? 'selected' : '' }}>1 Day (Overnight)</option>
+                                <option value="3" {{ old('borrow_days') == '3' ? 'selected' : '' }}>3 Days</option>
+                                <option value="5" {{ old('borrow_days', '5') == '5' ? 'selected' : '' }}>5 Days (Standard Default)</option>
+                                <option value="7" {{ old('borrow_days') == '7' ? 'selected' : '' }}>7 Days (1 Week)</option>
+                                <option value="14" {{ old('borrow_days') == '14' ? 'selected' : '' }}>14 Days (2 Weeks)</option>
+                                <option value="30" {{ old('borrow_days') == '30' ? 'selected' : '' }}>30 Days (1 Month)</option>
+                            </select>
+                        </div>
+
                     </div>
                 </div>
 
@@ -302,6 +326,23 @@
                                 <option value="Arts" {{ old('category') == 'Arts' ? 'selected' : '' }}>Arts</option>
                                 <option value="Education" {{ old('category') == 'Education' ? 'selected' : '' }}>Education</option>
                                 <option value="Health" {{ old('category') == 'Health' ? 'selected' : '' }}>Health</option>
+                                <option value="Homegrown Books" {{ old('category') == 'Homegrown Books' ? 'selected' : '' }}>Homegrown Books</option>
+                            </select>
+                        </div>
+
+                        <!-- Subcategory -->
+                        <div>
+                            <label for="subcategory" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-sitemap text-gray-500 mr-1"></i>
+                                Subcategory / Resource Classification
+                            </label>
+                            <select id="subcategory" name="subcategory" class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                                <option value="">Select Subcategory (Optional)</option>
+                                <option value="Thesis & Dissertation" {{ old('subcategory') == 'Thesis & Dissertation' ? 'selected' : '' }}>Thesis & Dissertation</option>
+                                <option value="Capstone Project" {{ old('subcategory') == 'Capstone Project' ? 'selected' : '' }}>Capstone Project</option>
+                                <option value="Institutional Research" {{ old('subcategory') == 'Institutional Research' ? 'selected' : '' }}>Institutional & Faculty Research</option>
+                                <option value="Course Module" {{ old('subcategory') == 'Course Module' ? 'selected' : '' }}>Course Module / Learning Material</option>
+                                <option value="Institutional Publication" {{ old('subcategory') == 'Institutional Publication' ? 'selected' : '' }}>Institutional Publication / Journal</option>
                             </select>
                         </div>
 
@@ -669,6 +710,12 @@ function updateResourceTypeFields(resourceType) {
             if (authorInput) authorInput.placeholder = 'Enter student name';
             if (thesisFields) thesisFields.classList.remove('hidden');
             break;
+        case 'homegrown':
+            if (titleLabel) titleLabel.textContent = 'Resource / Project Title';
+            if (authorLabel) authorLabel.textContent = 'Author / Proponent';
+            if (titleInput) titleInput.placeholder = 'Enter the homegrown resource title';
+            if (authorInput) authorInput.placeholder = 'Enter author or student proponent name';
+            break;
         case 'book':
         default:
             if (titleLabel) titleLabel.textContent = 'Book Title';
@@ -692,7 +739,7 @@ function updateResourceTypeUI(resourceType) {
             label.classList.add('border-blue-500', 'bg-blue-50');
             
             // Update icon colors
-            const icon = label.querySelector('i.fa-book, i.fa-newspaper, i.fa-graduation-cap');
+            const icon = label.querySelector('i.fa-book, i.fa-newspaper, i.fa-graduation-cap, i.fa-house-user');
             if (icon) {
                 icon.classList.remove('text-gray-600');
                 if (resourceType === 'book') {
@@ -701,6 +748,8 @@ function updateResourceTypeUI(resourceType) {
                     icon.classList.add('text-blue-600');
                 } else if (resourceType === 'thesis') {
                     icon.classList.add('text-purple-600');
+                } else if (resourceType === 'homegrown') {
+                    icon.classList.add('text-amber-600');
                 }
             }
         } else {
@@ -709,9 +758,9 @@ function updateResourceTypeUI(resourceType) {
             label.classList.add('border-gray-300', 'bg-white');
             
             // Reset icon colors
-            const icon = label.querySelector('i.fa-book, i.fa-newspaper, i.fa-graduation-cap');
+            const icon = label.querySelector('i.fa-book, i.fa-newspaper, i.fa-graduation-cap, i.fa-house-user');
             if (icon) {
-                icon.classList.remove('text-blue-600', 'text-purple-600');
+                icon.classList.remove('text-blue-600', 'text-purple-600', 'text-amber-600');
                 icon.classList.add('text-gray-600');
             }
         }

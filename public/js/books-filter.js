@@ -361,15 +361,18 @@ if (typeof BooksFilterManager === 'undefined') {
         // Borrow button functionality (delegated)
         if (this.elements.booksContainer) {
             this.elements.booksContainer.addEventListener('click', (e) => {
-                if (e.target.closest('.btn-borrow-quick')) {
+                const borrowButton = e.target.closest('.btn-borrow-quick, .btn-borrow');
+                if (borrowButton) {
                     e.preventDefault();
-                    const borrowButton = e.target.closest('.btn-borrow-quick');
-                    const bookId = borrowButton.dataset.bookId;
-                    const bookTitle = borrowButton.dataset.bookTitle;
-                    
-                    // Use the existing student dashboard borrow functionality
-                    if (window.__studentDashboard && typeof window.__studentDashboard.borrowBookQuick === 'function') {
-                        window.__studentDashboard.borrowBookQuick(bookId, bookTitle);
+                    const bookId = borrowButton.dataset.bookId || borrowButton.getAttribute('data-book-id');
+                    const bookTitle = borrowButton.dataset.bookTitle || borrowButton.getAttribute('data-book-title') || '';
+                    const bookCard = borrowButton.closest('.book-card');
+                    const maxDays = borrowButton.dataset.borrowDays || borrowButton.getAttribute('data-borrow-days') || bookCard?.getAttribute('data-borrow-days') || 5;
+
+                    if (window.__studentDashboard && typeof window.__studentDashboard.showBorrowPopup === 'function') {
+                        window.__studentDashboard.showBorrowPopup(bookId, bookTitle, maxDays);
+                    } else if (window.booksManager && typeof window.booksManager.showBorrowPopup === 'function') {
+                        window.booksManager.showBorrowPopup(bookId, bookTitle, maxDays);
                     }
                 }
             });

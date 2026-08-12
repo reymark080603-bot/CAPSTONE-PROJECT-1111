@@ -104,7 +104,7 @@
                         <!-- Action Buttons -->
                         <div class="flex gap-2 mt-4">
                             <!-- View Button -->
-                            <a href="{{ route('books.show', $book->id) }}" 
+                            <a href="{{ route('student.books.show', $book->id) }}" 
                                class="flex-1 px-3 py-2 text-center text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
                                 <i class="fas fa-eye mr-1"></i> View
                             </a>
@@ -113,8 +113,10 @@
                             @auth
                                 @if(in_array(Auth::user()->role, ['student', 'librarian']))
                                     @if($book->availability_status === 'available' && !in_array($book->id, $borrowedBookIds))
-                                        <button onclick="borrowBook({{ $book->id }})" 
-                                                class="flex-1 px-3 py-2 text-center text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors">
+                                        <button class="btn-borrow-quick flex-1 px-3 py-2 text-center text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors" 
+                                                data-book-id="{{ $book->id }}" 
+                                                data-book-title="{{ $book->title }}"
+                                                data-borrow-days="{{ $book->borrow_days ?? 5 }}">
                                             <i class="fas fa-book-reader mr-1"></i> Borrow
                                         </button>
                                     @elseif(in_array($book->id, $borrowedBookIds))
@@ -161,42 +163,51 @@
     </div>
 </div>
 
-@push('scripts')
-<script>
-/**
- * Borrow a book
- */
-function borrowBook(bookId) {
-    if (!confirm('Do you want to borrow this book?')) {
-        return;
-    }
+<!-- Borrow Duration Selection Popup Modal -->
+<div id="borrowPopup" class="hidden fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-xs z-[9999] p-4 transition-all duration-300">
+    <div id="borrowPopupCard" class="bg-white rounded-2xl shadow-2xl max-w-md w-full sm:w-[90%] p-6 sm:p-8 transform transition-all duration-200 scale-95 opacity-0 border border-gray-100">
+        <div class="flex justify-center mb-6">
+            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center border-2 border-blue-200">
+                <i class="fas fa-book text-3xl text-blue-600"></i>
+            </div>
+        </div>
+        
+        <div class="text-center mb-6">
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">Ready to Borrow?</h3>
+            <p class="text-gray-600 text-sm mb-4">You're about to borrow:</p>
+            
+            <div class="bg-blue-50 rounded-xl p-4 mb-4 border border-blue-200">
+                <p class="text-lg font-semibold text-gray-900 truncate" id="borrowPopupTitle">Book Title</p>
+            </div>
+            
+            <!-- Duration Selection Box -->
+            <div class="mb-6 text-left bg-gray-50 p-4 rounded-xl border border-gray-200">
+                <label for="borrowDurationSelect" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                    <i class="fas fa-clock text-blue-600 mr-1"></i>Select Borrowing Duration:
+                </label>
+                <select id="borrowDurationSelect" class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    <option value="1">1 Day</option>
+                </select>
+                <p class="text-[11px] text-gray-500 mt-1.5" id="borrowLimitNote">Select duration up to the librarian's set limit for this resource.</p>
+            </div>
+        </div>
+        
+        <div class="flex gap-3">
+            <button id="borrowPopupCancel" class="flex-1 px-4 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all font-medium text-sm">
+                Cancel
+            </button>
+            <button id="borrowPopupConfirm" class="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all font-medium text-sm shadow-md hover:shadow-lg">
+                <span id="borrowPopupConfirmText">Confirm Borrow</span>
+            </button>
+        </div>
+    </div>
+</div>
 
-    fetch(`{{ url('/borrow') }}/${bookId}`, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'Content-Type': 'application/json',
-        },
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert(data.message || 'Book borrowed successfully!');
-            location.reload();
-        } else {
-            alert(data.message || 'Failed to borrow book.');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred. Please try again.');
-    });
-}
-</script>
+@push('scripts')
+<script src="{{ asset('js/student-dashboard.js') }}?v={{ filemtime(public_path('js/student-dashboard.js')) }}"></script>
 @endpush
 
 <style>
-/* Line clamp for title */
 .line-clamp-2 {
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -204,7 +215,6 @@ function borrowBook(bookId) {
     overflow: hidden;
 }
 
-/* Custom pagination styling */
 .pagination {
     display: flex;
     justify-content: center;
@@ -236,4 +246,3 @@ function borrowBook(bookId) {
 }
 </style>
 @endsection
-
