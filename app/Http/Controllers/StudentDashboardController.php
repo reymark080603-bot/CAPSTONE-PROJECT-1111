@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use App\Models\Book;
@@ -78,12 +79,13 @@ class StudentDashboardController extends Controller
         $courseRelatedBooks = $recommendedBooks;
         $popularBooks = collect();
 
-        // Get recent e-resources for horizontal carousel. Keep this broad so the
-        // home page still shows new resources when none match the user's course.
-        $recentBooks = Book::where('availability_status', 'available')
-            ->orderBy('created_at', 'desc')
-            ->limit(10)
-            ->get();
+        // Get recent e-resources for horizontal carousel using query caching (3 minutes TTL)
+        $recentBooks = Cache::remember('student_dashboard_recent_books', 180, function () {
+            return Book::where('availability_status', 'available')
+                ->orderBy('created_at', 'desc')
+                ->limit(10)
+                ->get();
+        });
 
         $recentEJournalResources = $this->buildCourseResourceQuery($user)
             ->where('resource_type', 'e_journal')
@@ -203,8 +205,6 @@ class StudentDashboardController extends Controller
                 ->where('status', 'borrowed')
                 ->where('due_date', '<', now())
                 ->count();
-
-
 
             // Recent activity (last 30 days)
             $recentBorrows = BorrowRecord::where('user_id', $user->id)

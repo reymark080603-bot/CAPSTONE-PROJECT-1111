@@ -51,6 +51,19 @@ class Book extends Model
         'borrow_days' => 'integer',
     ];
 
+    protected static function booted()
+    {
+        static::saved(function ($book) {
+            \Illuminate\Support\Facades\Cache::forget('student_dashboard_recent_books');
+            \Illuminate\Support\Facades\Cache::forget('public_categories_list');
+        });
+
+        static::deleted(function ($book) {
+            \Illuminate\Support\Facades\Cache::forget('student_dashboard_recent_books');
+            \Illuminate\Support\Facades\Cache::forget('public_categories_list');
+        });
+    }
+
     public function borrowRecords()
     {
         return $this->hasMany(BorrowRecord::class);

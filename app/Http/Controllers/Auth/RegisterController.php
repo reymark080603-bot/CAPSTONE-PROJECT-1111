@@ -65,12 +65,19 @@ class RegisterController extends Controller
                     ]
                 );
 
-                $yearLevel = YearLevel::firstOrCreate(
-                    ['level' => $request->year_level],
-                    [
-                        'numeric_level' => $this->extractNumericYearLevel($request->year_level),
-                    ]
-                );
+                $yearLevel = YearLevel::where('level', $request->year_level)->first();
+
+                if (!$yearLevel) {
+                    $numeric = $this->extractNumericYearLevel($request->year_level);
+                    if (YearLevel::where('numeric_level', $numeric)->exists()) {
+                        $numeric = (YearLevel::max('numeric_level') ?? 0) + 1;
+                    }
+
+                    $yearLevel = YearLevel::create([
+                        'level' => $request->year_level,
+                        'numeric_level' => $numeric,
+                    ]);
+                }
 
                 $normalizedCourse = trim($request->course);
                 $course = Course::query()
@@ -118,7 +125,7 @@ class RegisterController extends Controller
             ]);
 
             return redirect()->back()
-                ->withErrors(['email' => 'Registration failed. Please try again.'])
+                ->withErrors(['email' => 'Registration failed: ' . $e->getMessage()])
                 ->withInput($request->except('password', 'password_confirmation'));
         }
     }

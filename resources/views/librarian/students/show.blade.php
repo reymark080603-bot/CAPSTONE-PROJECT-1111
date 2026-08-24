@@ -3,141 +3,213 @@
 @section('title', 'Student Details')
 
 @section('content')
-<div class="mb-6">
-    <div class="flex items-center justify-between">
+<div class="space-y-6">
+    <!-- Top Bar Navigation & Actions -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-            <h1 class="text-3xl font-bold text-gray-900">Student Details</h1>
-            <p class="text-gray-600 mt-2">Full information about this student</p>
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-3">
+                <span class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 shadow-sm">
+                    <i class="fas fa-user-graduate text-lg"></i>
+                </span>
+                Student Details
+            </h1>
+            <p class="text-sm text-gray-500 mt-1">Full academic information and borrowing activity log</p>
         </div>
-        <div class="flex gap-3">
+        <div class="flex items-center gap-3">
             @php($isActive = !empty($user->email_verified_at))
             <form id="student-status-form" method="POST" action="{{ $isActive ? route('librarian.students.deactivate', $user->id) : route('librarian.students.activate', $user->id) }}" onsubmit="return false;">
                 @csrf
                 @method('PUT')
-                <button type="submit" class="{{ $isActive ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-green-600 hover:bg-green-700' }} text-white px-5 py-3 rounded-lg flex items-center gap-2 transition-all duration-200 hover:transform hover:scale-105 shadow">
-                    <i class="fas {{ $isActive ? 'fa-pause-circle' : 'fa-check' }}"></i>
-                    {{ $isActive ? 'Deactivate' : 'Accept' }}
+                <button type="submit" class="{{ $isActive ? 'bg-amber-600 hover:bg-amber-700 focus:ring-amber-500' : 'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500' }} text-white text-sm font-semibold px-4 py-2.5 rounded-lg flex items-center gap-2 transition-all duration-150 border border-transparent shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1">
+                    <i class="fas {{ $isActive ? 'fa-pause-circle' : 'fa-check-circle' }}"></i>
+                    <span>{{ $isActive ? 'Deactivate Account' : 'Activate Account' }}</span>
                 </button>
             </form>
-            <a href="{{ route('librarian.students.index') }}" class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-5 py-3 rounded-lg flex items-center gap-2 transition-all duration-200">
-                <i class="fas fa-arrow-left"></i>
-                Back to List
+            <a href="{{ route('librarian.students.index') }}" class="bg-white hover:bg-gray-100 text-gray-800 border border-gray-300 text-sm font-semibold px-4 py-2.5 rounded-lg flex items-center gap-2 transition-all duration-150 shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-200">
+                <i class="fas fa-arrow-left text-gray-500"></i>
+                <span>Back to List</span>
             </a>
         </div>
     </div>
-</div>
 
-<div class="bg-white rounded-xl shadow-sm border p-6">
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div>
-            <div class="aspect-square w-full rounded-lg overflow-hidden bg-blue-50 flex items-center justify-center border">
-                <div class="text-blue-600 flex flex-col items-center">
-                    <div class="text-6xl font-bold">{{ strtoupper(substr($user->firstname, 0, 1) . substr($user->lastname, 0, 1)) }}</div>
-                    <div class="text-sm mt-2 text-blue-700">{{ $user->library_id ?? '-' }}</div>
+    <!-- Compact & Modern Profile Banner -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200/80 p-6">
+        <div class="pb-6 border-b border-gray-100">
+            <!-- Profile Info Header -->
+            <div class="space-y-2">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h2 class="text-xl sm:text-2xl font-bold text-gray-900">
+                            {{ trim(($user->firstname ?? '') . ' ' . ($user->lastname ?? '')) }}
+                        </h2>
+                        <div class="flex flex-wrap items-center gap-3 mt-1 text-sm text-gray-500">
+                            <span class="flex items-center gap-1.5">
+                                <i class="far fa-envelope text-emerald-600"></i>
+                                {{ $user->email }}
+                            </span>
+                            <span class="text-gray-300">•</span>
+                            <span class="font-mono text-xs font-semibold px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg border border-emerald-100">
+                                {{ $user->library_id ?? 'No Library ID' }}
+                            </span>
+                        </div>
+                    </div>
+
+                    @php($status = $user->email_verified_at ? 'Active' : 'Pending')
+                    <span class="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-bold tracking-wide {{ $status === 'Active' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200' }}">
+                        <span class="w-2 h-2 rounded-full mr-2 {{ $status === 'Active' ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500' }}"></span>
+                        {{ $status }}
+                    </span>
                 </div>
             </div>
         </div>
 
-        <div class="lg:col-span-2 space-y-6">
-            <div>
-                <div class="flex items-start justify-between gap-4">
-                    <div>
-                        <h2 class="text-2xl font-bold text-gray-900">{{ trim(($user->firstname ?? '') . ' ' . ($user->lastname ?? '')) }}</h2>
-                        <p class="text-gray-600 mt-1">{{ $user->email }}</p>
-                    </div>
-                    <div>
-                        @php($status = $user->email_verified_at ? 'Active' : 'Pending')
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {{ $status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' }}">
-                            <i class="fas fa-circle mr-1 text-[10px]"></i>
-                            {{ $status }}
-                        </span>
-                    </div>
+        <!-- Academic & System Metadata Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 pt-6">
+            <div class="bg-gray-50/80 border border-gray-100 rounded-xl p-3.5">
+                <div class="text-[11px] font-bold tracking-wider uppercase text-gray-400 mb-1 flex items-center gap-1.5">
+                    <i class="fas fa-graduation-cap text-emerald-600"></i> Program
+                </div>
+                <div class="text-sm font-semibold text-gray-900 truncate">
+                    {{ $user->course?->name ?? $user->course ?? '-' }}
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="bg-gray-50 rounded-lg p-4">
-                    <div class="text-xs uppercase text-gray-500">Program</div>
-                    <div class="text-gray-900 font-medium">{{ $user->course?->name ?? $user->course ?? '-' }}</div>
+            <div class="bg-gray-50/80 border border-gray-100 rounded-xl p-3.5">
+                <div class="text-[11px] font-bold tracking-wider uppercase text-gray-400 mb-1 flex items-center gap-1.5">
+                    <i class="fas fa-layer-group text-emerald-600"></i> Year Level
                 </div>
-                <div class="bg-gray-50 rounded-lg p-4">
-                    <div class="text-xs uppercase text-gray-500">Year Level</div>
-                    <div class="text-gray-900 font-medium">{{ $user->yearLevel?->level ?? $user->year ?? '-' }}</div>
-                </div>
-                <div class="bg-gray-50 rounded-lg p-4">
-                    <div class="text-xs uppercase text-gray-500">Campus</div>
-                    <div class="text-gray-900 font-medium">{{ $user->campus ?? '-' }}</div>
-                </div>
-                <div class="bg-gray-50 rounded-lg p-4">
-                    <div class="text-xs uppercase text-gray-500">Registered</div>
-                    <div class="text-gray-900 font-medium">{{ optional($user->created_at)->format('Y-m-d H:i') ?? '-' }}</div>
-                </div>
-                <div class="bg-gray-50 rounded-lg p-4 md:col-span-2">
-                    <div class="text-xs uppercase text-gray-500">Last Updated</div>
-                    <div class="text-gray-900 font-medium">{{ optional($user->updated_at)->format('Y-m-d H:i') ?? '-' }}</div>
+                <div class="text-sm font-semibold text-gray-900 truncate">
+                    {{ $user->yearLevel?->level ?? $user->year ?? '-' }}
                 </div>
             </div>
 
-            <div>
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">Activity Summary</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="bg-white border rounded-lg p-4">
-                        <div class="text-sm text-gray-500">Total Borrowed</div>
-                        <div class="text-2xl font-bold text-gray-900">{{ $statistics['total_borrowed'] ?? 0 }}</div>
-                    </div>
-                    <div class="bg-white border rounded-lg p-4">
-                        <div class="text-sm text-gray-500">Currently Borrowed</div>
-                        <div class="text-2xl font-bold text-gray-900">{{ $statistics['currently_borrowed'] ?? 0 }}</div>
-                    </div>
-                    <div class="bg-white border rounded-lg p-4">
-                        <div class="text-sm text-gray-500">Returned</div>
-                        <div class="text-2xl font-bold text-gray-900">{{ $statistics['total_returned'] ?? 0 }}</div>
-                    </div>
+            <div class="bg-gray-50/80 border border-gray-100 rounded-xl p-3.5">
+                <div class="text-[11px] font-bold tracking-wider uppercase text-gray-400 mb-1 flex items-center gap-1.5">
+                    <i class="fas fa-building-columns text-emerald-600"></i> Campus
+                </div>
+                <div class="text-sm font-semibold text-gray-900 truncate">
+                    {{ $user->campus ?? '-' }}
                 </div>
             </div>
 
-            <div>
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">Recent Borrows</h3>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full">
-                        <thead>
-                            <tr class="text-left text-xs text-gray-500">
-                                <th class="py-2 pr-4">Book</th>
-                                <th class="py-2 pr-4">Borrowed</th>
-                                <th class="py-2 pr-4">Due</th>
-                                <th class="py-2 pr-4">Returned</th>
-                                <th class="py-2 pr-4">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody class="text-sm text-gray-800">
-                            @forelse(($user->borrowRecords ?? collect())->sortByDesc('borrowed_date')->take(10) as $borrow)
-                                <tr class="border-t">
-                                    <td class="py-2 pr-4">{{ optional($borrow->book)->title ?? '-' }}</td>
-                                    <td class="py-2 pr-4">{{ $borrow->borrowed_date ?? '-' }}</td>
-                                    <td class="py-2 pr-4">{{ $borrow->due_date ?? '-' }}</td>
-                                    <td class="py-2 pr-4">{{ $borrow->returned_date ?? '-' }}</td>
-                                    <td class="py-2 pr-4">{{ $borrow->status ?? '-' }}</td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="5" class="py-4 text-gray-500">No borrow records</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+            <div class="bg-gray-50/80 border border-gray-100 rounded-xl p-3.5">
+                <div class="text-[11px] font-bold tracking-wider uppercase text-gray-400 mb-1 flex items-center gap-1.5">
+                    <i class="far fa-calendar-check text-emerald-600"></i> Registered
+                </div>
+                <div class="text-sm font-semibold text-gray-900 truncate">
+                    {{ optional($user->created_at)->format('Y-m-d H:i') ?? '-' }}
+                </div>
+            </div>
+
+            <div class="bg-gray-50/80 border border-gray-100 rounded-xl p-3.5 col-span-2 sm:col-span-1">
+                <div class="text-[11px] font-bold tracking-wider uppercase text-gray-400 mb-1 flex items-center gap-1.5">
+                    <i class="far fa-clock text-emerald-600"></i> Last Updated
+                </div>
+                <div class="text-sm font-semibold text-gray-900 truncate">
+                    {{ optional($user->updated_at)->format('Y-m-d H:i') ?? '-' }}
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Activity Summary Section -->
+    <div>
+        <h3 class="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+            <i class="fas fa-chart-pie text-emerald-600"></i> Activity Summary
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-white rounded-xl border border-gray-200/80 p-5 flex items-center justify-between shadow-sm hover:shadow transition-all duration-200">
+                <div>
+                    <div class="text-xs font-semibold uppercase tracking-wider text-gray-400">Total Borrowed</div>
+                    <div class="text-2xl font-bold text-gray-900 mt-1">{{ $statistics['total_borrowed'] ?? 0 }}</div>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg shadow-sm">
+                    <i class="fas fa-book"></i>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-gray-200/80 p-5 flex items-center justify-between shadow-sm hover:shadow transition-all duration-200">
+                <div>
+                    <div class="text-xs font-semibold uppercase tracking-wider text-gray-400">Currently Borrowed</div>
+                    <div class="text-2xl font-bold text-emerald-600 mt-1">{{ $statistics['currently_borrowed'] ?? 0 }}</div>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg shadow-sm">
+                    <i class="fas fa-book-reader"></i>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-gray-200/80 p-5 flex items-center justify-between shadow-sm hover:shadow transition-all duration-200">
+                <div>
+                    <div class="text-xs font-semibold uppercase tracking-wider text-gray-400">Returned</div>
+                    <div class="text-2xl font-bold text-purple-600 mt-1">{{ $statistics['total_returned'] ?? 0 }}</div>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-lg shadow-sm">
+                    <i class="fas fa-undo-alt"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Borrows Table -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200/80 p-6">
+        <h3 class="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <i class="fas fa-history text-emerald-600"></i> Recent Borrows
+        </h3>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-gray-200 bg-gray-50/80 text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                        <th class="py-3 px-4 rounded-l-xl">Book</th>
+                        <th class="py-3 px-4">Borrowed</th>
+                        <th class="py-3 px-4">Due</th>
+                        <th class="py-3 px-4">Returned</th>
+                        <th class="py-3 px-4 rounded-r-xl">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 text-sm">
+                    @forelse(($user->borrowRecords ?? collect())->sortByDesc('borrowed_date')->take(10) as $borrow)
+                        <tr class="hover:bg-gray-50/50 transition-colors">
+                            <td class="py-3 px-4 font-semibold text-gray-900">
+                                {{ optional($borrow->book)->title ?? '-' }}
+                            </td>
+                            <td class="py-3 px-4 text-gray-600">
+                                {{ $borrow->borrowed_date ?? '-' }}
+                            </td>
+                            <td class="py-3 px-4 text-gray-600">
+                                {{ $borrow->due_date ?? '-' }}
+                            </td>
+                            <td class="py-3 px-4 text-gray-600">
+                                {{ $borrow->returned_date ?? '-' }}
+                            </td>
+                            <td class="py-3 px-4">
+                                @php($bStatus = strtolower($borrow->status ?? ''))
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold
+                                    {{ $bStatus === 'returned' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                                       ($bStatus === 'borrowed' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-gray-100 text-gray-600') }}">
+                                    {{ ucfirst($borrow->status ?? '-') }}
+                                </span>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="py-6 text-center text-gray-400">
+                                No borrow records
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
-<div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 -translate-y-2 w-[92%] sm:w-auto max-w-lg bg-white border border-gray-200 rounded-lg shadow-lg p-4 transition-all duration-300 z-50 opacity-0 pointer-events-none">
+<div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 -translate-y-2 w-[92%] sm:w-auto max-w-lg bg-white border border-gray-200 rounded-xl shadow-xl p-4 transition-all duration-300 z-50 opacity-0 pointer-events-none">
     <div class="flex items-center">
         <div id="toastIcon" class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-3 bg-green-100">
             <i class="fas fa-check text-green-600"></i>
         </div>
         <div class="flex-1">
-            <p id="toastMessage" class="text-sm font-medium text-gray-900">Success</p>
+            <p id="toastMessage" class="text-sm font-semibold text-gray-900">Success</p>
         </div>
         <button id="closeToast" class="ml-4 text-gray-400 hover:text-gray-600" aria-label="Close">
             <i class="fas fa-times"></i>

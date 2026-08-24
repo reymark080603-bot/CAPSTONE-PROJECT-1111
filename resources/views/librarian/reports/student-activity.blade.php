@@ -31,7 +31,23 @@
         @if(request()->boolean('pdf'))
         .no-print { display:none !important; }
         @endif
-        @media print { html, body { background:#fff !important; font-size:12px; height:auto !important; min-height:0 !important; overflow:visible !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; } .header, .sidebar, .sidebar-backdrop, .no-print { display:none !important; } .main-content, .print-report, .print-page, .space-y-6, .space-y-8 { margin:0 !important; padding:0 !important; width:100% !important; max-width:none !important; min-height:0 !important; height:auto !important; overflow:visible !important; } .print-page { box-shadow:none !important; border-radius:0 !important; } .print-table-wrap { overflow:visible !important; max-height:none !important; height:auto !important; } .print-table { table-layout:fixed; } .print-table thead { display:table-header-group !important; } .print-table tbody { display:table-row-group; } .grid.grid-cols-1.md\:grid-cols-3 { display:grid !important; grid-template-columns:repeat(3, minmax(0, 1fr)) !important; gap:1rem !important; } }
+        @media print {
+            @page { size: A4 portrait; margin: 10mm; }
+            html, body { background: #fff !important; font-size: 11px !important; color: #000 !important; height: auto !important; min-height: 0 !important; overflow: visible !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .header, .sidebar, .sidebar-backdrop, .no-print { display: none !important; }
+            .main-content, .print-report, .print-page, .space-y-6, .space-y-8 { margin: 0 !important; padding: 0 !important; width: 100% !important; max-width: none !important; min-height: 0 !important; height: auto !important; overflow: visible !important; }
+            .report-shell { padding: 1rem !important; border: 1px solid #aac9ab !important; box-shadow: none !important; border-radius: 12px !important; }
+            .report-topbar { margin-bottom: 1rem !important; padding-bottom: 0.75rem !important; }
+            .report-summary-card { padding: 0.75rem !important; border-radius: 10px !important; }
+            .report-panel { border-radius: 12px !important; break-inside: avoid; page-break-inside: avoid; margin-bottom: 1rem !important; }
+            .report-panel-header { padding: 0.5rem 1rem !important; }
+            .print-table-wrap { padding: 0.75rem !important; overflow: visible !important; max-height: none !important; }
+            .print-table { width: 100% !important; font-size: 10.5px !important; table-layout: fixed; }
+            .print-table th, .print-table td { padding: 4px 6px !important; word-break: break-word; }
+            .print-section, .print-keep-together { break-inside: avoid; page-break-inside: avoid; }
+            canvas { max-height: 190px !important; width: 100% !important; height: auto !important; }
+            .grid.grid-cols-1.md\:grid-cols-3 { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 0.75rem !important; }
+        }
     </style>
 
     <div class="report-shell rounded-[28px] p-8 print-page print-report">
@@ -46,12 +62,51 @@
             <div class="report-summary-card rounded-2xl p-4"><p class="text-sm uppercase tracking-wide">Most Active Student</p><p class="text-base font-semibold">{{ isset($data['summary']['most_active_student']) && isset($data['summary']['most_active_student']['name']) ? $data['summary']['most_active_student']['name'] : '-' }}</p></div>
         </div>
 
-        <section class="report-panel rounded-[22px] shadow-sm print-section"><div class="report-panel-header px-6 py-4"><h2 class="text-xl font-semibold flex items-center uppercase"><i class="fas fa-users mr-3"></i>Students</h2><p class="text-sm mt-1">Student borrowing patterns and activity levels</p></div><div class="p-6 print-table-wrap"><table class="min-w-full text-sm print-table"><thead class="text-left border-b border-[#aac9ab]"><tr><th class="py-2 pr-4">Name</th><th class="py-2 pr-4">Library ID</th><th class="py-2 pr-4">Course</th><th class="py-2 pr-4">Year</th><th class="py-2 pr-4">Total Borrowed</th><th class="py-2 pr-4">Returned</th><th class="py-2 pr-4">Currently Borrowed</th><th class="py-2 pr-4">Overdue</th><th class="py-2 pr-4">Activity</th></tr></thead><tbody>@forelse($data['students'] as $s)<tr class="report-row border-b border-[#d7e7d5]"><td class="py-2 pr-4">{{ $s['name'] }}</td><td class="py-2 pr-4">{{ $s['library_id'] }}</td><td class="py-2 pr-4">{{ $s['course'] }}</td><td class="py-2 pr-4">{{ $s['year'] }}</td><td class="py-2 pr-4 font-medium text-[#2d6f55]">{{ $s['total_borrowed'] }}</td><td class="py-2 pr-4">{{ $s['total_returned'] }}</td><td class="py-2 pr-4">{{ $s['currently_borrowed'] }}</td><td class="py-2 pr-4">{{ $s['overdue_books'] }}</td><td class="py-2 pr-4">{{ $s['activity_level'] }}</td></tr>@empty<tr><td colspan="9" class="py-4 text-gray-500">No student activity for this period.</td></tr>@endforelse</tbody></table></div></section>
+        <section class="report-panel rounded-[22px] shadow-sm print-section">
+            <div class="report-panel-header px-6 py-4"><h2 class="text-xl font-semibold flex items-center uppercase"><i class="fas fa-users mr-3"></i>Students Activity Chart</h2><p class="text-sm mt-1">Student borrowing patterns and activity levels</p></div>
+            <div class="p-6 print-table-wrap space-y-6">
+                <!-- Student Activity Visual Chart -->
+                <div class="bg-white/80 p-4 rounded-xl border border-[#aac9ab] shadow-sm relative min-h-[220px] flex items-center justify-center">
+                    <canvas id="studentActivityChart" class="w-full max-h-[280px]"></canvas>
+                </div>
+
+                <table class="min-w-full text-sm print-table"><thead class="text-left border-b border-[#aac9ab]"><tr><th class="py-2 pr-4">Name</th><th class="py-2 pr-4">Library ID</th><th class="py-2 pr-4">Course</th><th class="py-2 pr-4">Year</th><th class="py-2 pr-4">Total Borrowed</th><th class="py-2 pr-4">Returned</th><th class="py-2 pr-4">Currently Borrowed</th><th class="py-2 pr-4">Overdue</th><th class="py-2 pr-4">Activity</th></tr></thead><tbody>@forelse($data['students'] as $s)<tr class="report-row border-b border-[#d7e7d5]"><td class="py-2 pr-4">{{ $s['name'] }}</td><td class="py-2 pr-4">{{ $s['library_id'] }}</td><td class="py-2 pr-4">{{ $s['course'] }}</td><td class="py-2 pr-4">{{ $s['year'] }}</td><td class="py-2 pr-4 font-medium text-[#2d6f55]">{{ $s['total_borrowed'] }}</td><td class="py-2 pr-4">{{ $s['total_returned'] }}</td><td class="py-2 pr-4">{{ $s['currently_borrowed'] }}</td><td class="py-2 pr-4">{{ $s['overdue_books'] }}</td><td class="py-2 pr-4">{{ $s['activity_level'] }}</td></tr>@empty<tr><td colspan="9" class="py-4 text-gray-500">No student activity for this period.</td></tr>@endforelse</tbody></table>
+            </div>
+        </section>
     </div>
 </div>
 @endsection
 
 @section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const studentCtx = document.getElementById('studentActivityChart')?.getContext('2d');
+    const studentLabels = [@foreach($data['students'] as $s) "{{ $s['name'] }}", @endforeach];
+    const totalBorrowed = [@foreach($data['students'] as $s) {{ $s['total_borrowed'] }}, @endforeach];
+    const totalReturned = [@foreach($data['students'] as $s) {{ $s['total_returned'] }}, @endforeach];
+
+    if (studentCtx) {
+        new Chart(studentCtx, {
+            type: 'bar',
+            data: {
+                labels: studentLabels.length ? studentLabels : ['No Active Students'],
+                datasets: [
+                    { label: 'Total Borrowed', data: totalBorrowed.length ? totalBorrowed : [0], backgroundColor: '#1f5b45', borderRadius: 6 },
+                    { label: 'Returned', data: totalReturned.length ? totalReturned : [0], backgroundColor: '#0284c7', borderRadius: 6 }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } },
+                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+            }
+        });
+    }
+});
+</script>
+
 @if(request()->boolean('print'))
 <script>window.addEventListener('load',()=>{window.print(); setTimeout(()=>{window.close&&window.close()},600)})</script>
 @endif

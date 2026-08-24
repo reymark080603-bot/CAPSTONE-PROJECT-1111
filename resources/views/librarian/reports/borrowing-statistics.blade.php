@@ -15,7 +15,7 @@
             --report-border: #aac9ab;
             --report-text: #224438;
         }
-        @page { size: A4; margin: 12mm; }
+        @page { size: A4 portrait; margin: 10mm; }
         .report-shell { background: linear-gradient(180deg, rgba(220, 235, 217, 0.96), rgba(238, 246, 232, 0.98)); border: 3px solid var(--report-border); box-shadow: 0 18px 35px rgba(31, 91, 69, 0.12); }
         .report-topbar { border-bottom: 2px solid rgba(31, 91, 69, 0.18); }
         .report-brand { color: var(--report-green-900); letter-spacing: 0.04em; }
@@ -43,16 +43,22 @@
         .no-print { display: none !important; }
         @endif
         @media print {
-            html, body { background: #fff !important; font-size: 12px; height: auto !important; min-height: 0 !important; overflow: visible !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            @page { size: A4 portrait; margin: 10mm; }
+            html, body { background: #fff !important; font-size: 11px !important; color: #000 !important; height: auto !important; min-height: 0 !important; overflow: visible !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .header, .sidebar, .sidebar-backdrop, .no-print { display: none !important; }
             .main-content, .print-report, .print-page, .space-y-6, .space-y-8 { margin: 0 !important; padding: 0 !important; width: 100% !important; max-width: none !important; min-height: 0 !important; height: auto !important; overflow: visible !important; }
-            .print-page { box-shadow: none !important; border-radius: 0 !important; }
-            .print-table-wrap { overflow: visible !important; max-height: none !important; height: auto !important; }
-            .print-table { table-layout: fixed; }
-            .print-table thead { display: table-header-group !important; }
-            .print-table tbody { display: table-row-group; }
-            .grid.grid-cols-1.md\:grid-cols-3 { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 1rem !important; }
-            .grid.grid-cols-1.lg\:grid-cols-2 { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 1rem !important; }
+            .report-shell { padding: 1rem !important; border: 1px solid #aac9ab !important; box-shadow: none !important; border-radius: 12px !important; }
+            .report-topbar { margin-bottom: 1rem !important; padding-bottom: 0.75rem !important; }
+            .report-summary-card { padding: 0.75rem !important; border-radius: 10px !important; }
+            .report-panel { border-radius: 12px !important; break-inside: avoid; page-break-inside: avoid; margin-bottom: 1rem !important; }
+            .report-panel-header { padding: 0.5rem 1rem !important; }
+            .print-table-wrap { padding: 0.75rem !important; overflow: visible !important; max-height: none !important; }
+            .print-table { width: 100% !important; font-size: 10.5px !important; table-layout: fixed; }
+            .print-table th, .print-table td { padding: 4px 6px !important; word-break: break-word; }
+            .print-section, .print-keep-together { break-inside: avoid; page-break-inside: avoid; }
+            canvas { max-height: 200px !important; width: 100% !important; height: auto !important; }
+            .grid.grid-cols-1.md\:grid-cols-3 { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 0.75rem !important; }
+            .grid.grid-cols-1.lg\:grid-cols-2 { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 0.75rem !important; }
         }
     </style>
 
@@ -77,14 +83,138 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <section class="report-panel rounded-[22px] shadow-sm print-section"><div class="report-panel-header px-6 py-4 print-keep-together"><h2 class="text-xl font-semibold flex items-center uppercase"><i class="fas fa-chart-bar mr-3"></i>Monthly Breakdown</h2><p class="text-sm mt-1">Monthly borrowing activity summary</p></div><div class="p-6 print-table-wrap"><table class="min-w-full text-sm print-table"><thead class="text-left border-b border-[#aac9ab]"><tr><th class="py-2 pr-4">Period</th><th class="py-2 pr-4">Count</th></tr></thead><tbody>@forelse($data['monthly_data'] as $m)<tr class="report-row border-b border-[#d7e7d5]"><td class="py-2 pr-4">{{ $m['period'] }}</td><td class="py-2 pr-4 font-medium text-[#2d6f55]">{{ $m['count'] }}</td></tr>@empty<tr><td colspan="2" class="py-4 text-gray-500">No data.</td></tr>@endforelse</tbody></table></div></section>
-            <section class="report-panel rounded-[22px] shadow-sm print-section"><div class="report-panel-header px-6 py-4 print-keep-together"><h2 class="text-xl font-semibold flex items-center uppercase"><i class="fas fa-tags mr-3"></i>Category Breakdown</h2><p class="text-sm mt-1">Borrowing grouped by category</p></div><div class="p-6 print-table-wrap"><table class="min-w-full text-sm print-table"><thead class="text-left border-b border-[#aac9ab]"><tr><th class="py-2 pr-4">Category</th><th class="py-2 pr-4">Count</th></tr></thead><tbody>@forelse($data['category_data'] as $c)<tr class="report-row border-b border-[#d7e7d5]"><td class="py-2 pr-4">{{ $c->category ?? '-' }}</td><td class="py-2 pr-4 font-medium text-[#2d6f55]">{{ $c->count }}</td></tr>@empty<tr><td colspan="2" class="py-4 text-gray-500">No data.</td></tr>@endforelse</tbody></table></div></section>
+            <!-- Monthly Breakdown Section -->
+            <section class="report-panel rounded-[22px] shadow-sm print-section">
+                <div class="report-panel-header px-6 py-4 print-keep-together">
+                    <h2 class="text-xl font-semibold flex items-center uppercase"><i class="fas fa-chart-bar mr-3"></i>Monthly Breakdown</h2>
+                    <p class="text-sm mt-1">Monthly borrowing activity summary</p>
+                </div>
+                <div class="p-6 print-table-wrap space-y-6">
+                    <!-- Graph Canvas Container -->
+                    <div class="bg-white/80 p-4 rounded-xl border border-[#aac9ab] shadow-sm relative min-h-[220px] flex items-center justify-center">
+                        <canvas id="monthlyChart" class="w-full max-h-[260px]"></canvas>
+                    </div>
+
+                    <!-- Data Table -->
+                    <table class="min-w-full text-sm print-table">
+                        <thead class="text-left border-b border-[#aac9ab]">
+                            <tr><th class="py-2 pr-4">Period</th><th class="py-2 pr-4">Count</th></tr>
+                        </thead>
+                        <tbody>
+                            @forelse($data['monthly_data'] as $m)
+                                <tr class="report-row border-b border-[#d7e7d5]"><td class="py-2 pr-4">{{ $m['period'] }}</td><td class="py-2 pr-4 font-medium text-[#2d6f55]">{{ $m['count'] }}</td></tr>
+                            @empty
+                                <tr><td colspan="2" class="py-4 text-gray-500">No data available.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Category Breakdown Section -->
+            <section class="report-panel rounded-[22px] shadow-sm print-section">
+                <div class="report-panel-header px-6 py-4 print-keep-together">
+                    <h2 class="text-xl font-semibold flex items-center uppercase"><i class="fas fa-tags mr-3"></i>Category Breakdown</h2>
+                    <p class="text-sm mt-1">Borrowing grouped by category</p>
+                </div>
+                <div class="p-6 print-table-wrap space-y-6">
+                    <!-- Graph Canvas Container -->
+                    <div class="bg-white/80 p-4 rounded-xl border border-[#aac9ab] shadow-sm relative min-h-[220px] flex items-center justify-center">
+                        <canvas id="categoryChart" class="w-full max-h-[260px]"></canvas>
+                    </div>
+
+                    <!-- Data Table -->
+                    <table class="min-w-full text-sm print-table">
+                        <thead class="text-left border-b border-[#aac9ab]">
+                            <tr><th class="py-2 pr-4">Category</th><th class="py-2 pr-4">Count</th></tr>
+                        </thead>
+                        <tbody>
+                            @forelse($data['category_data'] as $c)
+                                <tr class="report-row border-b border-[#d7e7d5]"><td class="py-2 pr-4">{{ $c->category ?? 'Uncategorized' }}</td><td class="py-2 pr-4 font-medium text-[#2d6f55]">{{ $c->count }}</td></tr>
+                            @empty
+                                <tr><td colspan="2" class="py-4 text-gray-500">No data available.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </section>
         </div>
     </div>
 </div>
 @endsection
 
 @section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const monthlyCtx = document.getElementById('monthlyChart')?.getContext('2d');
+    const categoryCtx = document.getElementById('categoryChart')?.getContext('2d');
+
+    // Monthly Bar Chart Data
+    const monthlyLabels = [@foreach($data['monthly_data'] as $m) "{{ $m['period'] }}", @endforeach];
+    const monthlyValues = [@foreach($data['monthly_data'] as $m) {{ $m['count'] }}, @endforeach];
+
+    if (monthlyCtx) {
+        new Chart(monthlyCtx, {
+            type: 'bar',
+            data: {
+                labels: monthlyLabels.length ? monthlyLabels : ['No Data'],
+                datasets: [{
+                    label: 'Borrow Count',
+                    data: monthlyValues.length ? monthlyValues : [0],
+                    backgroundColor: 'rgba(31, 91, 69, 0.85)',
+                    borderColor: 'rgba(31, 91, 69, 1)',
+                    borderWidth: 2,
+                    borderRadius: 8,
+                    hoverBackgroundColor: 'rgba(45, 111, 85, 0.95)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { backgroundColor: '#1f5b45', titleFont: { weight: 'bold' } }
+                },
+                scales: {
+                    y: { beginAtZero: true, ticks: { precision: 0, color: '#224438' }, grid: { color: 'rgba(170, 201, 171, 0.3)' } },
+                    x: { ticks: { color: '#224438' }, grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    // Category Doughnut Chart Data
+    const categoryLabels = [@foreach($data['category_data'] as $c) "{{ $c->category ?? 'Uncategorized' }}", @endforeach];
+    const categoryValues = [@foreach($data['category_data'] as $c) {{ $c->count }}, @endforeach];
+
+    if (categoryCtx) {
+        new Chart(categoryCtx, {
+            type: categoryLabels.length ? 'doughnut' : 'bar',
+            data: {
+                labels: categoryLabels.length ? categoryLabels : ['No Data'],
+                datasets: [{
+                    data: categoryValues.length ? categoryValues : [0],
+                    backgroundColor: [
+                        '#1f5b45', '#2d6f55', '#3f8768', '#6fae8e', '#0284c7', '#7c3aed', '#db2777', '#d97706', '#059669'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { boxWidth: 12, color: '#224438', font: { size: 11, weight: 'bold' } } },
+                    tooltip: { backgroundColor: '#1f5b45' }
+                }
+            }
+        });
+    }
+});
+</script>
+
 @if(request()->boolean('print'))
 <script>window.addEventListener('load',()=>{window.print(); setTimeout(()=>{window.close&&window.close()},600)})</script>
 @endif

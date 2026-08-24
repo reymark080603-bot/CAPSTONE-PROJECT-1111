@@ -330,9 +330,10 @@ async function loadStudents() {
             const status = row.status || (row.email_verified_at ? 'Active' : 'Pending');
             const statusClass = status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700';
             const created = row.created_at || '';
-            const genderIcon = row.gender === 'male' ? '<i class="fas fa-mars text-blue-500 mr-1"></i>' : row.gender === 'female' ? '<i class="fas fa-venus text-pink-500 mr-1"></i>' : '<i class="fas fa-question text-gray-400 mr-1"></i>';
+            const gVal = (row.gender || '').toString().toLowerCase().trim();
+            const genderIcon = gVal === 'male' ? '<i class="fas fa-mars text-blue-500 mr-1.5"></i>' : gVal === 'female' ? '<i class="fas fa-venus text-pink-500 mr-1.5"></i>' : '<i class="fas fa-user text-gray-400 mr-1.5"></i>';
             const genderText = row.gender ? row.gender.charAt(0).toUpperCase() + row.gender.slice(1) : 'Not specified';
-            const genderClass = row.gender === 'male' ? 'text-blue-700' : row.gender === 'female' ? 'text-pink-700' : 'text-gray-500';
+            const genderClass = gVal === 'male' ? 'text-blue-700' : gVal === 'female' ? 'text-pink-700' : 'text-gray-500';
             return `
                 <tr>
                     <td class="px-6 py-4">
