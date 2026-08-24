@@ -391,10 +391,42 @@ class StudentDashboardController extends Controller
         $user->lastname = $validated['lastname'];
         $user->mi = $validated['mi'] ?? $user->mi;
         $user->name = trim($validated['firstname'] . ' ' . $validated['lastname']);
-        $user->course = $validated['course'] ?? $user->course;
         $user->campus = $validated['campus'] ?? $user->campus;
-        $user->year = $validated['year'] ?? $user->year;
         $user->gender = $validated['gender'] ?? $user->gender;
+
+        if (!empty($validated['course'])) {
+            $normalizedCourse = trim($validated['course']);
+            $courseObj = \App\Models\Course::query()
+                ->where('name', $normalizedCourse)
+                ->orWhere('code', strtoupper($normalizedCourse))
+                ->first();
+
+            if (!$courseObj) {
+                $courseObj = \App\Models\Course::create([
+                    'name' => $normalizedCourse,
+                    'code' => strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $normalizedCourse), 0, 10)) ?: null,
+                ]);
+            }
+            $user->course_id = $courseObj->id;
+        }
+
+        if (!empty($validated['year'])) {
+            $yearLevelObj = \App\Models\YearLevel::where('level', $validated['year'])->first();
+            if (!$yearLevelObj) {
+                $numeric = 1;
+                if (preg_match('/(\d+)/', $validated['year'], $matches)) {
+                    $numeric = (int) $matches[1];
+                }
+                if (\App\Models\YearLevel::where('numeric_level', $numeric)->exists()) {
+                    $numeric = (\App\Models\YearLevel::max('numeric_level') ?? 0) + 1;
+                }
+                $yearLevelObj = \App\Models\YearLevel::create([
+                    'level' => $validated['year'],
+                    'numeric_level' => $numeric,
+                ]);
+            }
+            $user->year_level_id = $yearLevelObj->id;
+        }
 
         $user->save();
 
