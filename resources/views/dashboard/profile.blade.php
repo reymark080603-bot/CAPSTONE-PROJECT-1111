@@ -159,6 +159,7 @@
                     } else {
                         $courseText = (string)($user->course ?? '');
                     }
+                    $yearText = $user->yearLevel?->level ?? (is_string($user->year) ? $user->year : '');
                 @endphp
 
                 <!-- 2-Column Grid Layout -->
@@ -175,9 +176,9 @@
                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
                                     <i class="fas fa-graduation-cap mr-1.5"></i> {{ $courseText ?: 'No Program' }}
                                 </span>
-                                @if($user->year)
+                                @if($yearText)
                                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-                                        <i class="fas fa-layer-group mr-1.5"></i> {{ $user->year }}
+                                        <i class="fas fa-layer-group mr-1.5"></i> {{ $yearText }}
                                     </span>
                                 @endif
                             </div>
@@ -275,11 +276,11 @@
                                         <label for="year" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Year Level</label>
                                         <select id="year" name="year" class="w-full px-3.5 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-sm">
                                             <option value="">Select Year Level</option>
-                                            <option value="1st Year" {{ old('year', $user->year) === '1st Year' ? 'selected' : '' }}>1st Year</option>
-                                            <option value="2nd Year" {{ old('year', $user->year) === '2nd Year' ? 'selected' : '' }}>2nd Year</option>
-                                            <option value="3rd Year" {{ old('year', $user->year) === '3rd Year' ? 'selected' : '' }}>3rd Year</option>
-                                            <option value="4th Year" {{ old('year', $user->year) === '4th Year' ? 'selected' : '' }}>4th Year</option>
-                                            <option value="N/A (Visitor)" {{ old('year', $user->year) === 'N/A (Visitor)' ? 'selected' : '' }}>N/A (Visitor / Guest)</option>
+                                            <option value="1st Year" {{ old('year', $yearText) === '1st Year' ? 'selected' : '' }}>1st Year</option>
+                                            <option value="2nd Year" {{ old('year', $yearText) === '2nd Year' ? 'selected' : '' }}>2nd Year</option>
+                                            <option value="3rd Year" {{ old('year', $yearText) === '3rd Year' ? 'selected' : '' }}>3rd Year</option>
+                                            <option value="4th Year" {{ old('year', $yearText) === '4th Year' ? 'selected' : '' }}>4th Year</option>
+                                            <option value="N/A (Visitor)" {{ old('year', $yearText) === 'N/A (Visitor)' ? 'selected' : '' }}>N/A (Visitor / Guest)</option>
                                         </select>
                                     </div>
                                 </div>

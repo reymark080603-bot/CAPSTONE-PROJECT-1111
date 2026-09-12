@@ -171,7 +171,15 @@ class User extends Authenticatable
      */
     public function getYearLevelNameAttribute()
     {
-        return $this->yearLevel?->level ?? $this->year;
+        return $this->yearLevel?->level ?? ($this->attributes['year'] ?? null);
+    }
+
+    /**
+     * Get the user's year attribute (for backward compatibility)
+     */
+    public function getYearAttribute()
+    {
+        return $this->attributes['year'] ?? $this->yearLevel?->level;
     }
 
     /**

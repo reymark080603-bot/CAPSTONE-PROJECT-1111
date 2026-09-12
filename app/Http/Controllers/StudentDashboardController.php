@@ -350,6 +350,9 @@ class StudentDashboardController extends Controller
     public function profile()
     {
         $user = Auth::guard('student')->user();
+        if ($user) {
+            $user->load(['course', 'yearLevel']);
+        }
         return view('dashboard.profile', compact('user'));
     }
 
