@@ -13,13 +13,15 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
 
-        // Disable CSRF verification for login & registration routes to prevent 419 Page Expired
+        // Disable CSRF verification for login, registration & profile routes to prevent 419 Page Expired
         $middleware->validateCsrfTokens(except: [
             '/staff/login',
             '/student/login',
             '/login',
             '/librarian/login',
             '/register',
+            '/student/profile',
+            '/student/change-password',
         ]);
 
         $middleware->web([
