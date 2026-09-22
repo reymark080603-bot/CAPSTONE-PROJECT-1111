@@ -152,19 +152,25 @@ class LoginController extends Controller
         // Generate a random 8-character password
         $newPassword = \Illuminate\Support\Str::random(8);
 
-        // Save hashed password to database
-        $user->password = Hash::make($newPassword);
-        $user->save();
+        try {
+            // Attempt to send email BEFORE saving new password to database
+            $mailer = new \App\Models\Mailer();
+            $res = $mailer->generate_password($user->email, $newPassword, $user->email);
 
-        // Send email via Mailer model
-        $mailer = new \App\Models\Mailer();
-        $res = $mailer->generate_password($user->email, $newPassword, $user->email);
+            if (is_array($res) && isset($res['status']) && $res['status'] === 200) {
+                // Save hashed password to database only when email successfully sent
+                $user->password = Hash::make($newPassword);
+                $user->save();
 
-        if (is_array($res) && isset($res['status']) && $res['status'] === 200) {
-            return back()->with('status', 'A new temporary password has been sent to your email address!');
+                return back()->with('status', 'A new temporary password has been sent to your email address!');
+            }
+
+            Log::error('Password reset email failed: ' . json_encode($res));
+            return back()->withErrors(['email' => 'Failed to send password reset email. Please check your mail settings or network connection and try again.']);
+        } catch (\Throwable $e) {
+            Log::error('Password reset exception: ' . $e->getMessage());
+            return back()->withErrors(['email' => 'Unable to send password reset email due to a mail server timeout. Please try again later or contact support.']);
         }
-
-        return back()->withErrors(['email' => 'Failed to send password reset email. Please check your email settings or try again later.']);
     }
 
     /**

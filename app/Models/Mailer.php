@@ -18,6 +18,8 @@ class Mailer
         $mail->Password   = env('MAIL_PASSWORD', 'igpswwyawxrarhac');
         $mail->SMTPSecure = env('MAIL_ENCRYPTION', 'tls');
         $mail->Port       = env('MAIL_PORT', 587);
+        $mail->Timeout    = 8;
+        $mail->SMTPDebug  = 0;
 
         return $mail;
     }
@@ -68,7 +70,7 @@ class Mailer
             } else {
                 throw new Exception('Client ID, password, or recipient email missing.');
             }
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             Log::error("Email verification could not be sent. Error: {$e->getMessage()}");
             return ["status" => 500, "message" => "failure", "error" => $e->getMessage()];
         }
