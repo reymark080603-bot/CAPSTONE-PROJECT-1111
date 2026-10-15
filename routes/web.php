@@ -15,6 +15,39 @@ use App\Http\Controllers\RecentBooksController;
     
 use App\Services\PdfCoverService;
 
+// TEMPORARY MAIL DIAGNOSTIC ROUTE - Remove after fixing mail issue
+Route::get('/test-mail', function () {
+    $config = [
+        'MAIL_MAILER'       => env('MAIL_MAILER', '❌ NOT SET'),
+        'MAIL_HOST'         => env('MAIL_HOST', '❌ NOT SET'),
+        'MAIL_PORT'         => env('MAIL_PORT', '❌ NOT SET'),
+        'MAIL_USERNAME'     => env('MAIL_USERNAME', '❌ NOT SET'),
+        'MAIL_PASSWORD'     => env('MAIL_PASSWORD') ? '✅ SET (' . strlen(env('MAIL_PASSWORD')) . ' chars)' : '❌ NOT SET',
+        'MAIL_ENCRYPTION'   => env('MAIL_ENCRYPTION', '❌ NOT SET'),
+        'MAIL_FROM_ADDRESS' => env('MAIL_FROM_ADDRESS', '❌ NOT SET'),
+        'MAIL_FROM_NAME'    => env('MAIL_FROM_NAME', '❌ NOT SET'),
+    ];
+
+    $html = "<h2>Mail Configuration</h2><pre>" . print_r($config, true) . "</pre>";
+
+    try {
+        $mailer = new \App\Models\Mailer();
+        $result = $mailer->generate_password(
+            env('MAIL_USERNAME'),
+            'TestPassword123',
+            env('MAIL_USERNAME')
+        );
+        $html .= "<h2>Send Test Result</h2><pre>" . json_encode($result, JSON_PRETTY_PRINT) . "</pre>";
+        $html .= ($result['status'] ?? 500) === 200
+            ? "<p style='color:green;font-size:18px'>✅ Email sent successfully!</p>"
+            : "<p style='color:red;font-size:18px'>❌ Failed: " . htmlspecialchars($result['error'] ?? 'Unknown error') . "</p>";
+    } catch (\Throwable $e) {
+        $html .= "<p style='color:red'>❌ Exception: " . htmlspecialchars($e->getMessage()) . "</p>";
+    }
+
+    return $html;
+});
+
 // SYSTEM CHECK ROUTE - Visit this to diagnose cover generation issues
 // GHOST ROUTE - Bypasses Nginx static interceptor on Railway
 Route::get('/library-assets/{path}', function($path) {
