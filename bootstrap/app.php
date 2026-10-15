@@ -22,6 +22,8 @@ return Application::configure(basePath: dirname(__DIR__))
             '/register',
             '/student/profile',
             '/student/change-password',
+            '/logout',
+            '/librarian/logout',
         ]);
 
         $middleware->web([
