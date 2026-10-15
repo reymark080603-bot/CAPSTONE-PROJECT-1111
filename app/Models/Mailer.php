@@ -50,6 +50,9 @@ class Mailer
                 </div>
             ';
 
+            // Allow up to 20s for this operation to prevent PHP fatal timeout errors
+            set_time_limit(20);
+
             Mail::html($htmlBody, function ($message) use ($clientEmail, $fromName) {
                 $message->to(trim($clientEmail))
                         ->subject('Knowly Library – Password Reset Request');
